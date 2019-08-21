@@ -1,16 +1,16 @@
 # Basic Information
 ## Author
-:-:        | :-:
-Birthplace | China
-Living in  | Wuhan, Hubei, China
-Age        | 14
-Languages  | Chinese, English, Japanese, (German)
-Languages  | basics of C++11, basics of Python 3
+| :-:        | :-:                                  |
+| Birthplace | China                                |
+| Living in  | Wuhan, Hubei, China                  |
+| Age        | 14                                   |
+| Languages  | Chinese, English, Japanese, (German) |
+| Languages  | basics of C++11, basics of Python 3  |
 
 ## This Page
-:-:        | :-:
-Published  | 2019.8.17
-Updated    | 2019.8.21
+| :-:        | :-:        |
+| Published  | 2019.8.17  |
+| Updated    | 2019.8.21  |
 
 # Projects In Progress
 ### Lost
