@@ -1,6 +1,21 @@
 # Basic Information
 ## Author
-| Key        | Value                                |
+<table>
+    <tbody>
+        <tr>
+            <td>Birthplace</td>
+            <td>China</td>
+        </tr>
+        <tr>
+            <td>Living in</td>
+            <td>Wuhan, Hubei, China</td>
+        </tr>
+        <tr>
+            <td>Age</td>
+            <td>14</td>
+        </tr>
+    </tbody>
+</table>
 | :-:        | :-:                                  |
 | Birthplace | China                                |
 | Living in  | Wuhan, Hubei, China                  |
