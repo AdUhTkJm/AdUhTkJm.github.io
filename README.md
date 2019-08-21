@@ -1,21 +1,6 @@
 # Basic Information
 ## Author
-<table>
-    <tbody>
-        <tr>
-            <td>Birthplace</td>
-            <td>China</td>
-        </tr>
-        <tr>
-            <td>Living in</td>
-            <td>Wuhan, Hubei, China</td>
-        </tr>
-        <tr>
-            <td>Age</td>
-            <td>14</td>
-        </tr>
-    </tbody>
-</table>
+
 | :-:        | :-:                                  |
 | Birthplace | China                                |
 | Living in  | Wuhan, Hubei, China                  |
@@ -24,6 +9,7 @@
 | Languages  | basics of C++11, basics of Python 3  |
 
 ## This Page
+
 | Key        | Value      |
 | :-:        | :-:        |
 | Published  | 2019.8.17  |
