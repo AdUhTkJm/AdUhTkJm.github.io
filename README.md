@@ -18,9 +18,7 @@
 
 # Projects In Progress
 ### Lost
-  This project hasn't been uploaded to github yet.
-  
-  *Lost* is designed to be a plot game. It is based on the console input/output instead of graphical interface, to simulate a communicator better. The development of plot can be controlled through choosing the options, which are usually about difficulties the main character encounters.
+  [*Lost*](https://github.com/AdUhTkJm/Lost) is designed to be a plot game. It is based on the console input/output instead of graphical interface, to simulate a communicator better. The development of plot can be controlled through choosing the options, which are usually about difficulties the main character encounters.
   
   This game is inspired by *Lifeline*.
 
