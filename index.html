@@ -65,7 +65,7 @@
 						'faith', 'book', 'structure', 'alloy', 'telescope', 'memory']
 		var craftables = ['book', 'structure', 'alloy', 'telescope'];
 		var time = 0;
-		var debug = 1;
+		var debug = 0;
 		var physics = 0;
 		var chemistry = 0;
 		var maths = 0;
@@ -1995,6 +1995,8 @@
 
 		var load = function() {
 			var saving = localStorage.getItem("saving");
+			if (!parseInt(localStorage.getItem("memory")))
+				localStorage.setItem("memory", 0);
 			if (saving == "" || saving == "null") {
 				init();
 				return false;
