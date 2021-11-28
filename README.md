@@ -1,41 +1,9 @@
-# Basic Information
-## Author
+Currently, this game only offers a Chinese edition.
 
-| Key        | Value                                |
-| :-:        | :-:                                  |
-| Birthplace | China                                |
-| Living in  | Wuhan, Hubei, China                  |
-| Age        | 14                                   |
-| Languages  | Chinese, English, Japanese, (German) |
-| Languages  | basics of C++11, basics of Python 3  |
+## 重建
 
-## This Page
+这是一个放置游戏，是从猫国建设者与进化得到灵感而制作的。
 
-| Key        | Value      |
-| :-:        | :-:        |
-| Published  | 2019.8.17  |
-| Updated    | 2019.8.21  |
+在游戏中，你将指挥5名年轻人——以及后来逐渐加入的人们——重新研究各类科技，建造必需的建筑，并且重建文明。
 
-# Projects In Progress
-### Lost
-  [*Lost*](https://github.com/AdUhTkJm/Lost) is designed to be a plot game. It is based on the console input/output instead of graphical interface, to simulate a communicator better. The development of plot can be controlled through choosing the options, which are usually about difficulties the main character encounters.
-  
-  This game is inspired by *Lifeline*.
-
-## About Projects
-Currently, I work on projects with only myself. Also, I usually fail to think of interesting ideas to make a good game.
-
-Welcome if you want to join or advise me.
-
-Contacts: (Will fill later)
-
-# Links
-As a participant of Olympiads of Informatics (OI), I have registered accounts on various practicing platforms. Here are links to them:
-
-[Luogu](https://www.luogu.org/space/show?uid=64757)
-
-[AtCoder](https://atcoder.jp/users/AdUhTkJm)
-
-[Codeforces](http://codeforces.com/profile/AdUhTkJm)
-
-[Blog (OI related)](https://www.luogu.org/blog/user64757)
+第一次游戏的目标应当是建造砷汞富集器，并且研究废弃物处理实验，造成污染泄漏，从而重置游戏。
