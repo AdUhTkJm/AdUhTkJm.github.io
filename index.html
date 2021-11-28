@@ -2458,8 +2458,10 @@
 					}
 				if (!tag) continue;
 				prod[res] = get("craftsman_" + res).on * 0.0025 * (1 + (global_buff - 1) * 0.01) * craft_effect(res);
-				for (var j = 0; j < price.length; j++)
-					prod[price[j][0]] -= price[j][1] / 10;
+				for (var j = 0; j < price.length; j++) {
+					prod[price[j][0]] -= get("craftsman_" + res).on * price[j][1] * 0.0025;
+					show_crafts[price[j][0]] = -get("craftsman_" + res).on * price[j][1] * 0.0025;
+				}
 			}
 
 			prod["faith"] =
@@ -2489,6 +2491,7 @@
 			return x + "  " + "<font color='" + (what < 0 ? "red" : is_percent ? "green" : "black") + "'>" + (what > 0 ? "+" : "") + (is_percent ? percentage(what) : format(what)) + "</font><br>";
 		}
 
+		var show_crafts = {};
 		var show_production = function(x, self) {
 			var text = "";
 			var prod = production();
@@ -2609,6 +2612,9 @@
 				text += entext(get("smelter").name, -2 * get("smelter").on);
 				text += entext(get("furnace").name, -5 * get("furnace").on * get("iron_enhancement").upgraded);
 				text += entext(get("blast_furnace").name, -12.5 * get("blast_furnace").on);
+			}
+			if (show_crafts[x]) {
+				text += entext("工匠", show_crafts[x]);
 			}
 			if (x == "gold") {
 				if (!running_out("gold")) {
