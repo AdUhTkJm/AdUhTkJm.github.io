@@ -58,7 +58,6 @@
 	<script type="text/javascript">
 		var tick_persec = 5;
 		var $ = function(x) { return document.getElementById(x); }
-		var person_available = 5;
 		var divs = []
 		var current_nav = 'bonfire';
 		var resources = ['food', 'wood', 'person', 'thought', 'stone', 'mineral', 'fur', 'discovered_area', 'paper', 'copper', 'carbon', 'iron', 'glass', 'steel', 'gold',
@@ -116,8 +115,8 @@
 			},
 			'person': {
 				name: '人数',
-				storage: person_available,
-				capacity: -1,
+				storage: 5,
+				capacity: 5,
 				unlocked: true
 			},
 			'discovered_area': {
@@ -191,7 +190,7 @@
 			'fire': {
 				name: '火堆',
 				level: 0,
-				ratio: 1.7,
+				ratio: 1.8,
 				on: 0,
 				togglable: true,
 				clicked: function() {
@@ -215,7 +214,7 @@
 			'warehouse': {
 				name: '仓库',
 				level: 0,
-				ratio: 1.25,
+				ratio: 1.3,
 				on: 0,
 				togglable: false,
 				clicked: function() { construct('warehouse'); },
@@ -226,7 +225,7 @@
 			'warehouse_2': {
 				name: '货仓',
 				level: 0,
-				ratio: 1.18,
+				ratio: 1.24,
 				on: 0,
 				togglable: false,
 				clicked: function() { construct('warehouse_2'); },
@@ -237,7 +236,7 @@
 			'harbor': {
 				name: '港口',
 				level: 0,
-				ratio: 1.18,
+				ratio: 1.26,
 				on: 0,
 				togglable: false,
 				clicked: function() { construct('harbor'); },
@@ -248,7 +247,7 @@
 			'workshop': {
 				name: '工坊',
 				level: 0,
-				ratio: 1.18,
+				ratio: 1.3,
 				on: 0,
 				togglable: false,
 				clicked: function() {
@@ -270,7 +269,7 @@
 			'map': {
 				name: '地图',
 				level: 0,
-				ratio: 1.35,
+				ratio: 1.4,
 				togglable: false,
 				clicked: function() { construct("map"); },
 				show: "将过往的探索知识记录进地图。<br>探索产出增加8%<br>需要的探索随着地图的合成而增加<br><b>不消耗探索</b>",
@@ -281,7 +280,7 @@
 			'paper_factory': {
 				name: '造纸厂',
 				level: 0,
-				ratio: 1.18,
+				ratio: 1.22,
 				on: 0,
 				togglable: true,
 				clicked: function() { construct('paper_factory'); },
@@ -292,7 +291,7 @@
 			'mine': {
 				name: '矿井',
 				level: 0,
-				ratio: 1.18,
+				ratio: 1.28,
 				on: 0,
 				togglable: false,
 				clicked: function() { if (construct('mine') && !get("mineral").unlocked) { unlock("mineral"); push_button("miner", "society"); } },
@@ -303,7 +302,7 @@
 			'smelter': {
 				name: '冶炼窑',
 				level: 0,
-				ratio: 1.18,
+				ratio: 1.9,
 				on: 0,
 				togglable: true,
 				clicked: function() { if (!construct('smelter')) return; unlock("copper"); },
@@ -326,10 +325,10 @@
 			'small_house': {
 				name: '小屋',
 				level: 0,
-				ratio: 1.2,
+				ratio: 2,
 				on: 0,
 				togglable: false,
-				clicked: function() { var num = construct("small_house"); person_available += num; get("person").storage += num; },
+				clicked: function() { var num = construct("small_house"); get("person").storage += num; get("person").capacity += num; },
 				show: "吸引更多无家可归的人入住。<br>每个小屋可以居住1个人。",
 				price: [["wood", 60], ["stone", 30]],
 				unlocked: false
@@ -337,10 +336,10 @@
 			'apartment': {
 				name: '公寓',
 				level: 0,
-				ratio: 1.2,
+				ratio: 1.55,
 				on: 0,
 				togglable: false,
-				clicked: function() { var num = construct("apartment"); person_available += 3 * num; get("apartment").storage += num; },
+				clicked: function() { var num = construct("apartment"); get("person").storage += 3 * num; get("person").capacity += 3 * num; },
 				show: "通了电的公寓能够让人们生活得更快乐。<br>每个公寓可以居住3个人，同时提升1%稳定度。<br>消耗2电力；电力不足时，稳定度-1%",
 				price: [["glass", 300], ["alloy", 20], ["structure", 135]],
 				unlocked: false
@@ -348,7 +347,7 @@
 			'library': {
 				name: '图书馆',
 				level: 0,
-				ratio: 1.18,
+				ratio: 1.27,
 				on: 0,
 				togglable: false,
 				clicked: function() { if (construct('library') && !get("book_categorization").unlocked) { push_button('book_categorization', 'thoughts'); } },
@@ -359,7 +358,7 @@
 			'research_lab': {
 				name: '研究所',
 				level: 0,
-				ratio: 1.18,
+				ratio: 1.38,
 				on: 0,
 				togglable: false,
 				clicked: function() { construct('research_lab'); },
@@ -381,18 +380,19 @@
 			'university': {
 				name: '大学',
 				level: 0,
-				ratio: 1.12,
+				ratio: 1.19,
 				on: 0,
 				togglable: false,
 				clicked: function() { construct('university'); },
 				show: "风景优美，适合摸鱼。<br>每个大学使每名教授让书的制作效率+1%",
+				mutant: function() { return get("research_fund").upgraded ? "，同时每秒产出0.25思考" : ""; },
 				price: [["stone", 6000], ["book", 1], ["structure", 125]],
 				unlocked: false
 			},
 			'furnace': {
 				name: '熔炉',
 				level: 0,
-				ratio: 1.25,
+				ratio: 1.35,
 				on: 0,
 				togglable: true,
 				clicked: function() { construct('furnace'); },
@@ -403,7 +403,7 @@
 			'blast_furnace': {
 				name: '冶炼高炉',
 				level: 0,
-				ratio: 1.25,
+				ratio: 1.35,
 				on: 0,
 				togglable: true,
 				clicked: function() { construct('blast_furnace'); },
@@ -414,7 +414,7 @@
 			'factory': {
 				name: '工厂',
 				level: 0,
-				ratio: 1.25,
+				ratio: 1.35,
 				on: 0,
 				togglable: true,
 				clicked: function() { construct('factory'); },
@@ -425,7 +425,7 @@
 			'crossroad': {
 				name: '交通枢纽',
 				level: 0,
-				ratio: 1.25,
+				ratio: 1.31,
 				on: 0,
 				togglable: true,
 				clicked: function() { construct('crossroad'); },
@@ -436,7 +436,7 @@
 			'bank': {
 				name: '银行',
 				level: 0,
-				ratio: 1.18,
+				ratio: 1.27,
 				on: 0,
 				togglable: false,
 				clicked: function() {
@@ -450,7 +450,7 @@
 			'chemlab': {
 				name: '化学实验室',
 				level: 0,
-				ratio: 1.18,
+				ratio: 1.3,
 				on: 0,
 				togglable: false,
 				clicked: function() { construct('chemlab'); },
@@ -461,7 +461,7 @@
 			'power_station': {
 				name: '发电站',
 				level: 0,
-				ratio: 1.18,
+				ratio: 1.22,
 				on: 0,
 				togglable: true,
 				clicked: function() { construct('power_station'); },
@@ -472,18 +472,19 @@
 			'cathedral': {
 				name: '教堂',
 				level: 0,
-				ratio: 1.3,
+				ratio: 1.45,
 				on: 0,
 				togglable: false,
 				clicked: function() { construct('cathedral'); },
 				show: "净化心灵的场所。<br>每个居民每秒产出1信仰",
+				mutant: function() { return get("sincerity").upgraded ? "<br>增加0.5%稳定度；信仰加成提升0.5%" : "";},
 				price: [["wood", 1125], ["stone", 2700], ["glass", 450], ["structure", 50]],
 				unlocked: false
 			},
 			'theater': {
 				name: '剧场',
 				level: 0,
-				ratio: 1.3,
+				ratio: 1.45,
 				on: 0,
 				togglable: false,
 				clicked: function() { construct('theater'); },
@@ -494,7 +495,7 @@
 			'AsHg_collector': {
 				name: '砷汞富集器',
 				level: 0,
-				ratio: 1.85,
+				ratio: 2.1,
 				on: 0,
 				togglable: true,
 				collected: 0,
@@ -647,7 +648,7 @@
 				ratio: 1,
 				togglable: false,
 				clicked: function() { if (!upgrade('first_contact')) return; push_button('paper_craft', 'thoughts'); push_button('copper_usage', 'thoughts');
-					 push_button('architecture_basics', 'thoughts'); push_button('basic_science', 'thoughts'); person_available++; get("person").storage++;  },
+					 push_button('architecture_basics', 'thoughts'); push_button('basic_science', 'thoughts'); get("person").storage++; get("person").capacity++;  },
 				show: "你们找到了一个逃难的人，他愿意加入你们。<br>他看起来博学多才，你们可以从他那里得到各种各样的知识。",
 				price: [["discovered_area", 80 + 40 * (Math.random() - 0.5)]],
 				upgraded: false,
@@ -872,7 +873,7 @@
 				togglable: false,
 				clicked: function() { if (!upgrade('newton_3')) return; physics++; push_button_if('newton_2', 'thoughts', 'algebra');
 						push_button('stellars', 'thoughts'); push_button('E_and_P', 'thoughts'); },
-				show: "作用力和反作用力是相等的。<br>那为什么东西还能动起来呢？<br>全部建筑成本-5%",
+				show: "作用力和反作用力是相等的。<br>总有人问，为什么东西还能动起来呢？<br>全部建筑成本-5%",
 				price: [["thought", 350], ["book", 100]],
 				upgraded: false,
 				unlocked: false
@@ -1052,7 +1053,7 @@
 				togglable: false,
 				clicked: function() { if (!upgrade('engineering_mechanics')) return; physics++; push_button('flight', 'thoughts'); },
 				show: "让价格增长的底数减少0.01<br>同时，还能让无数物理学子脑袋变秃。",
-				price: [["thought", 10000], ["book", 2440]],
+				price: [["thought", 4300], ["book", 2440]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1061,9 +1062,9 @@
 				level: 0,
 				ratio: 1,
 				togglable: false,
-				clicked: function() { if (!upgrade('flight')) return; physics++; }, // TODO: 与万有引力、反应堆一起解锁火箭
+				clicked: function() { if (!upgrade('flight')) return; physics++; get("crossroad").price = [["alloy", 300], ["copper", 4500]]; }, // TODO: 与万有引力、反应堆一起解锁火箭
 				show: "一双翅膀和一架轻巧的机械。<br>交通枢纽的效果+300%<br>交通枢纽的燃料消耗+100%，成本增加", // TODO: 实现该效果
-				price: [["thought", 50500], ["book", 7500], ["alloy", 10000], ["structure", 6000]],
+				price: [["thought", 6850], ["book", 7500], ["alloy", 10000], ["structure", 6000]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1211,7 +1212,7 @@
 
 			/*
 
-			-- LIFE
+			-- BIOLOGY
 
 			*/
 			'genetics': {
@@ -1241,9 +1242,9 @@
 				level: 0,
 				ratio: 1,
 				togglable: false,
-				clicked: function() { if (stability() < 1 || !upgrade('GM')) return; add_navigation("gene"); },
+				clicked: function() { if (stability() < 1 || !upgrade('GM')) return; add_navigation("gene"); if(!get("structurize").upgraded) push_button("structurize", "gene"); },
 				show: "尝试编辑我们自己的基因。<br><font color=red>稳定度低于100%时，将因伦理争议而无法研究</font><br>解锁基因界面，可以购买在重置时保留的升级。",
-				price: [["thought", 1550], ["book", 200]],
+				price: [["thought", 2250], ["book", 650]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1318,7 +1319,7 @@
 				clicked: function() {
 					if (!upgrade('copper_pickaxe')) return;
 					var quar = get("quarry_worker");
-					person_available += quar.on;
+					get("person").storage += quar.on;
 					quar.unlocked = false; quar.on = 0;
 					delete_button("quarry_worker", "society");
 				},
@@ -1429,9 +1430,20 @@
 				ratio: 1,
 				togglable: false,
 				clicked: function() { if (!upgrade('education')) return; get("faithful").unlocked = false; delete_button("faithful");
-					push_button("university", "bonfire"); unlock("professor"); },
+					push_button("university", "bonfire"); unlock("professor"); push_button("research_fund", "thoughts"); },
 				show: "<b>与信仰互斥</b><br>解锁教授与大学，能够增加工匠制作书的产量。",
 				price: [["thought", 500], ["gold", 40], ["structure", 50]],
+				upgraded: false,
+				unlocked: false
+			},
+			'research_fund': {
+				name: '研究基金',
+				level: 0,
+				ratio: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('research_fund')) return; },
+				show: "给大学拨款，让它们能够直接产出思考。",
+				price: [["gold", 2000]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1441,9 +1453,20 @@
 				ratio: 1,
 				togglable: false,
 				clicked: function() { if (!upgrade('faithful')) return; get("education").unlocked = false; delete_button("education");
-					push_button('cathedral', 'bonfire'); unlock('priest'); unlock('faith'); },
+					push_button('cathedral', 'bonfire'); unlock('priest'); unlock('faith'); push_button("sincerity", "thoughts"); },
 				show: "<b>与教育互斥</b><br>解锁教堂与牧师，能够缓慢产出信仰来换取产量加成。",
 				price: [["thought", 500], ["gold", 40], ["structure", 50]],
+				upgraded: false,
+				unlocked: false
+			},
+			'sincerity': {
+				name: '虔诚',
+				level: 0,
+				ratio: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('sincerity')) return; },
+				show: "花钱装饰教堂、培训牧师。<br>教堂能够提升稳定度，并且开始提升信仰的加成",
+				price: [["gold", 2000]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1476,7 +1499,49 @@
 				togglable: false,
 				clicked: function() { if (!upgrade('surveillance')) return; },
 				show: "设立大量的摄像头，监视每个人的一举一动。<br>稳定度变为-0.3%/人，但是全局产量-10%",
-				price: [["thought", 4300], ["iron", 8000], ["copper", 6000], ["gold", 2000]],
+				price: [["thought", 2300], ["iron", 8000], ["copper", 6000], ["gold", 1200]],
+				upgraded: false,
+				unlocked: false
+			},
+
+			/*
+
+			-- GENETICS
+
+			*/
+			'structurize': {
+				name: '结构化',
+				level: 0,
+				ratio: 1,
+				genetics: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('structurize')) return; push_button("reform", "gene"); },
+				show: "价格增长底数减少0.005。",
+				price: [["memory", 25]],
+				upgraded: false,
+				unlocked: false
+			},
+			'reform': {
+				name: '空间重构',
+				level: 0,
+				ratio: 1,
+				genetics: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('reform')) return; push_button("over_optimization", "gene"); },
+				show: "价格增长底数减少0.005。",
+				price: [["memory", 125]],
+				upgraded: false,
+				unlocked: false
+			},
+			'over_optimization': {
+				name: '过优化',
+				level: 0,
+				ratio: 1,
+				genetics: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('over_optimization')) return; },
+				show: "价格增长底数减少0.01。",
+				price: [["memory", 500]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1692,7 +1757,7 @@
 				on: 0,
 				challenge: true,
 				togglable: false,
-				clicked: function() { get("challenge").unlocked = false; init_1(); },
+				clicked: function() { get("challenge").unlocked = false; $("float").style.display = "none"; init_1(); },
 				show: "开始重建文明<br>",
 				mutant: function() { return "<font color = 'red'>危机等级 " + challenge_level(); + "</font>"; },
 				unlocked: false
@@ -1747,7 +1812,9 @@
 		}
 
 		var derationate = function(x) {
-			return x - 0.01 * get("engineering_mechanics").upgraded - 0.003 * get("engineering_maths").upgraded - 0.002 * get("kaiseki_geometry").upgraded;
+			var after = x - 0.01 * get("engineering_mechanics").upgraded - 0.003 * get("engineering_maths").upgraded - 0.002 * get("kaiseki_geometry").upgraded
+			 - 0.005 * get("reform").upgraded - 0.005 * get("structurize").upgraded - 0.01 * get("over_optimization").upgraded;
+			return x - dim(x - after, x * 0.5);
 		}
 
 		var construct = function(x) {
@@ -1799,12 +1866,12 @@
 				return;
 			if (building.level === undefined) {
 				if (ev.shiftKey)
-					delta = (delta < 0 ? -building.on : person_available);
-				var old_on = building.on, old_ava = person_available;
+					delta = (delta < 0 ? -building.on : get("person").storage);
+				var old_on = building.on, old_ava = get("person").storage;
 				building.on += delta;
-				person_available -= delta;
-				if (person_available < 0 || building.on < 0 || person_available > get("person").storage) {
-					person_available = old_ava;
+				get("person").storage -= delta;
+				if (get("person").storage < 0 || building.on < 0 || get("person").storage > get("person").capacity) {
+					get("person").storage = old_ava;
 					building.on = old_on;
 				}
 				$(x).innerHTML = building.name + " (" + building.on + ")";
@@ -1834,6 +1901,8 @@
 			science.price.forEach(function(need) {
 				if (is_consumed(need[0]))
 					get(need[0]).storage -= need[1];
+				if (need[0] == "memory")
+					localStorage.setItem("memory", get(need[0]).storage);
 				if (!is_craftable(need[0]))
 					return;
 				var x = need[0];
@@ -1949,7 +2018,7 @@
 		}
 
 		var challenge_level = function() {
-			return get("clumsy").on + get("catastrophe").on + get("memory_loss").on + 2 * get("professional").on;
+			return get("clumsy").on + get("catastrophe").on + get("memory_loss").on + 2 * get("professional").on + get("gluttony").on;
 		}
 
 		var show_type = null;
@@ -1979,7 +2048,6 @@
 		var save = function() {
 			localStorage.setItem("saving", JSON.stringify(dictionary));
 			localStorage.setItem("time", time);
-			localStorage.setItem("person_available", person_available);
 			localStorage.setItem("ph", physics);
 			localStorage.setItem("ch", chemistry);
 			localStorage.setItem("m", maths);
@@ -2019,7 +2087,6 @@
 			chemistry = parseInt(localStorage.getItem("ch"));
 			maths = parseInt(localStorage.getItem("m"));
 			electricity = parseFloat(localStorage.getItem("electricity"));
-			person_available = parseInt(localStorage.getItem("person_available"));
 			pollution = parseFloat(localStorage.getItem("pollution"));
 			pollution_guided = parseInt(localStorage.getItem("pollution_guided"));
 			current_nav = localStorage.getItem("current_nav");
@@ -2034,7 +2101,6 @@
 		var delete_save = function(x) {
 			localStorage.setItem("saving", "");
 			localStorage.setItem("time", 0);
-			localStorage.setItem("person_available", 0);
 			localStorage.setItem("ph", 0);
 			localStorage.setItem("ch", 0);
 			localStorage.setItem("m", 0);
@@ -2111,7 +2177,7 @@
 			if (place == "crafts" && get("craftsman").upgraded)
 				push_button_0("craftsman_" + x, "society");
 			push_button_0(x, place);
-			save();
+			
 			self_reload();
 		}
 
@@ -2131,6 +2197,7 @@
 			$("content_society").innerHTML = "";
 			$("content_crafts").innerHTML = "";
 			$("content_challenge").innerHTML = "";
+			$("content_gene").innerHTML = "";
 
 			// then, add the available buttons and tabs back
 			for (var i = 0; i < keys.length; i++) {
@@ -2146,6 +2213,8 @@
 				if (item.challenge) { // it must be a challenge
 					push_button_0(name, "challenge");
 					$(name).innerHTML = item.name + " (" + item.on + "/" + item.level + ")";
+				} else if (item.genetics) { // it must be a genetic upgrade
+					push_button_0(name, "gene");
 				} else if (is_craftable(name)) { // it must be a crafted resource
 					push_button_0(name, "crafts");
 					$(name).innerHTML = item.name + ": " + format(item.storage);
@@ -2268,6 +2337,8 @@
 			} else {
 				alter -= get("apartment").level * 0.01;
 			}
+			if (get("sincerity").upgraded)
+				alter += get("cathedral").level * 0.005;
 			return 1 - person - pollu + alter;
 		}
 
@@ -2283,7 +2354,7 @@
 		}
 
 		var faith_buff = function() {
-			return Math.log(1 + get("faith").storage) / Math.log(2.718281828459045) / 100;
+			return Math.log(1 + get("faith").storage) / Math.log(2.718281828459045) * (1 + get("sincerity").upgraded * get("cathedral").level * 0.005) / 100;
 		}
 
 		var memory_buff = function() {
@@ -2339,7 +2410,7 @@
 		var production = function() {
 			var prod = {};
 			var global_buff = global_buffs();
-			var crossroaded = 1 + get("crossroad").on * 0.05;
+			var crossroaded = 1 + get("crossroad").on * 0.05 * (1 + 1 * get("flight").upgraded);
 			var fuel_total = fuel_consumption();
 				  
 			prod["person"] = 0;
@@ -2361,10 +2432,10 @@
 
 			prod["thought"] =
 				  get("fire").on === 0 ? 0
-				: (person_available * 0.1)
+				: (get("person").storage * 0.1 + (get("research_fund").upgraded ? get("university").level * 0.25 : 0))
 				* global_buff
 				* (1 + get("+-*/").upgraded * 0.3)
-				* (1 + get("discussion").upgraded * (0.05 + 0.05 * get("record").upgraded) * (1 + 0.1 * get("research_lab").level) * person_available)
+				* (1 + get("discussion").upgraded * (0.05 + 0.05 * get("record").upgraded) * (1 + 0.1 * get("research_lab").level) * get("person").storage)
 				* (1 + get("observatory").level * 1.5 // NEXT LINE: upgrades to observatory
 				* (1 + 0.8 * get("kepler").upgraded + 0.4 * get("kinetics").upgraded + 0.001 * get("telescope").storage * (1 + get("inflection_law").upgraded * 0.2)))
 				* book_effect()
@@ -2509,10 +2580,12 @@
 				text += entext("升级", get("stone_ax").upgraded * 0.5 + get("copper_ax").upgraded * 0.5 + get("iron_ax").upgraded * 0.3 + get("metal_forge").upgraded * 0.15, true);
 			}
 			if (x == "thought") {
-				text += entext("空闲", person_available * 0.1);
+				text += entext("空闲", get("person").storage * 0.1);
+				if (get("research_fund").upgraded)
+					text += entext(get("university").name, get("university").level * 0.25);
 				text += "遗忘  /" + format(forgetting()) + "<br>";
 				if (get("discussion").upgraded)
-					text += entext("商讨", person_available * (0.05 + 0.05 * get("record").upgraded) * (1 + 0.1 * get("research_lab").level), true);
+					text += entext("商讨", get("person").storage * (0.05 + 0.05 * get("record").upgraded) * (1 + 0.1 * get("research_lab").level), true);
 				text += entext(get("observatory").name, get("observatory").level * 1.5 * (1 + 0.8 * get("kepler").upgraded + 0.4 * get("kinetics").upgraded
 						+ 0.001 * get("telescope").storage * (1 + get("inflection_law").upgraded * 0.2)), true);
 				text += entext(get("book").name, book_effect() - 1, true);
@@ -2669,17 +2742,17 @@
 			};
 
 			var storages = get("harbor").level * 3 + get("warehouse").level + get("warehouse_2").level * 0.5;
-			storages *= (1 + get("crossroad").level * 0.3);
+			storages *= (1 + get("crossroad").level * 0.3 * (1 + 3 * get("flight").upgraded));
 
 			var res = get(x);
 			if (res.capacity == -1)
 				return -1;
-			if (["food", "wood", "fur", "stone", "mineral", "copper", "carbon", "iron", "glass", "steel"].find(function(elem) { return elem == x; }) !== undefined) {
-				return (storages + 1) *cap_increase[x];
-			}
-			if (x == "gold") {
+			if (["food", "wood", "fur", "stone", "mineral", "copper", "carbon", "iron", "glass", "steel"].find(function(elem) { return elem == x; }) !== undefined)
+				return (storages + 1) * cap_increase[x];
+			if (x == "gold")
 				return 100 + 400 * get("bank").level;
-			}
+			if (x == "person")
+				return get("person").capacity;
 			return -1;
 		}
 
@@ -2772,12 +2845,12 @@
 			delta *= mult;
 			var trader = is_in ? trader_in : trader_out;
 			if (ev.shiftKey)
-				delta = (delta < 0 ? -trader[x] : person_available);
-			var old_on = trader[x], old_ava = person_available;
+				delta = (delta < 0 ? -trader[x] : get("person").storage);
+			var old_on = trader[x], old_ava = get("person").storage;
 			trader[x] += delta;
-			person_available -= delta;
-			if (person_available < 0 || trader[x] < 0 || person_available > get("person").storage) {
-				person_available = old_ava;
+			get("person").storage -= delta;
+			if (get("person").storage < 0 || trader[x] < 0 || get("person").storage > get("person").capacity) {
+				get("person").storage = old_ava;
 				trader[x] = old_on;
 			}
 			$("country_" + x + (is_in ? "_in" : "_out")).innerHTML = "贸易特使：" + (is_in ? "买入" : "卖出") + " (" + trader[x] + ")";
@@ -2926,7 +2999,7 @@
 			if (show_type)
 				$("float").innerHTML = show_string(show_type);
 			
-			if (time % 10 == 0)
+			if (time && time % 10 == 0)
 				save();
 		}
 
@@ -3034,6 +3107,13 @@
 
 			<div id="statistics" style="display:none;">
 			</div>
+
+			<div id="gene">
+				<table id="content_gene">
+					<tr></tr>
+				</table>
+			</div>
+
 
 			<div id="challenge" style="display:none;">
 				<table id="content_challenge">
