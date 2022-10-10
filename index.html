@@ -60,7 +60,7 @@
 		var $ = function(x) { return document.getElementById(x); }
 		var divs = []
 		var current_nav = 'bonfire';
-		var resources = ['food', 'wood', 'person', 'thought', 'stone', 'mineral', 'fur', 'discovered_area', 'paper', 'copper', 'carbon', 'iron', 'glass', 'steel', 'gold',
+		var resources = ['food', 'wood', 'person', 'thought', 'stone', 'mineral', 'fur', 'discovered_area', 'paper', 'copper', 'carbon', 'iron', 'glass', 'steel', 'gold', 'titanium',
 						'faith', 'book', 'structure', 'alloy', 'telescope', 'memory']
 		var craftables = ['book', 'structure', 'alloy', 'telescope'];
 		var time = 0;
@@ -75,11 +75,12 @@
 		var elements = [['carbon', 3000], ['iron', 12000], ['gold', 20000]];
 		var countries = [30000, 90000, 170000, 440000, 1280000, 7000000, 16000000, 90000000, 1.78e308];
 		var country_name = ['埃奇克斯', '阿利亚', '洛普斯', '乌托比亚', '东方联盟', '诺比尔', '克里木', '纳罕图斯'];
-		var country_sell = ['food', 'wood', 'stone', 'mineral', 'fur', 'copper', 'iron', 'steel'];
-		var country_take = ['stone', 'mineral', 'food', 'copper', 'paper', 'iron', 'fur', 'glass'];
-		var trader_in = [0, 0, 0, 0, 0, 0, 0, 0];
-		var trader_out = [0, 0, 0, 0, 0, 0, 0, 0];
+		var country_sell = ['food', 'wood', 'stone', 'paper', 'fur', 'copper', 'book', 'titanium'];
+		var country_take = ['stone', 'mineral', 'food', 'carbon', 'paper', 'glass', 'iron', 'steel'];
+		var trader = [0, 0, 0, 0, 0, 0, 0, 0];
 		var relationship = [1, 1, 1, 1, 1, 1, 1, 1];
+		var autoc_ratio = 0.95;
+		var autoc_storage = 0;
 		
 		var dictionary = {
 			'food': {
@@ -173,6 +174,12 @@
 				capacity: 100,
 				unlocked: false
 			},
+			'titanium': {
+				name: '钛',
+				storage: 0,
+				capacity: 1000,
+				unlocked: false
+			},
 			'faith': {
 				name: '信仰',
 				storage: 0,
@@ -206,7 +213,7 @@
 						consume *= 2, buff = 7.5;
 					if (get("carbon_usage").upgraded)
 						consume /= 2;
-					return "<br>每秒消耗" + consume + "木材" + (get("carbon_usage").unlocked ? "与" + (consume * 0.2).toFixed(1) + "煤" : "") + "，全局产量+" + buff + "%";
+					return "<br>每秒消耗" + consume + "木材" + (get("carbon_usage").unlocked ? "与" + (consume * 0.2).toFixed(1) + "煤" : "") + "，令思考产量+" + buff + "%";
 				},
 				price: [["wood", 10]],
 				unlocked: false
@@ -262,7 +269,7 @@
 						
 					}
 				},
-				show: "四个木头合成一个工作台。<br>工艺制作效率+2.5%",
+				show: "四个木头合成一个工作台。<br>合成效率+4.5%",
 				price: [["wood", 40], ["stone", 160]],
 				unlocked: false
 			},
@@ -288,6 +295,17 @@
 				price: [["wood", 80], ["stone", 40]],
 				unlocked: false
 			},
+			'wood_factory': {
+				name: '木材厂',
+				level: 0,
+				ratio: 1.24,
+				on: 0,
+				togglable: false,
+				clicked: function() {  construct('wood_factory'); },
+				show: "咔咔响着的工具正在加工木材。<br>每个木材厂将木材产量+20%",
+				price: [["wood", 30], ["stone", 105], ["iron", 125]],
+				unlocked: false
+			},
 			'mine': {
 				name: '矿井',
 				level: 0,
@@ -296,6 +314,7 @@
 				togglable: false,
 				clicked: function() { if (construct('mine') && !get("mineral").unlocked) { unlock("mineral"); push_button("miner", "society"); } },
 				show: "昏暗的矿井里摇曳着油灯。<br>允许开采<b>矿石</b><br>每个矿井将矿石产量+20%",
+				mutant: function() { return get("carbon_reveal").upgraded ? "，同时每秒产出0.25煤炭" : ""; },
 				price: [["wood", 125]],
 				unlocked: false
 			},
@@ -373,7 +392,7 @@
 				on: 0,
 				togglable: false,
 				clicked: function() { construct('observatory'); },
-				show: "晚上可以通过望远镜看到满天的星星。<br>思考产量增加150%",
+				show: "晚上可以通过望远镜看到满天的星星。<br>思考产量增加100%",
 				price: [["copper", 5000], ["iron", 7500], ["structure", 500]],
 				unlocked: false
 			},
@@ -384,7 +403,7 @@
 				on: 0,
 				togglable: false,
 				clicked: function() { construct('university'); },
-				show: "风景优美，适合摸鱼。<br>每个大学使每名教授让书的制作效率+1%",
+				show: "风景优美，适合摸鱼。<br>每个大学使每名教授让书的合成效率+1%",
 				mutant: function() { return get("research_fund").upgraded ? "，同时每秒产出0.25思考" : ""; },
 				price: [["stone", 6000], ["book", 1], ["structure", 125]],
 				unlocked: false
@@ -417,9 +436,20 @@
 				ratio: 1.35,
 				on: 0,
 				togglable: true,
-				clicked: function() { construct('factory'); },
-				show: "工艺制作效率+10%。<br>消耗2电力；电力不足时不再工作",
+				clicked: function() { if (construct('factory') && get("element_analysis").upgraded && !get("titanium").unlocked) unlock("titanium"); },
+				show: "允许熔炼钛。<br>合成效率+10%<br>消耗2电力",
 				price: [["steel", 400], ["alloy", 50], ["structure", 75]],
+				unlocked: false
+			},
+			'collider': {
+				name: '对撞机',
+				level: 0,
+				ratio: 1.16,
+				on: 0,
+				togglable: false,
+				clicked: function() { if (construct('collider') && !get("atomic_fission").unlocked) push_button_if("atomic_fission", "thoughts", "micro"); },
+				show: "通过高能粒子对撞，研究更深层的知识。<br>大学的效果增加5%<br>消耗15电力",
+				price: [["copper", 13500], ["titanium", 1800], ["structure", 2000], ["book", 1000]],
 				unlocked: false
 			},
 			'crossroad': {
@@ -429,7 +459,7 @@
 				on: 0,
 				togglable: true,
 				clicked: function() { construct('crossroad'); },
-				show: "物资的运输更加方便了。<br>消耗相当于35木材的燃料，使大部分物资产量+5%，储量+30%",
+				show: "物资的运输更加方便了。<br>消耗相当于35木材的燃料，使大部分物资产量+1.5%，储量+3%",
 				price: [["alloy", 200], ["copper", 3000]],
 				unlocked: false
 			},
@@ -465,8 +495,19 @@
 				on: 0,
 				togglable: true,
 				clicked: function() { construct('power_station'); },
-				show: "通过内燃机带动转子，切割磁感线而产生电流。<br>每秒消耗15木材，电力+5",
+				show: "通过内燃机带动转子，切割磁感线而产生电流。<br>每秒消耗15木材，产出0.7污染，电力+5",
 				price: [["steel", 250], ["copper", 640], ["stone", 1100], ["alloy", 5]],
+				unlocked: false
+			},
+			'fission_powerplant': {
+				name: '裂变反应堆',
+				level: 0,
+				ratio: 1.36,
+				on: 0,
+				togglable: true,
+				clicked: function() { construct('fission_powerplant'); },
+				show: "利用原子的能量。<br>每秒产出30污染，电力+45",
+				price: [["steel", 2500], ["titanium", 1750], ["structure", 3000], ["alloy", 500]],
 				unlocked: false
 			},
 			'cathedral': {
@@ -477,7 +518,7 @@
 				togglable: false,
 				clicked: function() { construct('cathedral'); },
 				show: "净化心灵的场所。<br>每个居民每秒产出1信仰",
-				mutant: function() { return get("sincerity").upgraded ? "<br>增加0.5%稳定度；信仰加成提升0.5%" : "";},
+				mutant: function() { return get("sincerity").upgraded ? "<br>每个教堂增加1%稳定度，并且使信仰加成提升1%" : "";},
 				price: [["wood", 1125], ["stone", 2700], ["glass", 450], ["structure", 50]],
 				unlocked: false
 			},
@@ -488,7 +529,7 @@
 				on: 0,
 				togglable: false,
 				clicked: function() { construct('theater'); },
-				show: "娱乐场所，雅俗共赏。<br>电足够时，消耗2电力使稳定度+2%",
+				show: "娱乐场所，雅俗共赏。<br>稳定度+2%",
 				price: [["wood", 2025], ["stone", 3800], ["glass", 600], ["structure", 125]],
 				unlocked: false
 			},
@@ -500,9 +541,9 @@
 				togglable: true,
 				collected: 0,
 				clicked: function() { construct('AsHg_collector'); },
-				show: "收集有毒物质，主要由工业设施产生。<br>消耗2电力，电力不足时不再工作<br>",
+				show: "收集有毒物质，主要由工业设施产生。<br>消耗2电力<br>",
 				mutant: function() { return "已经收集了" + format(get("AsHg_collector").collected) + "污染物" },
-				price: [["steel", 2000], ["copper", 10000], ["alloy", 300], ["structure", 500]],
+				price: [["steel", 2000], ["copper", 10000], ["alloy", 300], ["titanium", 175], ["structure", 500]],
 				unlocked: false
 			},
 
@@ -626,7 +667,7 @@
 				ratio: 1,
 				togglable: false,
 				clicked: function() { if (!upgrade('slingshot')) return; get("collector").name = "猎人"; },
-				show: "你们能运用弹弓来达到比手扔石头更好的效果。<br>采集者改为猎人，食物产量增加50%，但每秒消耗2石头",
+				show: "你们能运用弹弓来达到比手扔石头更好的效果。<br>采集者改为猎人，食物产量增加50%，但每秒消耗2石头<",
 				price: [["thought", 120], ["fur", 50]],
 				upgraded: false,
 				unlocked: false
@@ -683,7 +724,7 @@
 				ratio: 1,
 				togglable: false,
 				clicked: function() { if (!upgrade('book_categorization')) return; },
-				show: "更加细致而严格的图书分类法能够进一步加强图书馆的效率，并且让它产生了抑制遗忘的作用。",
+				show: "更加细致而严格的图书分类法能够进一步加强图书馆的效率，并且让它抑制遗忘的作用进一步增强。",
 				price: [["thought", 180], ["paper", 60]],
 				upgraded: false,
 				unlocked: false
@@ -1062,12 +1103,35 @@
 				level: 0,
 				ratio: 1,
 				togglable: false,
-				clicked: function() { if (!upgrade('flight')) return; physics++; get("crossroad").price = [["alloy", 300], ["copper", 4500]]; }, // TODO: 与万有引力、反应堆一起解锁火箭
-				show: "一双翅膀和一架轻巧的机械。<br>交通枢纽的效果+300%<br>交通枢纽的燃料消耗+100%，成本增加", // TODO: 实现该效果
-				price: [["thought", 6850], ["book", 7500], ["alloy", 10000], ["structure", 6000]],
+				clicked: function() { if (!upgrade('flight')) return; physics++; push_button_if("rocket", "thoughts", "atomic_fission"); },
+				show: "一双翅膀和一架轻巧的机械。<br>交通枢纽的效果+50%，但燃料消耗+50%",
+				price: [["thought", 4750], ["book", 4500], ["titanium", 4000], ["structure", 6000]],
 				upgraded: false,
 				unlocked: false
 			},
+			'atomic_fission': {
+				name: '核裂变',
+				level: 0,
+				ratio: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('atomic_fission')) return; physics++; push_button("fission_powerplant", "bonfire"); push_button_if("rocket", "thoughts", "flight"); },
+				show: "从人类的视野之外爆发出的惊人力量。<br>解锁裂变反应堆，以极高的污染为代价产出大量电力",
+				price: [["thought", 3880], ["book", 3500], ["alloy", 600], ["titanium", 3000]],
+				upgraded: false,
+				unlocked: false
+			},
+			'rocket': {
+				name: '火箭',
+				level: 0,
+				ratio: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('rocket')) return; },
+				show: "向天空发起第一次挑战。<br>解锁<b>太空</b>面板<br>注：暂无效果，请等待更新", // TODO
+				price: [["thought", 6000], ["book", 7200], ["alloy", 3000], ["structure", 4000], ["titanium", 10000]],
+				upgraded: false,
+				unlocked: false
+			},
+			
 
 			/*
 			
@@ -1159,9 +1223,22 @@
 				level: 0,
 				ratio: 1,
 				togglable: false,
-				clicked: function() { if (!upgrade('element_analysis')) return; chemistry++; push_button("AsHg", "thoughts"); push_button("organic", "thoughts");  },
-				show: "大量的探索与分析，使人们认识到了65种自然元素。<br>解锁化学分支的进一步研究",
-				price: [["thought", 1350], ["discovered_area", 1000000], ["book", 440]],
+				clicked: function() { if (!upgrade('element_analysis')) return; chemistry++; push_button("AsHg", "thoughts");
+										push_button("organic", "thoughts"); push_button("periodic_table", "thoughts"); push_button("redox", "thoughts");
+										if (get("factory").level) unlock("titanium"); },
+				show: "大量的探索与分析，使人们认识到了自然元素中的65种。<br>解锁化学分支的进一步研究",
+				price: [["thought", 1350], ["discovered_area", 150000], ["book", 440]],
+				upgraded: false,
+				unlocked: false
+			},
+			'redox': {
+				name: '氧化还原',
+				level: 0,
+				ratio: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('redox')) return; chemistry++; },
+				show: "对已经了解的反应机制的研究，增加了不常见金属的产量。<br>钛的产量+100%",
+				price: [["thought", 1440], ["copper", 3000], ["iron", 3000], ["carbon", 1000]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1170,8 +1247,8 @@
 				level: 0,
 				ratio: 1,
 				togglable: false,
-				clicked: function() { if (!upgrade('periodic_table')) return; chemistry++;  },
-				show: "不仅归纳了已发现的元素，更为没发现的留出了位置。<br>解锁<b>粒子源</b>，以合成新的元素",
+				clicked: function() { if (!upgrade('periodic_table')) return; chemistry++; push_button("collider", "bonfire"); },
+				show: "不仅归纳了已发现的元素，更为没发现的留出了位置。<br>解锁<b>对撞机</b>，以触碰未知的领域",
 				price: [["thought", 1500], ["book", 75]],
 				upgraded: false,
 				unlocked: false
@@ -1204,7 +1281,7 @@
 				ratio: 1,
 				togglable: false,
 				clicked: function() { if (!upgrade('AsHg_experiment')) return; prestige(0); },
-				show: "有人想出了一个更好地处理砷汞富集器内的物质的方法。<br><font color='red'>一旦泄漏，能毁灭整个文明</font><br><font color='red'>重置游戏</font>",
+				show: "有人想出了一个更好地处理砷汞富集器内的物质的方法。<br><font color='red'>一旦泄漏，能毁灭整个文明</font>",
 				price: [["thought", 2500], ["book", 750]],
 				upgraded: false,
 				unlocked: false
@@ -1222,7 +1299,7 @@
 				togglable: false,
 				clicked: function() { if (!upgrade('genetics')) return; push_button_if("micro", "thoughts", "optics"); push_button("inherit", "thoughts"); },
 				show: "一望无际的豌豆田。<br>发现遗传的奥秘，激起人们对生物学的兴趣。<br>解锁进一步的研究。",
-				price: [["thought", 1550], ["book", 200]],
+				price: [["thought", 1350], ["book", 200]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1253,9 +1330,9 @@
 				level: 0,
 				ratio: 1,
 				togglable: false,
-				clicked: function() { if (!upgrade('micro')) return; },
+				clicked: function() { if (upgrade('micro') && !get("atomic_fission").unlocked) push_button_if("atomic_fission", "thoughts", "micro"); },
 				show: "制作显微镜，看到更小尺度的东西。",
-				price: [["thought", 1900], ["glass", 1800]],
+				price: [["thought", 1500], ["glass", 1800]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1344,9 +1421,20 @@
 				level: 0,
 				ratio: 1,
 				togglable: false,
-				clicked: function() { if (!upgrade('carbon_usage')) return; },
+				clicked: function() { if (!upgrade('carbon_usage')) return; push_button("carbon_reveal", "thoughts"); },
 				show: "将木材和煤炭混在一起使用。<br>煤按照原本用于燃料的木材量的10%被消耗<br>作为燃料的木材消耗-50%<br>",
 				price: [["thought", 235], ["carbon", 30], ["wood", 75]],
+				upgraded: false,
+				unlocked: false
+			},
+			'carbon_reveal': {
+				name: '煤开采',
+				level: 0,
+				ratio: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('carbon_reveal')) return; },
+				show: "煤炭可以从矿井中开采了。",
+				price: [["thought", 260], ["structure", 40]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1357,7 +1445,7 @@
 				togglable: false,
 				clicked: function() { if (!upgrade('iron_ax')) return; },
 				show: "铁斧除了爱生锈之外，没有什么不好的。<br>猎人的效率+30%",
-				price: [["thought", 280], ["iron", 600]],
+				price: [["thought", 330], ["iron", 600]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1367,8 +1455,8 @@
 				ratio: 1,
 				togglable: false,
 				clicked: function() { if (!upgrade('iron_sword')) return; },
-				show: "用起来和看起来都很舒服，比铜的好多了。<br>猎人收集食物的效率+35%<br>探索产出+30%",
-				price: [["thought", 320], ["iron", 1000]],
+				show: "用起来和看起来都很舒服，比铜的好多了。<br>猎人收集食物的效率+35%<br>探索产出+15%",
+				price: [["thought", 350], ["iron", 1000]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1378,8 +1466,8 @@
 				ratio: 1,
 				togglable: false,
 				clicked: function() { if (!upgrade('iron_pickax')) return; },
-				show: "铁镐可以开采钻石矿。等等，钻石在哪里？<br>矿物产出+50%",
-				price: [["thought", 375], ["iron", 2050]],
+				show: "铁镐可以开采钻石矿。等等，钻石在哪里？<br>矿物产出+25%",
+				price: [["thought", 400], ["iron", 2050]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1388,9 +1476,20 @@
 				level: 0,
 				ratio: 1,
 				togglable: false,
-				clicked: function() { if (!upgrade('iron_shield')) return; }, // TODO: +force level
-				show: "全副武装。<br>武力值上升<br>探索产量增加5%",
-				price: [["thought", 335], ["iron", 3150]],
+				clicked: function() { if (!upgrade('iron_shield')) return; },
+				show: "全副武装。<br>探索产量增加15%",
+				price: [["thought", 305], ["iron", 450]],
+				upgraded: false,
+				unlocked: false
+			},
+			'wood_process': {
+				name: '切削器',
+				level: 0,
+				ratio: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('wood_process')) return; push_button("wood_factory", "bonfire"); },
+				show: "以铁质工具切削木头。<br>解锁<b>木材厂</b>",
+				price: [["thought", 290], ["iron", 300]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1441,9 +1540,20 @@
 				level: 0,
 				ratio: 1,
 				togglable: false,
-				clicked: function() { if (!upgrade('research_fund')) return; },
+				clicked: function() { if (!upgrade('research_fund')) return; push_button("anthropology", "thoughts"); },
 				show: "给大学拨款，让它们能够直接产出思考。",
-				price: [["gold", 2000]],
+				price: [["gold", 500]],
+				upgraded: false,
+				unlocked: false
+			},
+			'anthropology': {
+				name: '人类学',
+				level: 0,
+				ratio: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('anthropology')) return; },
+				show: "开始真正地深入研究上一个文明。研究所现在可以根据思考的总量加成记忆的效果。",
+				price: [["thought", 1005], ["gold", 1000], ["book", 150]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1464,9 +1574,20 @@
 				level: 0,
 				ratio: 1,
 				togglable: false,
-				clicked: function() { if (!upgrade('sincerity')) return; },
-				show: "花钱装饰教堂、培训牧师。<br>教堂能够提升稳定度，并且开始提升信仰的加成",
-				price: [["gold", 2000]],
+				clicked: function() { if (!upgrade('sincerity')) return; push_button("worship", "thoughts"); },
+				show: "花钱装饰教堂、培训牧师。<br>教堂能够提升稳定度，并且开始提升信仰的加成。",
+				price: [["gold", 500]],
+				upgraded: false,
+				unlocked: false
+			},
+			'worship': {
+				name: '敬拜',
+				level: 0,
+				ratio: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('worship')) return; },
+				show: "将上一个文明视为神明背后的神明。教堂现在可以根据信仰的总量加成记忆的效果。",
+				price: [["thought", 1005], ["gold", 1000], ["book", 150]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1515,7 +1636,8 @@
 				ratio: 1,
 				genetics: 1,
 				togglable: false,
-				clicked: function() { if (!upgrade('structurize')) return; push_button("reform", "gene"); },
+				clicked: function() { if (!upgrade('structurize')) return; push_button("reform", "gene"); push_button("memory_stabilize", "gene");
+										push_button("craftive", "gene"); push_button("autocraft", "gene"); },
 				show: "价格增长底数减少0.005。",
 				price: [["memory", 25]],
 				upgraded: false,
@@ -1529,7 +1651,7 @@
 				togglable: false,
 				clicked: function() { if (!upgrade('reform')) return; push_button("over_optimization", "gene"); },
 				show: "价格增长底数减少0.005。",
-				price: [["memory", 125]],
+				price: [["memory", 225]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1541,7 +1663,79 @@
 				togglable: false,
 				clicked: function() { if (!upgrade('over_optimization')) return; },
 				show: "价格增长底数减少0.01。",
-				price: [["memory", 500]],
+				price: [["memory", 750]],
+				upgraded: false,
+				unlocked: false
+			},
+			'memory_stabilize': {
+				name: '记忆固化',
+				level: 0,
+				ratio: 1,
+				genetics: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('memory_stabilize')) return; push_button("reform", "gene"); push_button("memory_inherit", "gene"); },
+				show: "有1%思考（至少100）不再计入遗忘。",
+				price: [["memory", 200]],
+				upgraded: false,
+				unlocked: false
+			},
+			'memory_inherit': {
+				name: '记忆遗传',
+				level: 0,
+				ratio: 1,
+				genetics: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('memory_inherit')) return; push_button("memory_implant", "gene"); },
+				show: "不再计入遗忘的思考增加至3.5%（至少350）。",
+				price: [["memory", 700]],
+				upgraded: false,
+				unlocked: false
+			},
+			'memory_implant': {
+				name: '记忆植入',
+				level: 0,
+				ratio: 1,
+				genetics: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('memory_implant')) return; },
+				show: "不再计入遗忘的思考增加至10%（至少1000）。",
+				price: [["memory", 2000]],
+				upgraded: false,
+				unlocked: false
+			},
+			'craftive': {
+				name: '心灵手巧',
+				level: 0,
+				ratio: 1,
+				genetics: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('craftive')) return; push_button("literacy", "gene"); },
+				show: "工匠的效率提高100%；手动制作的效率提高10%。",
+				price: [["memory", 100]],
+				upgraded: false,
+				unlocked: false
+			},
+			'literacy': {
+				name: '文学化',
+				level: 0,
+				ratio: 1,
+				genetics: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('literacy')) return; },
+				show: "书的合成效率+100%（与其它加成乘算）。<br>工匠合成书的效率+50%。",
+				price: [["memory", 375]],
+				upgraded: false,
+				unlocked: false
+			},
+			'autocraft': {
+				name: '自加工',
+				level: 0,
+				ratio: 1,
+				genetics: 1,
+				togglable: false,
+				clicked: function() { if (!upgrade('autocraft')) return; },
+				show: "解锁自动合成功能。<br>当某种物资即将达到上限时，自动将其合成为工艺制品。<br>视作手动合成：无法享受工匠加成，也可能被挑战禁用。",
+				price: [["memory", 25]],
 				upgraded: false,
 				unlocked: false
 			},
@@ -1589,7 +1783,7 @@
 				togglable: true,
 				on: 0,
 				clicked: function() { turn_on('priest', 1); },
-				show: "在大学中讲课，促进书的产出。<br>每位教授可以使大学提供1%的书的制作效率",
+				show: "在大学中讲课，促进书的产出。<br>每位教授可以使每个大学提供1%的书的合成效率",
 				unlocked: false
 			},
 			'priest': {
@@ -1597,7 +1791,7 @@
 				togglable: true,
 				on: 0,
 				clicked: function() { turn_on('priest', 1); },
-				show: "在各处布道，不过有很大一部分喜欢留在教堂。<br>信仰产出+1%",
+				show: "在各处布道，不过有很大一部分喜欢留在教堂。<br>信仰加成+2.5%",
 				unlocked: false
 			},
 			'craftsman_book': {
@@ -1682,7 +1876,7 @@
 				ratio: 1,
 				togglable: false,
 				clicked: function() { craft("telescope"); },
-				show: "两个简单的凸透镜的组合。<br>使天文台的效果增加1%",
+				show: "两个简单的凸透镜的组合。<br>使天文台的效果增加1%<br><b>该效果有上限</b>",
 				price: [["glass", 50]],
 				upgraded: false,
 				craftable: true,
@@ -1724,8 +1918,8 @@
 				challenge: true,
 				togglable: true,
 				clicked: function() {},
-				show: "在笨拙的操作中，制作原料常常有惊人的损耗。<br>1级：工艺制作效率-15%<br>2级：工艺制作效率-30%，成本增加25%<br>" +
-					"3级：工艺制作效率-45%，基础成本+25%，所有工艺制作品以1.005的底数增长价格<br>（此时shift效果将会变为制作至多100个）",
+				show: "在笨拙的操作中，制作原料常常有惊人的损耗。<br>1级：合成效率-15%<br>2级：合成效率-30%，成本增加25%<br>" +
+					"3级：合成效率-45%，基础成本+50%，工匠效率-50%",
 				unlocked: false
 			},
 			'gluttony': {
@@ -1747,7 +1941,18 @@
 				challenge: true,
 				togglable: true,
 				clicked: function() {},
-				show: "人们不希望业余的人来掺和工艺品的制作。<br>工艺品现在只能通过工匠制作。<br><b>价值2危机等级</b>",
+				show: "人们不希望业余的人来掺和复杂物品的制作。<br>现在只能通过工匠合成物品。<br><b>价值2危机等级</b>",
+				unlocked: false
+			},
+			'redundancy': {
+				name: '冗余',
+				level: 3,
+				ratio: 1,
+				on: 0,
+				challenge: true,
+				togglable: true,
+				clicked: function() {},
+				show: "在利用有限的空间时，人们总是在做无用功。<br>1级：价格增长底数增加0.02<br>2级：价格增长底数增加0.04<br>3级：价格增长底数增加0.06",
 				unlocked: false
 			},
 			'endeavour': {
@@ -1803,6 +2008,16 @@
 			},
 		}
 
+		var trait_list = [
+			{
+				name: '普通',
+				show: '十分正常的人种。没有突出的特点，也没有显著的缺陷。',
+			},
+			{
+
+			}
+		]
+
 		var get = function(x) {
 			return dictionary[x];
 		}
@@ -1812,6 +2027,7 @@
 		}
 
 		var derationate = function(x) {
+			x += get("redundancy").on * 0.02;
 			var after = x - 0.01 * get("engineering_mechanics").upgraded - 0.003 * get("engineering_maths").upgraded - 0.002 * get("kaiseki_geometry").upgraded
 			 - 0.005 * get("reform").upgraded - 0.005 * get("structurize").upgraded - 0.01 * get("over_optimization").upgraded;
 			return x - dim(x - after, x * 0.5);
@@ -1832,25 +2048,6 @@
 			if (ev.shiftKey)
 				return 1 + construct(x);
 			return 1;
-		}
-
-		var craft_clumsy = function(x, depth) {
-			if (!depth)
-				depth = 0;
-			if (depth >= 100)
-				return craft_effect(x);
-			var building = get(x);
-			var ev = window.event;
-			var ratio = Math.pow(1.005, building.storage) * 1.25;
-			if (building.price.find(function(need) { return get(need[0]).storage < ratio * need[1]; }) !== undefined)
-				return 0;
-			building.price.forEach(function(need) { if (is_consumed(need[0])) get(need[0]).storage -= ratio * need[1] });
-			building.storage += craft_effect(x);
-			$(x).innerHTML = get(x).name + ": " + format(building.storage);
-			show($(x), x);
-			if (ev.shiftKey)
-				return craft_effect(x) + construct(x, depth + 1);
-			return craft_effect(x);
 		}
 
 		var turn_on = function(x, delta) {
@@ -1913,19 +2110,23 @@
 			return true;
 		}
 
-		var craft_effect = function(x) {
-			var base = (1 + 0.025 * get("workshop").level + 0.1 * (electricity > 0) * get("factory").level);
+		var craft_effect = function(x, is_manual) {
+			var base = (1 + 0.045 * get("workshop").level + 0.1 * (electricity > 0) * get("factory").level);
+			base *= (1 + (get("craftive").upgraded ? (is_manual ? 0.1 : 1) : 0));
+			base *= ((get("clumsy").on == 3 && !is_manual) ? 0.5 : 1);
 			base -= (0.15 * get("clumsy").on);
-			if (x == "book")
+			if (x == "book") {
 				base += get("university").level * get("professor").on * 0.01;
+				if (get("literacy").upgraded)
+					base *= (1 + (is_manual ? 1 : 2));
+			}
+			if (!is_manual)
+				base *= (1 + global_buffs() * 0.1);
 			return base;
 		}
 
 		var craft = function(x) {
-			if (get("clumsy").on == 3) {
-				craft_clumsy(x);
-			}
-			var more = (get("clumsy").on == 2 ? 1.25 : 1)
+			var more = (get("clumsy").on >= 2 ? 0.75 + 0.25 * get("clumsy").on : 1);
 			var ev = window.event;
 			var mult = 1;
 			var craft = get(x);
@@ -1940,7 +2141,7 @@
 			if (craft.price.find(function(need) { return get(need[0]).storage < mult * need[1] * more; }) !== undefined)
 				return false;
 			craft.price.forEach(function(need) { if (is_consumed(need[0])) get(need[0]).storage -= mult * need[1] * more; });
-			craft.storage += mult * craft_effect(x);
+			craft.storage += mult * craft_effect(x, true);
 			$(x).innerHTML = get(x).name + ": " + format(craft.storage);
 			show($(x), x);
 			return true;
@@ -2018,11 +2219,14 @@
 		}
 
 		var challenge_level = function() {
-			return get("clumsy").on + get("catastrophe").on + get("memory_loss").on + 2 * get("professional").on + get("gluttony").on;
+			return get("clumsy").on + get("catastrophe").on + get("memory_loss").on + 2 * get("professional").on + get("gluttony").on + get("redundancy").on;
 		}
 
 		var show_type = null;
-		var show_string = function(type) { return get(type).show + (get(type).mutant ? get(type).mutant() : "") + price_string(type); }
+		var show_string = function(type) {
+			return get(type).show + (get(type).mutant ? get(type).mutant() : "") + price_string(type);
+		}
+
 		var show = function(self, type) {
 			if (self == null || type == null)
 				return;
@@ -2052,13 +2256,14 @@
 			localStorage.setItem("ch", chemistry);
 			localStorage.setItem("m", maths);
 			localStorage.setItem("current_nav", current_nav);
-			localStorage.setItem("trader_in", trader_in);
-			localStorage.setItem("trader_out", trader_out);
+			localStorage.setItem("trader", trader);
 			localStorage.setItem("name_randomized", name_randomized);
 			localStorage.setItem("relationship", relationship);
 			localStorage.setItem("electricity", electricity);
 			localStorage.setItem("pollution", pollution);
 			localStorage.setItem("pollution_guided", pollution_guided);
+			localStorage.setItem("autoc_storage", autoc_storage);
+			localStorage.setItem("autoc_ratio", autoc_ratio);
 		}
 
 		var load = function() {
@@ -2081,6 +2286,7 @@
 			}
 			
 			self_reload();
+			render_auto();
 
 			time = parseInt(localStorage.getItem("time"));
 			physics = parseInt(localStorage.getItem("ph"));
@@ -2090,10 +2296,11 @@
 			pollution = parseFloat(localStorage.getItem("pollution"));
 			pollution_guided = parseInt(localStorage.getItem("pollution_guided"));
 			current_nav = localStorage.getItem("current_nav");
-			trader_in = eval('[' + localStorage.getItem("trader_in") + ']');
-			trader_out = eval('[' + localStorage.getItem("trader_out") + ']');
+			trader = eval('[' + localStorage.getItem("trader") + ']');
 			relationship = eval('[' + localStorage.getItem("relationship") + ']');
 			name_randomized = localStorage.getItem("name_randomized").split(',');
+			autoc_ratio = parseFloat(localStorage.getItem("autoc_ratio"));
+			autoc_storage = parseFloat(localStorage.getItem("autoc_storage"));
 			change_navigation(current_nav);
 			return true;
 		}
@@ -2105,14 +2312,12 @@
 			localStorage.setItem("ch", 0);
 			localStorage.setItem("m", 0);
 			localStorage.setItem("current_nav", "bonfire");
-			localStorage.setItem("trader_in", [0, 0, 0, 0, 0, 0, 0, 0]);
-			localStorage.setItem("trader_out", [0, 0, 0, 0, 0, 0, 0, 0]);
+			localStorage.setItem("trader", [0, 0, 0, 0, 0, 0, 0, 0]);
 			localStorage.setItem("name_randomized", country_name);
 			localStorage.setItem("relationship", [1, 1, 1, 1, 1, 1, 1, 1]);
 			localStorage.setItem("electricity", 0);
 			localStorage.setItem("pollution", 0);
 			localStorage.setItem("pollution_guided", 0);
-			//dictionary = null;
 			if (!x)
 				location.reload();
 		}
@@ -2149,7 +2354,7 @@
 
 			var td = document.createElement("td");
 			var item = get(x);
-			td.innerHTML = "<button id=\"" + x + "\"class='button-border' style='width:" + (item.togglable ? 250 : 300) + ";height:50' onclick='dictionary[\"" + x + "\"].clicked()' onmouseover='show(this, \"" + x + "\")' onmouseleave='hide()'>" + item.name + "</button>";
+			td.innerHTML = "<button id=\"" + x + "\"class='button-border' style='width:" + (item.togglable ? 250 : 300) + ";height:50' onclick='get(\"" + x + "\").clicked()' onmouseover='show(this, \"" + x + "\")' onmouseleave='hide()'>" + item.name + "</button>";
 			if (get(x).togglable) {
 				td.innerHTML += '<button id="' + x + '+" class="button-border" style="width:25;height:50" onclick="turn_on(\'' + x + '\', 1)">+</button><button id="' + x + '-" class="button-border" style="width:25;height:50" onclick="turn_on(\'' + x + '\', -1);">-</button>';
 			}
@@ -2252,23 +2457,32 @@
 				text += "</tr>";
 			}
 			var ind = current_buttons.findIndex(function(y) { return y[0] == x; })
-			console.log(current_buttons[ind][0]);
 			current_buttons.splice(ind, 1);
 			content.innerHTML = text;
 			hide();
 		}
 
 		var botany = function() {
-			return Math.log(1 + get("discovered_area").storage) / Math.log(1.125) / 1500;
+			if (!get("botany_knowledge").upgraded)
+				return 0;
+			return Math.log(1 + get("discovered_area").storage) / Math.log(1.125) / 1500 * (1 + get("inherit").upgraded);
 		}
 
 		var forgetting_ignored = function() {
-			return get("thought").ignored;
+			var from_crispr = 0;
+			if (get("memory_stabilize").upgraded)
+				from_crispr = 0.01;
+			if (get("memory_inherit").upgraded)
+				from_crispr = 0.035;
+			if (get("memory_implant").upgraded)
+				from_crispr = 0.1;
+
+			return get("thought").ignored + (from_crispr ? Math.min(get("thought").storage * from_crispr, 10000 * from_crispr) : 0);
 		}
 
 		var forgetting_ratio = function() {
 			var deration =
-				  0.0001 * get("book").storage * (1 + get("basic_science").upgraded)
+				  dim(0.0001 * get("book").storage * (1 + get("basic_science").upgraded), 0.5)
 				* (1 + 0.05 * get("library").level * get("book_categorization").upgraded)
 				+ 0.005 * get("research_lab").level;
 
@@ -2320,31 +2534,29 @@
 		}
 
 		var stability = function() {
-			if (get("person").storage <= 10)
-				return 1;
-
 			var person =
-				  (get("person").storage - 10)
+				  (get("person").capacity - 10)
 				* (0.01 - 0.001 * get("management").upgraded - 0.001 * get("government").upgraded - 0.001 * get("laws").upgraded - 0.004 * get("surveillance").upgraded);
+			if (get("person").capacity <= 10)
+				person = 0;
 			var pollu = 
 				Math.sqrt(pollution) / 1000;
-			var alter = 0;
+			var alter = get("theater").level * 0.02;
 
 			if (electricity >= 0) {
 				alter += get("illumination").upgraded * Math.sqrt(electricity) / 100;
 				alter += get("apartment").level * 0.01;
-				alter += get("theater").level * 0.02;
 			} else {
 				alter -= get("apartment").level * 0.01;
 			}
 			if (get("sincerity").upgraded)
-				alter += get("cathedral").level * 0.005;
+				alter += get("cathedral").level * 0.01;
 			return 1 - person - pollu + alter;
 		}
 
 		var fuel_consumption = function() {
 			var original =
-				 get("fire").on * 2 * (1 + get("heat_concentration").upgraded)
+				 get("fire").on * 2 * (1 + 0.5 * get("heat_concentration").upgraded)
 				+ get("paper_factory").on * 5
 				+ get("smelter").on * 5
 				+ get("furnace").on * 7.5
@@ -2354,7 +2566,7 @@
 		}
 
 		var faith_buff = function() {
-			return Math.log(1 + get("faith").storage) / Math.log(2.718281828459045) * (1 + get("sincerity").upgraded * get("cathedral").level * 0.005) / 100;
+			return Math.log(1 + get("faith").storage) / Math.log(2.718281828459045) * (1 + get("sincerity").upgraded * get("cathedral").level * 0.01) * (1 + get("priest").on * 0.025) / 100;
 		}
 
 		var memory_buff = function() {
@@ -2366,12 +2578,16 @@
 			var denom = 1;
 			if (get("catastrophe").on == 2)
 				denom *= 4;
-			return dim(Math.sqrt(effective) / 30, 2) / denom;
+			var buff = 1;
+			if (get("anthropology").upgraded)
+				buff *= 1 + Math.log(1 + get("thought").storage / 100) / 1000 * get("research_lab").level;
+			if (get("worship").upgraded)
+				buff *= 1 + Math.log(1 + Math.log(1 + get("faith").storage / 100)) / 1000 * get("cathedral").level;
+			return dim(Math.sqrt(effective) / 30, 2) / denom * buff;
 		}
 
 		var global_buffs = function() {
 			return 1
-				* (1 + (0.02 + 0.055 * get("heat_concentration").upgraded + 0.005 * get("heat").upgraded) * get("fire").on)
 				* (1 + get("botany_knowledge").upgraded * botany())
 				* (get("food").storage <= 1e-8 ? 0.25 : 1)
 				* (1 + science_buff())
@@ -2383,7 +2599,7 @@
 		}
 
 		var food_eaten = function() {
-			var person = get("person").storage;
+			var person = get("person").capacity;
 			var level = get("gluttony").on;
 			if (level == 0) {
 				return person * 3;
@@ -2404,13 +2620,13 @@
 		}
 
 		var elec_produce = function() {
-			return get("power_station").on * 5;
+			return get("power_station").on * 5 + get("fission_powerplant").on * 45;
 		}
 
 		var production = function() {
 			var prod = {};
 			var global_buff = global_buffs();
-			var crossroaded = 1 + get("crossroad").on * 0.05 * (1 + 1 * get("flight").upgraded);
+			var crossroaded = 1 + get("crossroad").on * 0.015 * (1 + 0.5 * get("flight").upgraded);
 			var fuel_total = fuel_consumption();
 				  
 			prod["person"] = 0;
@@ -2427,17 +2643,19 @@
 				  (get("collector").on * 2)
 				* global_buff
 				* (1 + get("stone_ax").upgraded * 0.5 + get("copper_ax").upgraded * 0.5 + get("iron_ax").upgraded * 0.3 + get("metal_forge").upgraded * 0.15)
+				* (1 + get("wood_factory").level * 0.2)
 				* crossroaded
 				- fuel_total * (1 - get("carbon_usage").upgraded * 0.5);
 
 			prod["thought"] =
 				  get("fire").on === 0 ? 0
-				: (get("person").storage * 0.1 + (get("research_fund").upgraded ? get("university").level * 0.25 : 0))
+				: (get("person").storage * 0.1 + (get("research_fund").upgraded ? get("university").level * 0.25 * (1 + 0.05 * get("collider").level) : 0))
 				* global_buff
+				* (1 + (0.02 + 0.055 * get("heat_concentration").upgraded + 0.005 * get("heat").upgraded) * get("fire").on)
 				* (1 + get("+-*/").upgraded * 0.3)
 				* (1 + get("discussion").upgraded * (0.05 + 0.05 * get("record").upgraded) * (1 + 0.1 * get("research_lab").level) * get("person").storage)
-				* (1 + get("observatory").level * 1.5 // NEXT LINE: upgrades to observatory
-				* (1 + 0.8 * get("kepler").upgraded + 0.4 * get("kinetics").upgraded + 0.001 * get("telescope").storage * (1 + get("inflection_law").upgraded * 0.2)))
+				* (1 + get("observatory").level * 1 // NEXT LINE: upgrades to observatory
+				* (1 + 0.8 * get("kepler").upgraded + 0.4 * get("kinetics").upgraded + dim(0.001 * get("telescope").storage, 4) * (1 + get("inflection_law").upgraded * 0.2)))
 				* book_effect()
 				/ forgetting();
 
@@ -2459,7 +2677,7 @@
 				  (get("adventurer").on * 1)
 				* global_buff
 				* (1 + get("directions").upgraded * 0.5)
-				* (1 + get("iron_sword").upgraded * 0.3 + get("iron_shield").upgraded * 0.05 + get("metal_forge").upgraded * 0.15 + get("copper_sword").upgraded * 0.3)
+				* (1 + get("iron_sword").upgraded * 0.15 + get("iron_shield").upgraded * 0.15 + get("metal_forge").upgraded * 0.15 + get("copper_sword").upgraded * 0.3)
 				* (1 + get("map").level * 0.08);
 
 			prod["paper"] =
@@ -2468,10 +2686,10 @@
 				* crossroaded;
 
 			prod["mineral"] =
-				  (get("miner").on * 2.5)
+				  (get("miner").on * 0.5)
 				* global_buff
 				* crossroaded
-				* (1 + get("copper_pickaxe").upgraded * 1 + get("iron_pickax").upgraded * 0.5 + get("metal_forge").upgraded * 0.15)
+				* (1 + get("copper_pickaxe").upgraded * 1 + get("iron_pickax").upgraded * 0.25 + get("metal_forge").upgraded * 0.15)
 				* (1 + get("mine").level * 0.2)
 				- get("smelter").on * 2
 				- get("furnace").on * (5 * get("steel").unlocked)
@@ -2485,7 +2703,7 @@
 
 			prod["carbon"] =
 				  !get("carbon").unlocked ? 0
-				: get("smelter").on * 0.75
+				: (get("smelter").on * 0.75 + (get("carbon_reveal").upgraded ? get("mine").level * 0.25 : 0))
 				* global_buff
 				* crossroaded
 				- fuel_total * (get("carbon_usage").upgraded * 0.1);
@@ -2516,11 +2734,19 @@
 				* (1 + get("heat").upgraded * 0.1)
 				* (1 - get("government").upgraded * 0.05);
 
+			prod["titanium"] = 
+				  !get("titanium").unlocked ? 0
+				: get("factory").on * 0.035
+				* (1 + get("redox").upgraded)
+				* global_buff
+				* crossroaded
+
 			// craftsman
 			for (var i = 0; i < craftables.length; i++) {
 				var res = craftables[i];
 				var price = get(res).price;
 				var tag = 1;
+				prod[res] = 0;
 				for (var j = 0; j < price.length; j++)
 					if (prod[price[j][0]] < price[j][1] / 10 && prod[price[j][0]] <= 1e-8) {
 						// resources not enough to craft
@@ -2528,7 +2754,7 @@
 						break;
 					}
 				if (!tag) continue;
-				prod[res] = get("craftsman_" + res).on * 0.0025 * (1 + (global_buff - 1) * 0.01) * craft_effect(res);
+				prod[res] = 0.0025 * get("craftsman_" + res).on * craft_effect(res, false);
 				for (var j = 0; j < price.length; j++) {
 					prod[price[j][0]] -= get("craftsman_" + res).on * price[j][1] * 0.0025;
 					show_crafts[price[j][0]] = -get("craftsman_" + res).on * price[j][1] * 0.0025;
@@ -2536,17 +2762,16 @@
 			}
 
 			prod["faith"] =
-				  get("cathedral").level * 1 * get("person").storage
-				* global_buff
-				* (1 + get("priest").on * 0.01);
+				  get("cathedral").level * 1 * get("person").capacity
+				* global_buff;
 
 			// calculating trades
 			if (prod["gold"] < 0 && get("gold").storage <= 1e-8) // cannot use running_out(), or it will be an infinite recursion
 				return prod;
 			for (var i = 0; i < 8; i++) {
-				prod[country_sell[i]] += trader_in[i] * trader_efficiency(i);
-				prod[country_take[i]] -= trader_out[i] * trader_efficiency(i);
-				prod["gold"] += (sell_price(i) * trader_out[i] - buy_price(i) * trader_in[i]) * trader_efficiency(i);
+				prod[country_sell[i]] += trader[i] * trader_efficiency(i);
+				prod[country_take[i]] -= trader[i] * trader_efficiency(i);
+				prod["gold"] -= 1.5 * trader[i];
 			}
 			
 			return prod;
@@ -2569,14 +2794,15 @@
 			if (!prod[x] || prod[x] <= 1e-8 && prod[x] >= -1e-8)
 				return;
 			var fuel_total = fuel_consumption();
+			var crossroaded = 1 + get("crossroad").on * 0.015 * (1 + 0.5 * get("flight").upgraded);
 			/*production calculation*/
 			if (x == "food") {
-				text += entext(get("collector").name, get("collector").on * 5);
+				text += entext(get("collector").name, get("collector").on * 5 * crossroaded);
 				text += entext("升级", get("stone_ax").upgraded * 0.5 + get("slingshot").upgraded * 0.5 + get("copper_ax").upgraded * 0.5 + get("copper_sword").upgraded * 0.3 +
 										get("iron_ax").upgraded * 0.3 + get("iron_sword").upgraded * 0.35 + get("metal_forge").upgraded * 0.15, true);
 			}
 			if (x == "wood") {
-				text += entext(get("collector").name, get("collector").on * 2);
+				text += entext(get("collector").name, get("collector").on * 2 * crossroaded);
 				text += entext("升级", get("stone_ax").upgraded * 0.5 + get("copper_ax").upgraded * 0.5 + get("iron_ax").upgraded * 0.3 + get("metal_forge").upgraded * 0.15, true);
 			}
 			if (x == "thought") {
@@ -2586,76 +2812,82 @@
 				text += "遗忘  /" + format(forgetting()) + "<br>";
 				if (get("discussion").upgraded)
 					text += entext("商讨", get("person").storage * (0.05 + 0.05 * get("record").upgraded) * (1 + 0.1 * get("research_lab").level), true);
-				text += entext(get("observatory").name, get("observatory").level * 1.5 * (1 + 0.8 * get("kepler").upgraded + 0.4 * get("kinetics").upgraded
+				text += entext(get("observatory").name, get("observatory").level * 1 * (1 + 0.8 * get("kepler").upgraded + 0.4 * get("kinetics").upgraded
 						+ 0.001 * get("telescope").storage * (1 + get("inflection_law").upgraded * 0.2)), true);
 				text += entext(get("book").name, book_effect() - 1, true);
 				text += entext("科学", get("+-*/").upgraded * 0.3, true);
+				if (get("fire").on)
+					text += entext(get("fire").name, (0.02 + 0.055 * get("heat_concentration").upgraded + 0.005 * get("heat").upgraded) * get("fire").on, true);
 			}
 			if (x == "stone") {
 				if (get("copper_pickaxe").upgraded)
 					text += entext(get("miner").name, get("miner").on * 5);
 				else
-					text += entext(get("quarry_worker").name, get("quarry_worker").on * 3);
+					text += entext(get("quarry_worker").name, get("quarry_worker").on * 3 * crossroaded);
 				text += entext(get("mine").name, get("mine").level * 0.2, true);
 			}
 			if (x == "fur") {
-				text += entext(get("collector").name, 0.005 * (prod["food"] + get("person").storage * 3));
+				text += entext(get("collector").name, 0.005 * (prod["food"] + get("person").storage * 3) * crossroaded);
 			}
 			if (x == "discovered_area") {
-				text += entext(get("adventurer").name, get("adventurer").on * 1);
+				text += entext(get("adventurer").name, get("adventurer").on * 1 * crossroaded);
 				text += entext(get("directions").name, get("directions").upgraded * 0.5, true);
-				text += entext("升级", get("iron_sword").upgraded * 0.3 + get("iron_shield").upgraded * 0.05 + get("metal_forge").upgraded * 0.15 + get("copper_sword").upgraded * 0.3, true);
+				text += entext("升级", get("iron_sword").upgraded * 0.15 + get("iron_shield").upgraded * 0.15 + get("metal_forge").upgraded * 0.15 + get("copper_sword").upgraded * 0.3, true);
 				text += entext(get("map").name, get("map").level * 0.08, true);
 			}
 			if (x == "paper") {
-				text += entext(get("paper_factory").name, get("paper_factory").on * 1);
+				text += entext(get("paper_factory").name, get("paper_factory").on * 1 * crossroaded);
 			}
 			if (x == "mineral") {
-				text += entext(get("miner").name, get("miner").on * 2.5);
+				text += entext(get("miner").name, get("miner").on * 0.5 * crossroaded);
 				text += entext("升级", get("copper_pickaxe").upgraded * 1 + get("metal_forge").upgraded * 0.15, true);
 				text += entext(get("mine").name, get("mine").level * 0.2, true);
 			}
 			if (x == "copper") {
-				text += entext(get("smelter").name, get("smelter").on * 1);
+				text += entext(get("smelter").name, get("smelter").on * 1 * crossroaded);
 				text += entext("升级", get("heat").upgraded * 0.1, true);
 			}
 			if (x == "carbon") {
-				text += entext(get("smelter").name, get("smelter").on * 0.75);
+				text += entext(get("smelter").name, get("smelter").on * 0.75 * crossroaded);
+				if (get("carbon_reveal").upgraded)
+					text += entext(get("mine").name, get("mine").level * 0.25 * crossroaded);
 			}
 			if (x == "iron") {
-				text += entext(get("smelter").name, get("smelter").on * 0.75);
+				text += entext(get("smelter").name, get("smelter").on * 0.75 * crossroaded);
 				text += entext("升级", get("heat").upgraded * 0.1, true);
 			}
 			if (x == "glass") {
-				text += entext(get("furnace").name, get("furnace").on * 0.5);
+				text += entext(get("furnace").name, get("furnace").on * 0.5 * crossroaded);
 			}
 			if (x == "steel") {
-				text += entext(get("furnace").name, get("furnace").on * 1);
+				text += entext(get("furnace").name, get("furnace").on * 1 * crossroaded);
 				text += entext("升级", get("heat").upgraded * 0.1, true);
 			}
 			if (x == "gold") {
-				text += entext(get("blast_furnace").name, get("blast_furnace").on * 1);
+				text += entext(get("blast_furnace").name, get("blast_furnace").on * 1 * crossroaded);
 				text += entext("升级", get("heat").upgraded * 0.1, true);
 				text += entext(get("government").name, -get("government").upgraded * 0.05, true);
 			}
 			if (x == "faith") {
-				text += entext(get("cathedral").name, get("cathedral").level * get("person").storage * 1);
+				text += entext(get("cathedral").name, get("cathedral").level * get("person").capacity * 1);
 				text += entext(get("priest").name, get("priest").on * 0.01, true);
+			}
+			if (x == "titanium") {
+				text += entext(get("factory").name, get("factory").on * 0.035 * crossroaded);
+				text += entext("升级", get("redox").upgraded * 1, true);
 			}
 			if (is_craftable(x)) {
 				text += entext("工匠", get("craftsman_" + x).on * 0.0025);
-				text += entext("效率", craft_effect(x) - 1, true);
-				text += entext("加成", (global_buffs() - 1) * 0.01, true);
+				text += entext("效率", craft_effect(x, true) - 1, true);
+				text += entext("加成", (global_buffs() - 1) * 0.1, true);
 			} else {
-				if (get("fire").on)
-					text += entext(get("fire").name, (0.02 + 0.055 * get("heat_concentration").upgraded + 0.005 * get("heat").upgraded) * get("fire").on, true);
 				if (science_buff())
 					text += entext("科学", science_buff(), true);
 				if (get("faith").unlocked)
 					text += entext(get("faith").name, faith_buff(), true);
 				if (get("memory").unlocked)
 					text += entext(get("memory").name, memory_buff(), true);
-				if (get("person").storage > 10)
+				if (get("person").capacity > 10)
 					text += entext("稳定", stability() < 0.5 ? -0.75 : (stability() - 1), true);
 				if (get("food").storage <= 1e-8 && x != "food")
 					text += entext("饥饿", -0.75, true);
@@ -2693,16 +2925,16 @@
 				if (!running_out("gold")) {
 					var total_trade = 0;
 					for (var i = 0; i < 8; i++) {
-						total_trade += (sell_price(i) * trader_out[i] - buy_price(i) * trader_in[i]) * trader_efficiency(i);
+						total_trade += sell_price(i) * trader[i] * trader_efficiency(i);
 					}
 					text += entext("贸易", total_trade);
 				}
 			}
 			for (var i = 0; i < 8; i++) {
 				if (country_sell[i] == x)
-					text += entext("贸易", trader_in[i] * trader_efficiency(i));
+					text += entext("贸易", trader[i] * trader_efficiency(i));
 				if (country_take[i] == x)
-					text += entext("贸易", -trader_out[i] * trader_efficiency(i));
+					text += entext("贸易", -trader[i] * trader_efficiency(i));
 			}
 
 			/*show*/
@@ -2730,24 +2962,25 @@
 		var capacity_calc = function(x) {
 			var cap_increase = {
 				"food": 5000,
-				"wood": 1000,
+				"wood": 2000,
 				"fur": 100,
-				"stone": 1500,
+				"stone": 2000,
 				"mineral": 1500,
 				"copper": 500,
-				"carbon": 250,
+				"carbon": 300,
 				"iron": 750,
-				"glass": 160,
-				"steel": 50
+				"glass": 250,
+				"steel": 150,
+				"titanium": 1000,
 			};
 
 			var storages = get("harbor").level * 3 + get("warehouse").level + get("warehouse_2").level * 0.5;
-			storages *= (1 + get("crossroad").level * 0.3 * (1 + 3 * get("flight").upgraded));
+			storages *= (1 + get("crossroad").level * 0.03 * (1 + 3 * get("flight").upgraded));
 
 			var res = get(x);
 			if (res.capacity == -1)
 				return -1;
-			if (["food", "wood", "fur", "stone", "mineral", "copper", "carbon", "iron", "glass", "steel"].find(function(elem) { return elem == x; }) !== undefined)
+			if (["food", "wood", "fur", "stone", "mineral", "copper", "carbon", "iron", "glass", "steel", "titanium"].find(function(elem) { return elem == x; }) !== undefined)
 				return (storages + 1) * cap_increase[x];
 			if (x == "gold")
 				return 100 + 400 * get("bank").level;
@@ -2757,13 +2990,28 @@
 		}
 
 		var pollute = function() {
-			var pollution_get = get("factory").on * 1 + get("crossroad").on * 2.5;
-			var pollution_absorption = get("AsHg_collector").level * 0.6;
+			var pollution_get = get("factory").on * 1 + get("crossroad").on * 2.5 + get("power_station").on * 0.7 + get("fission_powerplant").on * 30;
+			var pollution_absorption = get("AsHg_collector").level * 1.2;
 
-			get("AsHg_collector").collected += get("AsHg_collector").level * 0.6 / tick_persec;
+			get("AsHg_collector").collected += get("AsHg_collector").level * 1.2 / tick_persec;
 			pollution += (pollution_get - pollution_absorption) / tick_persec;
 			if (pollution < 0)
 				pollution = 0;
+		}
+
+		var autocraft = function() {
+			if (autoc_storage >= 1 || !get("autocraft").upgraded || get("professional").level)
+				return;
+			var able = function(res) { return get(res).storage > autoc_ratio * get(res).capacity; }
+			var craft_all = function(res) {
+				var max = get(res).price.reduce(function(minimum, elem) { return Math.min(minimum, get(elem[0]).storage * (1 - autoc_storage) / elem[1]); }, 1e300);
+				get(res).price.forEach(function(elem) { get(elem[0]).storage -= max * elem[1]; })
+				get(res).storage += max * craft_effect(res, true);
+			}
+			craftables.forEach(function(elem) {
+				if (get(elem).unlocked && get(elem).price.reduce(function(flag, elem) { return flag && able(elem[0]); }, true))
+					craft_all(elem);
+			});
 		}
 
 		var refresh_resource = function() {
@@ -2795,7 +3043,7 @@
 			productions = production();
 
 			for (var i = 0; i < resources.length; i++) {
-				var res = dictionary[resources[i]];
+				var res = get(resources[i]);
 				var produce = productions[resources[i]];
 				if (res.unlocked !== true)
 					continue;
@@ -2812,30 +3060,11 @@
 			}
 			if (get("education").upgraded)
 				get("book").storage += 0.0003 * get("library").level; // no global buff
+			autocraft();
 			$("resources").innerHTML = text;
 		}
 
-		var trade_price = {
-			"food": 0.001,
-			"wood": 0.0025,
-			"fur": 0.0075,
-			"mineral": 0.015,
-			"stone": 0.02,
-			"copper": 0.03,
-			"iron": 0.035,
-			"steel": 0.06,
-			"paper": 0.0085,
-			"glass": 0.025,
-		};
-		var sell_price = function(x) {
-			return relationship[x] * trade_price[country_take[x]];
-		}
-
-		var buy_price = function(x) {
-			return (1 + relationship[x]) * trade_price[country_sell[x]];
-		}
-
-		var add_trader = function(x, delta, is_in) {
+		var add_trader = function(x, delta) {
 			var ev = window.event;
 			var mult = 1;
 			if (ev.ctrlKey)
@@ -2843,7 +3072,6 @@
 			else if (ev.altKey)
 				mult = 10;
 			delta *= mult;
-			var trader = is_in ? trader_in : trader_out;
 			if (ev.shiftKey)
 				delta = (delta < 0 ? -trader[x] : get("person").storage);
 			var old_on = trader[x], old_ava = get("person").storage;
@@ -2853,11 +3081,11 @@
 				get("person").storage = old_ava;
 				trader[x] = old_on;
 			}
-			$("country_" + x + (is_in ? "_in" : "_out")).innerHTML = "贸易特使：" + (is_in ? "买入" : "卖出") + " (" + trader[x] + ")";
+			$("country_" + x).innerHTML = "贸易特使 " + " (" + trader[x] + ")";
 		}
 
 		var trader_efficiency = function(x) {
-			return 10;
+			return 1;
 		}
 
 		var name_randomized = [];
@@ -2871,13 +3099,11 @@
 				var x = "country_" + i;
 				var text =
 				"<div style='border:1px solid'>" + name_randomized[i] + "<br>" +
-				"出售：" + get(country_sell[i]).name + "（价格：" + format(buy_price(i)) + "贵金属）<br>" +
-				"购买：" + get(country_take[i]).name + "（价格：" + format(sell_price(i)) + "贵金属）<br>" +
-				"贸易特使效率：每秒交易" + trader_efficiency(i) + "单位<br>" +
-				"<button id=\"" + x + "_in\"class='button-border' style='width:250;height:50' onclick='add_trader(" + i + ", 1, true)' onmouseleave='hide()'>" + "贸易特使：买入 (0)</button>" +
-				'<button id="' + x + '+_in" class="button-border" style="width:25;height:50" onclick="add_trader(' + i + ', 1, true)">+</button><button id="' + x + '-_in" class="button-border" style="width:25;height:50" onclick="add_trader(' + i + ', -1, true);">-</button><br>' +
-				"<button id=\"" + x + "_out\"class='button-border' style='width:250;height:50' onclick='add_trader(" + i + ", 1, false)' onmouseleave='hide()'>" + "贸易特使：卖出 (0)</button>" +
-				'<button id="' + x + '+_out" class="button-border" style="width:25;height:50" onclick="add_trader(' + i + ', 1, false)">+</button><button id="' + x + '-_out" class="button-border" style="width:25;height:50" onclick="add_trader(' + i + ', -1, false);">-</button>' +
+				"该国家出售：" + get(country_sell[i]).name + "<br>" +
+				"该国家购买：" + get(country_take[i]).name + "<br>" +
+				"贸易特使效率：每人每秒交易" + trader_efficiency(i) + "单位物资，但消耗1.5贵金属<br>" +
+				"<button id=\"" + x + "\"class='button-border' style='width:250;height:50' onclick='add_trader(" + i + ", 1)' onmouseleave='hide()'>" + "贸易特使 (" + trader[i] + ")</button>" +
+				'<button id="' + x + '" class="button-border" style="width:25;height:50" onclick="add_trader(' + i + ', 1)">+</button><button id="' + x + '-" class="button-border" style="width:25;height:50" onclick="add_trader(' + i + ', -1);">-</button><br>' +
 				"</div>";
 				$("trade").innerHTML += text;
 				last_discovered = i;
@@ -2902,6 +3128,22 @@
 				text += "当前污染为" + format(pollution);
 			}
 			$("statistics").innerHTML = text;
+		}
+
+		var autocraft_confirm = function() {
+			autoc_ratio = parseInt($('autocraft_ratio').value) / 100;
+			autoc_storage = parseInt($('autocraft_storage').value) / 100;
+		}
+
+		var render_auto = function() {
+			var autobar = $("auto");
+			var text = "";
+			if (get("autocraft").upgraded) {
+				text +=
+					" 自动工匠<br>达到上限<input type='text' id='autocraft_ratio'></input>%之后才自动合成，<br> 但留存<input type='text' id='autocraft_storage'></input>%不合成" +
+					"<br> <button id='craft_confirm' onclick=autocraft_confirm()>设置</button>";
+			}
+			autobar.innerHTML = text;
 		}
 
 		var refresh_button = function() {
@@ -2945,11 +3187,13 @@
 				push_button("carbon_usage", "thoughts");
 			}
 			if (get("iron").unlocked && !get("iron_ax").unlocked) {
+				push_button("wood_process", "thoughts");
 				push_button("iron_ax", "thoughts");
 				push_button("iron_pickax", "thoughts");
 				push_button("iron_sword", "thoughts");
 				push_button("iron_shield", "thoughts");
 				push_button("iron_enhancement", "thoughts");
+				setguide("发现铁的存在，这将推动各种工具的发展。");
 			}
 			if (get("gold").unlocked && !get("blast_furnace").unlocked) {
 				push_button("blast_furnace", "bonfire");
@@ -2957,7 +3201,7 @@
 				add_navigation("trade");
 				setguide("发现贵金属，同时解锁了贸易界面。随着探索的增长，可以发现最多8个国家。");
 			}
-			if (get("person").storage > 10 && !get("management").unlocked) {
+			if (get("person").capacity > 10 && !get("management").unlocked) {
 				push_button("management", "thoughts");
 				setguide("解锁稳定度，同时思考面板下也解锁了相应的升级。每人减少1%稳定（前十个人不计入）。");
 			}
@@ -2976,7 +3220,7 @@
 				return;
 			time += 1;
 			var text = "第" + parseInt(time / 50) + "年 ";
-			if (get("person").storage >= 10) {
+			if (get("person").capacity >= 10) {
 				text += "<br>稳定度：" + percentage(stability());
 			}
 			if (get("electricity").upgraded)
@@ -3004,7 +3248,7 @@
 		}
 
 		var prestige = function(x) {
-			var gotten = parseInt(get("person").storage * 1.35 + Math.log(1 + get("thought").storage) / Math.log(1.1));
+			var gotten = parseInt(get("person").capacity * 1.5 + Math.log(1 + get("thought").storage) / Math.log(1.06));
 			gotten *= (1 + challenge_level() * 0.1);
 			get("memory").storage += gotten;
 			localStorage.setItem("memory", get("memory").storage);
@@ -3018,8 +3262,11 @@
 			push_button("clumsy", "challenge");
 			push_button("gluttony", "challenge");
 			push_button("professional", "challenge");
+			push_button("redundancy", "challenge");
 			push_button("endeavour", "challenge");
+			choose_trait();
 			change_navigation("challenge");
+			render_auto();
 
 			if (get("memory").storage = parseInt(localStorage.getItem("memory")))
 				unlock("memory");
@@ -3032,6 +3279,7 @@
 			push_button("fire", "bonfire");
 			push_button("collector", "society");
 			change_navigation("bonfire");
+			render_auto();
 
 			if (get("memory").storage = parseInt(localStorage.getItem("memory")))
 				unlock("memory");
@@ -3119,6 +3367,12 @@
 				<table id="content_challenge">
 					<tr></tr>
 				</table>
+				<br>
+				<select id="trait_select" style="width:300;height:50">
+				</select>
+				<br>
+				<div id="trait_hint" style="width:300;height:50">
+				</div>
 			</div>
 		</div>
 
@@ -3136,6 +3390,8 @@
 				<button class="button" style="width:130;height:35" onclick="delete_save()">
 					软重置
 				</button>
+			</div><br>
+			<div id="auto">
 			</div>
 			<div id="guide">
 			</div>
