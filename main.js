@@ -3325,6 +3325,7 @@ let save_import = function() {
         else assign(key, object[key]);
     }
     save();
+    load();
     self_reload();
 }
 
