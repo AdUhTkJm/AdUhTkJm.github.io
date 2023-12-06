@@ -31,6 +31,7 @@ let autoc_storage = 0.8;
 let global_prod = [];
 let last_memory = 0;
 let memory_elapsed = 5000;
+let config = {};
 
 let dictionary = {
     'food': {
@@ -2971,7 +2972,7 @@ let dictionary = {
 }
 
 let get = function(x) {
-    return dictionary[x] ? dictionary[x] : load_item(x);
+    return dictionary[x] ?? load_item(x);
 }
 
 let unlock = function(x) {
@@ -2991,7 +2992,7 @@ let derationate = function(id) {
     after -= 0.005 * get("structurize").upgraded;
     after -= 0.01 * get("over_optimization").upgraded;
     after -= 0.015 * get("spatial_fold").upgraded;
-    after -= 0.0005 * get("highest_lvl");
+    after -= 0.0005 * (get("highest_lvl") ?? 0);
 
     if (get(id).craftable || get(id).metaphysics || id == "university" || id == "cathedral") {
         after -= 0.04 * get("rigidize").upgraded;
@@ -3280,16 +3281,16 @@ let hide = function() {
 
 let save_item = function(id, val) {
     localStorage.setItem(id, val);
-    if (id == "saving")
+    if (id == "saving" || id == "config")
         return;
-    dictionary[id] = {
+    config[id] = {
         value: val,
         from_save: true,
     };
 }
 
 let load_item = function(id) {
-    let val = localStorage.getItem(id) ?? dictionary[id];
+    let val = localStorage.getItem(id) ?? dictionary[id] ?? config[id].value;
     return val;
 }
 
@@ -3303,14 +3304,22 @@ let from_base64 = function(text) {
 
 let save_import = function() {
     let save_str = prompt("请将存档粘贴到此处：");
-    save_item("saving", from_base64(save_str));
+    let object = JSON.parse(from_base64(save_str));
+    let keys = Object.keys(object);
+    for (let i = 0; i < keys.length; i++) {
+        let key = keys[i];
+        if (object[key].from_save)
+            config[key] = object[key];
+        else dictionary[key] = object[key];
+    }
     load();
     save();
 }
 
 let save_export = function() {
     save();
-    let save_blob = new Blob([to_base64(JSON.stringify(dictionary))], { type: "text/plain" });
+    let temp_config = JSON.parse(JSON.stringify(config));
+    let save_blob = new Blob([to_base64(JSON.stringify(Object.assign(temp_config, dictionary)))], { type: "text/plain" });
     let download_link = document.createElement("a");
     let date = new Date();
     download_link.download = sprintf("AdCaelum savefile $-$-$ $$$",
@@ -3342,6 +3351,7 @@ let save = function() {
     save_item("last_memory", last_memory);
     save_item("memory_elapsed", memory_elapsed);
     save_item("saving", JSON.stringify(dictionary));
+    save_item("config", JSON.stringify(config));
 }
 
 let activate_gene = function() {
@@ -3366,8 +3376,6 @@ let load = function() {
     let dict = JSON.parse(saving);
     let keys = Object.keys(dict);
     for (let i = 0; i < keys.length; i++) {
-        if (dict[keys[i]].from_save)
-            continue;
         let name = keys[i];
         let clicked = dictionary[name].clicked;
         let mutant = dictionary[name].mutant;
@@ -3533,8 +3541,6 @@ let self_reload = function() {
         if (item.challenge) { // it must be a challenge
             push_button_0(name, "challenge");
             $(name).innerHTML = item.name + " (" + item.on + "/" + item.level + ")";
-        } else if (item.from_save) {
-            ; // do nothing
         } else if (item.genetics) { // it must be a genetic upgrade
             push_button_0(name, "gene");
         } else if (item.metaphysics) {
@@ -4773,6 +4779,7 @@ let init_0 = function() {
     push_button("professional", "challenge");
     push_button("redundancy", "challenge");
     push_button("endeavour", "challenge");
+
     change_navigation("challenge");
 
     if (get("memory").storage = parseInt(load_item("memory")))
@@ -4780,6 +4787,10 @@ let init_0 = function() {
 }
 
 let init_1 = function() {
+    save_item("saving", "");
+    save_item("highest_lvl", 0);
+    save_item("memory", 0); 
+
     add_navigation("bonfire");
     add_navigation("society");
     add_navigation("statistics");
