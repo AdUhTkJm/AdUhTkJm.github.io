@@ -29,6 +29,7 @@ let relationship = [1, 1, 1, 1, 1, 1, 1, 1];
 let autoc_ratio = 0.95;
 let autoc_storage = 0.8;
 let global_prod = [];
+let highest_lvl = 0;
 let last_memory = 0;
 let memory_elapsed = 5000;
 let config = {};
@@ -2910,7 +2911,7 @@ let dictionary = {
         clicked: function() {
             get("challenge").unlocked = false;
             $("float").style.display = "none";
-            init_1();
+            init_0();
             render_craft();
             render_auto();
         },
@@ -2992,7 +2993,7 @@ let derationate = function(id) {
     after -= 0.005 * get("structurize").upgraded;
     after -= 0.01 * get("over_optimization").upgraded;
     after -= 0.015 * get("spatial_fold").upgraded;
-    after -= 0.0005 * (get("highest_lvl") ?? 0);
+    after -= 0.0005 * highest_lvl;
 
     if (get(id).craftable || get(id).metaphysics || id == "university" || id == "cathedral") {
         after -= 0.04 * get("rigidize").upgraded;
@@ -3280,18 +3281,28 @@ let hide = function() {
 }
 
 let save_item = function(id, val) {
-    localStorage.setItem(id, val);
-    if (id == "saving" || id == "config")
+    if (id == "saving" || id == "config") {
+        localStorage.setItem(id, val);
         return;
+    }
     config[id] = {
         value: val,
         from_save: true,
     };
+    localStorage.setItem(id, JSON.stringify(config));
 }
 
 let load_item = function(id) {
-    let val = localStorage.getItem(id) ?? dictionary[id] ?? config[id].value;
-    return val;
+    if (id == "saving" || id == "config") {
+        let val = localStorage.getItem(id);
+        if (!val || val == "null") {
+            init_1();
+            save();
+            return load_item(id);
+        }
+        return JSON.parse(val);
+    }
+    return config[id].value;
 }
 
 let to_base64 = function(text) {
@@ -3305,15 +3316,16 @@ let from_base64 = function(text) {
 let save_import = function() {
     let save_str = prompt("请将存档粘贴到此处：");
     let object = JSON.parse(from_base64(save_str));
+    console.log(object);
     let keys = Object.keys(object);
     for (let i = 0; i < keys.length; i++) {
         let key = keys[i];
         if (object[key].from_save)
             config[key] = object[key];
-        else dictionary[key] = object[key];
+        else assign(key, object[key]);
     }
-    load();
     save();
+    self_reload();
 }
 
 let save_export = function() {
@@ -3350,67 +3362,73 @@ let save = function() {
     save_item("genetics_upgrades", genetics_upgrades);
     save_item("last_memory", last_memory);
     save_item("memory_elapsed", memory_elapsed);
+    save_item("highest_lvl", highest_lvl);
+    save_item("memory", get("memory").storage);
     save_item("saving", JSON.stringify(dictionary));
     save_item("config", JSON.stringify(config));
 }
 
 let activate_gene = function() {
-    if (!load_item("genetics"))
+    if (!load_item("genetics_upgrades"))
         return;
     
-        genetics_upgrades = load_item("genetics_upgrades").split(',');
+        genetics_upgrades = load_item("genetics_upgrades");
     for (let i = 0; i < genetics_upgrades.length; i++) {
         upgrade(genetics_upgrades[i], true);
         get(genetics_upgrades[i]).clicked();
     }
 }
 
+let assign = function(id, val) {
+    let clicked = dictionary[id].clicked;
+    let mutant = dictionary[id].mutant;
+    dictionary[id] = val;
+    dictionary[id].clicked = clicked;
+    dictionary[id].mutant = mutant;
+}
+
 let load = function() {
-    let saving = load_item("saving");
+    let dict = load_item("saving");
+    config = load_item("config");
     if (!parseInt(load_item("memory")))
         save_item("memory", 0);
-    if (!saving || saving == "" || saving == "null") {
-        init();
+    if (!dict) {
+        init_1();
         return false;
     }
-    let dict = JSON.parse(saving);
     let keys = Object.keys(dict);
     for (let i = 0; i < keys.length; i++) {
-        let name = keys[i];
-        let clicked = dictionary[name].clicked;
-        let mutant = dictionary[name].mutant;
-        dictionary[name] = dict[name];
-        dictionary[name].clicked = clicked;
-        dictionary[name].mutant = mutant;
+        assign(keys[i], dict[keys[i]]);
     }
     
     self_reload();
     render_craft();
     render_auto();
 
-    time = parseInt(load_item("time"));
-    memory_elapsed = parseInt(load_item("memory_elapsed"));
-    last_memory = parseInt(load_item("last_memory"));
-    physics = parseInt(load_item("ph"));
-    chemistry = parseInt(load_item("ch"));
-    maths = parseInt(load_item("m"));
-    magics = parseInt(load_item("magics"));
-    electricity = parseFloat(load_item("electricity"));
-    pollution = parseFloat(load_item("pollution"));
-    pollution_guided = parseInt(load_item("pollution_guided"));
+    time = load_item("time");
+    memory_elapsed = load_item("memory_elapsed");
+    last_memory = load_item("last_memory");
+    physics = load_item("physics");
+    chemistry = load_item("chemistry");
+    maths = load_item("maths");
+    magics = load_item("magics");
+    electricity = load_item("electricity");
+    pollution = load_item("pollution");
+    pollution_guided = load_item("pollution_guided");
     current_nav = load_item("current_nav");
-    trader = eval('[' + load_item("trader") + ']');
-    relationship = eval('[' + load_item("relationship") + ']');
-    name_randomized = load_item("name_randomized").split(',');
-    autoc_ratio = parseFloat(load_item("autoc_ratio"));
-    autoc_storage = parseFloat(load_item("autoc_storage"));
+    trader = load_item("trader");
+    relationship = load_item("relationship");
+    name_randomized = load_item("name_randomized");
+    autoc_ratio = load_item("autoc_ratio");
+    autoc_storage = load_item("autoc_storage");
+    highest_lvl = load_item("highest_lvl");
     
     activate_gene();
     change_navigation(current_nav);
     return true;
 }
 
-let delete_save = function(x) {
+let delete_save = function(no_reload) {
     save_item("saving", "");
     save_item("time", 0);
     save_item("physics", 0);
@@ -3423,7 +3441,8 @@ let delete_save = function(x) {
     save_item("electricity", 0);
     save_item("pollution", 0);
     save_item("pollution_guided", 0);
-    if (!x)
+    save_item("highest_lvl", 0);
+    if (!no_reload)
         location.reload();
 }
 
@@ -3828,7 +3847,7 @@ let global_buffs = function() {
         * (1 + memory_buff())
         * (1 + potion_buff())
         * (1 + get("brewery").on * 0.02 * (1 + 0.15 * get("magic_alcohol").upgraded))
-        * (1 + (get("highest_lvl") ?? 0) * 0.02)
+        * (1 + highest_lvl * 0.02)
         * (1 + get("potion_factory").level * get("cathedral").level * 0.002)
         * (1 + get("HE_lab").level * get("university").level * 0.002)
         * (debug ? 1000 : 1);
@@ -4210,8 +4229,8 @@ let show_production = function(x, self) {
             text += entext("实验室", get("HE_lab").level * get("university").level * 0.002, true);
         if (get("memory").unlocked)
             text += entext(get("memory").name, memory_buff(), true);
-        if (get("highest_lvl"))
-            text += entext("危机", 0.02 * get("highest_lvl"), true);
+        if (highest_lvl)
+            text += entext("危机", 0.02 * highest_lvl, true);
         if (get("person").capacity > 10)
             text += entext("稳定", stability() < 0.5 ? -0.75 : (stability() - 1), true);
         if (get("food").storage <= 1e-8 && x != "food")
@@ -4610,11 +4629,11 @@ let statistics_refresh = function() {
         text += sprintf("当前污染为<font color='red'>$</font><br>", format(pollution));
         text += sprintf("污染使得稳定度$<br>", percentage(-pollution_debuff(), true));
     }
-    if (get("highest_lvl")) {
+    if (highest_lvl) {
         text += "<br><br><h3>危机等级</h3>";
-        text += sprintf("最高达到危机等级<font color='red'>$</font><br>", get("highest_lvl"));
-        text += sprintf("全体建筑的价格底数减少<font color='green'>$</font><br>", get("highest_lvl") * 0.0005);
-        text += sprintf("全局产量提高$<br>", percentage(get("highest_lvl") * 0.02, true));
+        text += sprintf("最高达到危机等级<font color='red'>$</font><br>", highest_lvl);
+        text += sprintf("全体建筑的价格底数减少<font color='green'>$</font><br>", highest_lvl * 0.0005);
+        text += sprintf("全局产量提高$<br>", percentage(highest_lvl * 0.02, true));
     }
     $("statistics").innerHTML = text;
 }
@@ -4764,7 +4783,7 @@ let prestige = function(x) {
     save_item("memory", get("memory").storage);
 
     let lvl = challenge_level();
-    save_item("highest_lvl", Math.max(lvl, load_item("highest_lvl", 0)));
+    save_item("highest_lvl", Math.max(lvl, load_item("highest_lvl") ?? 0));
 
     save_item("genetics_upgrades", genetics_upgrades);
     delete_save();
@@ -4782,14 +4801,12 @@ let init_0 = function() {
 
     change_navigation("challenge");
 
-    if (get("memory").storage = parseInt(load_item("memory")))
+    if (get("memory").storage = load_item("memory"))
         unlock("memory");
 }
 
 let init_1 = function() {
-    save_item("saving", "");
-    save_item("highest_lvl", 0);
-    save_item("memory", 0); 
+    save();
 
     add_navigation("bonfire");
     add_navigation("society");
@@ -4798,7 +4815,7 @@ let init_1 = function() {
     push_button("collector", "society");
     change_navigation("bonfire");
 
-    if (get("memory").storage = parseInt(load_item("memory")))
+    if (get("memory").storage = load_item("memory"))
         unlock("memory");
     activate_gene();
     
@@ -4806,13 +4823,6 @@ let init_1 = function() {
     setguide("你们是末世之后的几个未受教育的年轻人，试图在这片焦土之上从零开始重建文明。");
 }
 
-let init = function() {
-    if (parseInt(load_item("memory"))) {
-        init_0();
-        return;
-    }
-    init_1();
-}
 
 load();
 setInterval(refresh, 1000 / tick_persec);
