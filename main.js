@@ -3314,7 +3314,7 @@ let load = function() {
     let saving = localStorage.getItem("saving");
     if (!parseInt(localStorage.getItem("memory")))
         localStorage.setItem("memory", 0);
-    if (saving == "" || saving == "null") {
+    if (!saving || saving == "" || saving == "null") {
         init();
         return false;
     }
