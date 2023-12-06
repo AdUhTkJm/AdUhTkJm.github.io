@@ -1776,7 +1776,7 @@ let dictionary = {
             if (!upgrade('anthropology'))
                 return;
             get("memory").storage += 5;
-            localStorage.setItem("memory", get("memory").storage);
+            save_item("memory", get("memory").storage);
             push_button("fundamental", "thoughts")
         },
         show: "开始真正地深入研究上一个文明。<br>立即获得5记忆<br>大学现在可以根据思考的总量加成记忆的效果",
@@ -1951,7 +1951,7 @@ let dictionary = {
             if (!upgrade('fusion_energizer'))
                 return;
         },
-        show: "完全取代低效的石油燃料，部分取代污染的裂变能源。<br>每秒减少4.8污染<br>铀的成本-15%",
+        show: "完全取代低效的石油燃料，部分取代污染的裂变能源。<br>每秒减少48污染<br>铀的成本-15%",
         price: [["thought", 1675], ["insight", 600], ["uranium", 100]],
         upgraded: false,
         unlocked: false
@@ -2627,7 +2627,7 @@ let dictionary = {
         unlocked: false
     },
     'anti_flow': {
-        name: '倒流',
+        name: '逆流',
         level: 0,
         ratio: 1,
         genetics: 1,
@@ -2971,7 +2971,7 @@ let dictionary = {
 }
 
 let get = function(x) {
-    return dictionary[x] ? dictionary[x] : localStorage.getItem(x);
+    return dictionary[x] ? dictionary[x] : load_item(x);
 }
 
 let unlock = function(x) {
@@ -3077,7 +3077,7 @@ let upgrade = function(x, enforce) {
         if (is_consumed(need[0]))
             get(need[0]).storage -= need[1];
         if (need[0] == "memory")
-            localStorage.setItem("memory", get(need[0]).storage);
+            save_item("memory", get(need[0]).storage);
         if (!is_craftable(need[0]))
             return;
         let x = need[0];
@@ -3278,32 +3278,77 @@ let hide = function() {
     $("float").style.display = "none";
 }
 
+let save_item = function(id, val) {
+    localStorage.setItem(id, val);
+    if (id == "saving")
+        return;
+    dictionary[id] = {
+        value: val,
+        from_save: true,
+    };
+}
+
+let load_item = function(id) {
+    let val = localStorage.getItem(id) ?? dictionary[id];
+    return val;
+}
+
+let to_base64 = function(text) {
+    return btoa(String.fromCharCode(...new TextEncoder().encode(text)));
+}
+  
+let from_base64 = function(text) {
+    return new TextDecoder().decode(Uint8Array.from(atob(text), (c) => c.charCodeAt(0)));
+}
+
+let save_import = function() {
+    let save_str = prompt("请将存档粘贴到此处：");
+    save_item("saving", from_base64(save_str));
+    load();
+    save();
+}
+
+let save_export = function() {
+    save();
+    let save_blob = new Blob([to_base64(JSON.stringify(dictionary))], { type: "text/plain" });
+    let download_link = document.createElement("a");
+    let date = new Date();
+    download_link.download = sprintf("AdCaelum savefile $-$-$ $$$",
+        date.getFullYear(), date.getMonth() + 1, date.getDay(),
+        date.getHours(), date.getMinutes(), date.getSeconds());
+    download_link.href = window.URL.createObjectURL(save_blob);
+    download_link.style.display = "none";
+    document.body.appendChild(download_link);
+
+    download_link.click();
+}
+
 let save = function() {
-    localStorage.setItem("saving", JSON.stringify(dictionary));
-    localStorage.setItem("time", time);
-    localStorage.setItem("ph", physics);
-    localStorage.setItem("ch", chemistry);
-    localStorage.setItem("m", maths);
-    localStorage.setItem("magics", magics);
-    localStorage.setItem("current_nav", current_nav);
-    localStorage.setItem("trader", trader);
-    localStorage.setItem("name_randomized", name_randomized);
-    localStorage.setItem("relationship", relationship);
-    localStorage.setItem("electricity", electricity);
-    localStorage.setItem("pollution", pollution);
-    localStorage.setItem("pollution_guided", pollution_guided);
-    localStorage.setItem("autoc_storage", autoc_storage);
-    localStorage.setItem("autoc_ratio", autoc_ratio);
-    localStorage.setItem("genetics", genetics_upgrades);
-    localStorage.setItem("last_memory", last_memory);
-    localStorage.setItem("memory_elapsed", memory_elapsed);
+    save_item("time", time);
+    save_item("physics", physics);
+    save_item("chemistry", chemistry);
+    save_item("maths", maths);
+    save_item("magics", magics);
+    save_item("current_nav", current_nav);
+    save_item("trader", trader);
+    save_item("name_randomized", name_randomized);
+    save_item("relationship", relationship);
+    save_item("electricity", electricity);
+    save_item("pollution", pollution);
+    save_item("pollution_guided", pollution_guided);
+    save_item("autoc_storage", autoc_storage);
+    save_item("autoc_ratio", autoc_ratio);
+    save_item("genetics_upgrades", genetics_upgrades);
+    save_item("last_memory", last_memory);
+    save_item("memory_elapsed", memory_elapsed);
+    save_item("saving", JSON.stringify(dictionary));
 }
 
 let activate_gene = function() {
-    if (!localStorage.getItem("genetics"))
+    if (!load_item("genetics"))
         return;
     
-        genetics_upgrades = localStorage.getItem("genetics").split(',');
+        genetics_upgrades = load_item("genetics_upgrades").split(',');
     for (let i = 0; i < genetics_upgrades.length; i++) {
         upgrade(genetics_upgrades[i], true);
         get(genetics_upgrades[i]).clicked();
@@ -3311,9 +3356,9 @@ let activate_gene = function() {
 }
 
 let load = function() {
-    let saving = localStorage.getItem("saving");
-    if (!parseInt(localStorage.getItem("memory")))
-        localStorage.setItem("memory", 0);
+    let saving = load_item("saving");
+    if (!parseInt(load_item("memory")))
+        save_item("memory", 0);
     if (!saving || saving == "" || saving == "null") {
         init();
         return false;
@@ -3321,6 +3366,8 @@ let load = function() {
     let dict = JSON.parse(saving);
     let keys = Object.keys(dict);
     for (let i = 0; i < keys.length; i++) {
+        if (dict[keys[i]].from_save)
+            continue;
         let name = keys[i];
         let clicked = dictionary[name].clicked;
         let mutant = dictionary[name].mutant;
@@ -3333,22 +3380,22 @@ let load = function() {
     render_craft();
     render_auto();
 
-    time = parseInt(localStorage.getItem("time"));
-    memory_elapsed = parseInt(localStorage.getItem("memory_elapsed"));
-    last_memory = parseInt(localStorage.getItem("last_memory"));
-    physics = parseInt(localStorage.getItem("ph"));
-    chemistry = parseInt(localStorage.getItem("ch"));
-    maths = parseInt(localStorage.getItem("m"));
-    magics = parseInt(localStorage.getItem("magics"));
-    electricity = parseFloat(localStorage.getItem("electricity"));
-    pollution = parseFloat(localStorage.getItem("pollution"));
-    pollution_guided = parseInt(localStorage.getItem("pollution_guided"));
-    current_nav = localStorage.getItem("current_nav");
-    trader = eval('[' + localStorage.getItem("trader") + ']');
-    relationship = eval('[' + localStorage.getItem("relationship") + ']');
-    name_randomized = localStorage.getItem("name_randomized").split(',');
-    autoc_ratio = parseFloat(localStorage.getItem("autoc_ratio"));
-    autoc_storage = parseFloat(localStorage.getItem("autoc_storage"));
+    time = parseInt(load_item("time"));
+    memory_elapsed = parseInt(load_item("memory_elapsed"));
+    last_memory = parseInt(load_item("last_memory"));
+    physics = parseInt(load_item("ph"));
+    chemistry = parseInt(load_item("ch"));
+    maths = parseInt(load_item("m"));
+    magics = parseInt(load_item("magics"));
+    electricity = parseFloat(load_item("electricity"));
+    pollution = parseFloat(load_item("pollution"));
+    pollution_guided = parseInt(load_item("pollution_guided"));
+    current_nav = load_item("current_nav");
+    trader = eval('[' + load_item("trader") + ']');
+    relationship = eval('[' + load_item("relationship") + ']');
+    name_randomized = load_item("name_randomized").split(',');
+    autoc_ratio = parseFloat(load_item("autoc_ratio"));
+    autoc_storage = parseFloat(load_item("autoc_storage"));
     
     activate_gene();
     change_navigation(current_nav);
@@ -3356,18 +3403,18 @@ let load = function() {
 }
 
 let delete_save = function(x) {
-    localStorage.setItem("saving", "");
-    localStorage.setItem("time", 0);
-    localStorage.setItem("ph", 0);
-    localStorage.setItem("ch", 0);
-    localStorage.setItem("m", 0);
-    localStorage.setItem("current_nav", "bonfire");
-    localStorage.setItem("trader", [0, 0, 0, 0, 0, 0, 0, 0]);
-    localStorage.setItem("name_randomized", country_name);
-    localStorage.setItem("relationship", [1, 1, 1, 1, 1, 1, 1, 1]);
-    localStorage.setItem("electricity", 0);
-    localStorage.setItem("pollution", 0);
-    localStorage.setItem("pollution_guided", 0);
+    save_item("saving", "");
+    save_item("time", 0);
+    save_item("physics", 0);
+    save_item("chemistry", 0);
+    save_item("maths", 0);
+    save_item("current_nav", "bonfire");
+    save_item("trader", [0, 0, 0, 0, 0, 0, 0, 0]);
+    save_item("name_randomized", country_name);
+    save_item("relationship", [1, 1, 1, 1, 1, 1, 1, 1]);
+    save_item("electricity", 0);
+    save_item("pollution", 0);
+    save_item("pollution_guided", 0);
     if (!x)
         location.reload();
 }
@@ -3486,6 +3533,8 @@ let self_reload = function() {
         if (item.challenge) { // it must be a challenge
             push_button_0(name, "challenge");
             $(name).innerHTML = item.name + " (" + item.on + "/" + item.level + ")";
+        } else if (item.from_save) {
+            ; // do nothing
         } else if (item.genetics) { // it must be a genetic upgrade
             push_button_0(name, "gene");
         } else if (item.metaphysics) {
@@ -3741,6 +3790,9 @@ let memory_buff = function() {
     if (get("catastrophe").on == 3)
         ratio = 0;
     ratio += 0.01 * get("memory_study").upgraded;
+    ratio += 0.02 * get("restep").upgraded;
+    ratio += 0.04 * get("anti_flow").upgraded;
+    ratio += 0.06 * get("memory_retrace").upgraded;
     effective *= ratio;
 
     let buff = 1;
@@ -4302,7 +4354,7 @@ let pollute = function() {
 
     let absorption = 0;
     absorption += ashg;
-    absorption += get("fusion_energizer").upgraded * 0.48;
+    absorption += get("fusion_energizer").upgraded * 48;
 
     get("AsHg_collector").collected += ashg / tick_persec;
     pollution += (base - absorption) / tick_persec;
@@ -4672,7 +4724,7 @@ let time_update = function() {
         get("memory").storage += 1 + get("restep").upgraded + 3 * get("anti_flow").upgraded + 5 * get("memory_retrace").upgraded;
         unlock("memory");
         last_memory = time;
-        localStorage.setItem("memory", get("memory").storage);
+        save_item("memory", get("memory").storage);
     }
     $("time").innerHTML = text;
 }
@@ -4703,12 +4755,12 @@ let prestige_memory = function(type) {
 
 let prestige = function(x) {    
     get("memory").storage += prestige_memory(1);
-    localStorage.setItem("memory", get("memory").storage);
+    save_item("memory", get("memory").storage);
 
     let lvl = challenge_level();
-    localStorage.setItem("highest_lvl", Math.max(lvl, localStorage.getItem("highest_lvl", 0)));
+    save_item("highest_lvl", Math.max(lvl, load_item("highest_lvl", 0)));
 
-    localStorage.setItem("genetics", genetics_upgrades);
+    save_item("genetics_upgrades", genetics_upgrades);
     delete_save();
 }
 
@@ -4723,7 +4775,7 @@ let init_0 = function() {
     push_button("endeavour", "challenge");
     change_navigation("challenge");
 
-    if (get("memory").storage = parseInt(localStorage.getItem("memory")))
+    if (get("memory").storage = parseInt(load_item("memory")))
         unlock("memory");
 }
 
@@ -4735,7 +4787,7 @@ let init_1 = function() {
     push_button("collector", "society");
     change_navigation("bonfire");
 
-    if (get("memory").storage = parseInt(localStorage.getItem("memory")))
+    if (get("memory").storage = parseInt(load_item("memory")))
         unlock("memory");
     activate_gene();
     
@@ -4744,7 +4796,7 @@ let init_1 = function() {
 }
 
 let init = function() {
-    if (parseInt(localStorage.getItem("memory"))) {
+    if (parseInt(load_item("memory"))) {
         init_0();
         return;
     }
