@@ -1,0 +1,97 @@
+body { margin:0; }
+.nav {
+    overflow: hidden;
+    text-align: center;
+    background: #F4F4F4;
+}
+.nav li {
+    float: left;
+    padding: 5px;
+    width: 50px;
+    color: #666;
+    list-style: none;
+    border-left: 1px solid #F4F4F4;
+    cursor: pointer;
+}
+.nav li: hover, .selected {
+    background: #ECEBEB;
+    border-left: 1px solid #ECEBEB;
+}
+#float {
+    position: absolute;
+    border: 1px solid #EEE;
+    box-shadow: 0 0 5px #CCC;
+    background: white;
+    z-index: 600;
+}
+#sl {
+    position: absolute;
+    border: 1px solid #EEE;
+    box-shadow: 0 0 5px #CCC;
+    background: white;
+    z-index: 1000;
+}
+#container {
+    position: absolute;
+    display: flex;
+    width: 100%;
+}
+#left {
+    width: 30vw;
+}
+#right {
+    width: 30vw;
+}
+#operations {
+    flex: 1;
+    width: 40vw;
+}
+tr {
+    width: 40vw;
+}
+td {
+    padding-left: 1.5vw;
+    padding-right: 1.5vw;
+    width: 20vw;
+}
+table {
+    border-collapse: collapse;
+}
+tbody#resources tr:nth-child(even) td {
+    background-color: #DCDCDC;
+}
+tbody#crafting tr:nth-child(even) td {
+    background-color: #DCDCDC;
+}
+tbody#resources tr td {
+    padding: 0;
+    width: 6vw;
+    border: none;
+}
+tbody#crafting tr td {
+    padding: 0;
+    width: 4.8vw;
+}
+tbody#crafting tr td button {
+    border: none;
+    background: none;
+    padding: 0;
+    width: 5vw;
+    height: 15px;
+}
+.game-button {
+    width: 15.8vw;
+    height: 50px;
+}
+.game-button-togglable {
+    width: 13vw;
+    height: 50px;
+}
+tbody#content_challenge .game-button-togglable {
+    width: 11vw;
+    height: 50px;
+}
+.toggler {
+    width: 1.4vw;
+    height: 50px;
+}
