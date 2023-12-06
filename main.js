@@ -3822,7 +3822,7 @@ let global_buffs = function() {
         * (1 + memory_buff())
         * (1 + potion_buff())
         * (1 + get("brewery").on * 0.02 * (1 + 0.15 * get("magic_alcohol").upgraded))
-        * (1 + get("highest_lvl") * 0.02)
+        * (1 + (get("highest_lvl") ?? 0) * 0.02)
         * (1 + get("potion_factory").level * get("cathedral").level * 0.002)
         * (1 + get("HE_lab").level * get("university").level * 0.002)
         * (debug ? 1000 : 1);
