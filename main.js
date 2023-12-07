@@ -1720,9 +1720,14 @@ let dictionary = {
         name: '狂欢节',
         level: 0,
         ratio: 1,
+        active: true,
         togglable: false,
         clicked: function() { if (!upgrade('carnival')) return; push_button("brewery", "bonfire"); },
-        show: "肆意挥霍食物可以增强人们的幸福感。<br>稳定度+20%，但是食物的消耗量+400%<br>解锁<b>酿酒厂</b>",
+        show: "肆意挥霍食物可以增强人们的幸福感。<br>稳定度+20%，但是食物的消耗量+400%<br>食物不足时自动取消<br>解锁<b>酿酒厂</b>",
+        mutant: function() {
+            let text = sprintf("<br><font color='red'>你现在的食物产量需要达到$/s才能稳定触发加成</font>", format(food_eaten() * 4));
+            return text;
+        },
         price: [["thought", 110], ["food", 25000]],
         upgraded: false,
         unlocked: false
@@ -3773,7 +3778,7 @@ let stability = function() {
     } else {
         alter -= get("apartment").level * 0.03;
     }
-    if (get("carnival").upgraded)
+    if (get("carnival").active)
         alter += 0.2;
     if (get("sincerity").upgraded)
         alter += get("cathedral").level * 0.01;
@@ -3869,7 +3874,7 @@ let food_eaten = function() {
     if (level == 3) {
         eaten = Math.pow(1.2, person) + 12.51168;
     }
-    eaten *= (1 + 4 * get("carnival").upgraded);
+    eaten *= (1 + 4 * get("carnival").active);
     eaten += 15 * get("brewery").on;
     eaten += 250 * get("potion_factory").level;
     return eaten;
@@ -4456,6 +4461,11 @@ let refresh_resource = function() {
     if (!get("bonfire").unlocked)
         return;
     let productions = production();
+    let is_active = get("carnival").active;
+    get("carnival").active = true;      // let food_eaten() return the correct result
+    get("carnival").active = is_active ? !running_out("food") : (get("food").storage > 0.5 * get("food").capacity || productions.food > food_eaten());
+    if (!get("carnival").upgraded)
+        get("carnival").active = false;
 
     electricity = elec_produce() - elec_usage();
     pollute();
