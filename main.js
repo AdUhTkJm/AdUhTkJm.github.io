@@ -4,9 +4,9 @@ let sprintf = (x, ...args) => args.length ? sprintf(x.replace('$', "" + args[0])
 let divs = [];
 let current_nav = 'bonfire';
 let resources = ['food', 'wood', 'person', 'thought', 'stone', 'mineral', 'fur', 'discovered_area', 'paper',
-    'copper', 'carbon', 'iron', 'glass', 'steel', 'gold', 'titanium', 'uranium', 'REE',
-    'faith', 'insight', 'magic', 'book', 'structure', 'alloy', 'telescope', 'memory',];
-let craftables = ['book', 'structure', 'alloy', 'telescope'];
+    'copper', 'carbon', 'iron', 'glass', 'steel', 'gold', 'titanium', 'uranium', 'REE', 'dark_matter',
+    'faith', 'insight', 'magic', 'book', 'structure', 'alloy', 'telescope', 'superconductor', 'memory',];
+let craftables = ['book', 'structure', 'alloy', 'telescope', 'superconductor'];
 let time = 0;
 let debug = 0;
 let physics = 0;
@@ -17,15 +17,8 @@ let electricity = 0;
 let pollution = 0;
 let pollution_guided = 0;
 let current_buttons = [];
-let elements = [['carbon', 3000], ['iron', 12000], ['gold', 20000], ['uranium', 400000]];
-// trade: not yet implemented
-let countries = [30000, 90000, 170000, 440000, 1280000, 7000000, 16000000, 90000000, 1.78e308];
-let country_name = ['埃奇克斯', '阿利亚', '洛普斯', '乌托比亚', '东方联盟', '诺比尔', '克里木', '纳罕图斯'];
-let country_sell = ['food', 'wood', 'stone', 'paper', 'fur', 'copper', 'book', 'titanium'];
-let country_take = ['stone', 'mineral', 'food', 'carbon', 'paper', 'glass', 'iron', 'steel'];
+let elements = [['carbon', 3000], ['iron', 12000], ['gold', 20000], ['uranium', 250000]];
 let genetics_upgrades = [];
-let trader = [0, 0, 0, 0, 0, 0, 0, 0];
-let relationship = [1, 1, 1, 1, 1, 1, 1, 1];
 let autoc_ratio = 0.95;
 let autoc_storage = 0.8;
 let global_prod = [];
@@ -140,7 +133,14 @@ let dictionary = {
     'REE': {
         name: '稀土元素',
         storage: 0,
-        capacity: 350,
+        capacity: 3500,
+        spatial: true,
+        unlocked: false
+    },
+    'dark_matter': {
+        name: '暗物质',
+        storage: 0,
+        capacity: 2000,
         spatial: true,
         unlocked: false
     },
@@ -434,9 +434,9 @@ let dictionary = {
         show: "构建一个大熔炉，一次可以塞很多东西进去。",
         mutant: function() {
             let text = "";
-            text += sprintf("<br>每秒消耗$以及5矿石，产出0.5玻璃", fuel_text(7.5));
+            text += sprintf("<br>每秒消耗$以及3石头，产出0.5玻璃", fuel_text(7.5));
             if (get("steel").unlocked)
-                text += sprintf("还可以冶炼各类金属");
+                text += sprintf("<br>还可以消耗5矿石，冶炼各类金属");
             return text;
         },
         price: [["iron", 150], ["copper", 250], ["structure", 30]],
@@ -540,7 +540,7 @@ let dictionary = {
         on: 0,
         togglable: false,
         clicked: function() { construct('chemlab'); },
-        show: "与研究所不同，里面摆的仪器都闪闪发光。<br>遗忘的分母增加10%，燃料消耗减少2%",
+        show: "与研究所不同，里面摆的仪器都闪闪发光。<br>遗忘的分母增加5%，燃料消耗减少4%",
         price: [["steel", 350], ["copper", 60], ["glass", 150], ["structure", 30]],
         unlocked: false
     },
@@ -635,15 +635,32 @@ let dictionary = {
         level: 0,
         ratio: 1.26,
         on: 0,
-        togglable: false,
+        togglable: true,
+        spatial: true,
         clicked: function() {
             if (construct('moon_base') && !get("REE").unlocked)
                 unlock("REE"); // REE: rare-earth element
         },
-        show: "巨大的综合设施，支持研究与生活。<br>人数+1<br>每秒产出2稀土元素<br>稀土元素上限+350<br>消耗18电力",
+        show: "巨大的综合设施，支持研究与生活。<br>人数+1<br>每秒产出2稀土元素<br>稀土元素上限+3500<br>消耗18电力",
         price: [["steel", 18000], ["alloy", 1800], ["structure", 6000], ["glass", 5000]],
         unlocked: false
     },
+    'moon_exotic_lab': {
+        name: '外星材料实验室',
+        level: 0,
+        ratio: 1.28,
+        on: 0,
+        togglable: true,
+        spatial: true,
+        clicked: function() {
+            if (construct("moon_exotic_lab") && !get("dark_matter").unlocked)
+                unlock("dark_matter");
+        },
+        show: "研究源于外星的材料。<br>每秒消耗0.3书，产出1暗物质<br>消耗4电力",
+        price: [["steel", 22000], ["copper", 18000], ["iron", 12000], ["titanium", 3000], ["REE", 7000]],
+        unlocked: false
+    },
+
 
     /*
 
@@ -869,7 +886,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('+-*/')) return; maths++; push_button('math_basics', 'thoughts'); },
-        show: "你们理解了简单的运算。<br>思考产量提升30%",
+        show: "<b>数学研究</b><br>你们理解了简单的运算。<br>思考产量提升30%",
         price: [["thought", 200], ["book", 5]],
         upgraded: false,
         unlocked: false
@@ -881,7 +898,7 @@ let dictionary = {
         togglable: false,
         clicked: function() { if (!upgrade('math_basics')) return; maths++; get("book").price[0][1] *= 0.5; get("book").price[1][1] *= 0.5;
             push_button('rationals', 'thoughts'); },
-        show: "你们了解了数学的基础，并且建立了基本的逻辑能力。<br>书的价格降低50%",
+        show: "<b>数学研究</b><br>你们了解了数学的基础，并且建立了基本的逻辑能力。<br>书的价格降低50%",
         price: [["thought", 250], ["book", 10]],
         upgraded: false,
         unlocked: false
@@ -892,7 +909,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('rationals')) return; maths++; push_button("algebra", "thoughts") },
-        show: "从整数过渡到分数的一大步。<br><b>前置研究，无效果</b>",
+        show: "<b>数学研究</b><br>从整数过渡到分数的一大步。<br><b>前置研究，无效果</b>",
         price: [["thought", 280], ["book", 23.5]],
         upgraded: false,
         unlocked: false
@@ -904,7 +921,7 @@ let dictionary = {
         togglable: false,
         clicked: function() { if (!upgrade('algebra')) return; maths++; push_button_if("newton_2", "thoughts", "newton_3");
                                 push_button("functions", "thoughts"); push_button('equations', 'thoughts'); },
-        show: "a与b和的平方大于等于四倍的它们的积。<br>书对思考产出的效果增加15%",
+        show: "<b>数学研究</b><br>a与b和的平方大于等于四倍的它们的积。<br>书对思考产出的效果增加15%",
         price: [["thought", 340], ["book", 30]],
         upgraded: false,
         unlocked: false
@@ -915,7 +932,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('equations')) return; maths++; push_button_if("differential_equations", "thoughts", "calculus"); },
-        show: "什么是x？<br>思考少量提升科学加成。",
+        show: "<b>数学研究</b><br>什么是x？<br>思考少量提升科学加成。",
         price: [["thought", 825], ["book", 214]],
         upgraded: false,
         unlocked: false
@@ -926,7 +943,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('functions')) return; maths++; push_button("epsilon", "thoughts"); push_button("kaiseki_geometry", "thoughts"); },
-        show: "随着变化而变化的量。<br>牛顿第二定律的效果增加50%",
+        show: "<b>数学研究</b><br>随着变化而变化的量。<br>牛顿第二定律的效果增加50%",
         price: [["thought", 575], ["book", 167]],
         upgraded: false,
         unlocked: false
@@ -937,7 +954,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('kaiseki_geometry')) return; maths++; push_button("sin_cos_tan", "thoughts"); },
-        show: "经过60分钟的检查，发现这里少了一个负号。<br>全体建筑的价格增长底数-0.002",
+        show: "<b>数学研究</b><br>经过60分钟的检查，发现这里少了一个负号。<br>全体建筑的价格增长底数-0.002",
         price: [["thought", 1135], ["book", 290]],
         upgraded: false,
         unlocked: false
@@ -948,7 +965,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('sin_cos_tan')) return; maths++; push_button("engineering_maths", "thoughts"); },
-        show: "邻边比上对边是…？<br>工坊为建筑结构提供的合成效率额外+3%",
+        show: "<b>数学研究</b><br>邻边比上对边是…？<br>工坊为建筑结构提供的合成效率额外+3%",
         price: [["thought", 1420], ["book", 330], ["paper", 5000]],
         upgraded: false,
         unlocked: false
@@ -959,7 +976,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('engineering_maths')) return; maths++; },
-        show: "让价格增长的底数减少0.003<br>同时，还能让无数数学学子脑袋变秃。",
+        show: "<b>数学研究</b><br>让价格增长的底数减少0.003<br>同时，还能让无数数学学子脑袋变秃。",
         price: [["thought", 4620], ["book", 700], ["paper", 12000]],
         upgraded: false,
         unlocked: false
@@ -970,7 +987,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('epsilon')) return; maths++; push_button_if("kinetics", "thoughts", "newton_2"); push_button_if("calculus", "thoughts", "kinetics"); },
-        show: "缺乏一个严格定义，但是神奇般地能用。<br>所有思考的成本-1.2%",
+        show: "<b>数学研究</b><br>缺乏一个严格定义，但是神奇般地能用。<br>所有思考的成本-1.2%",
         price: [["thought", 1000], ["book", 260]],
         upgraded: false,
         unlocked: false
@@ -981,7 +998,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('calculus')) return; maths++; push_button_if("differential_equations", "thoughts", "equations"); },
-        show: "逐渐明晰化的定义。<br>跨时代的数学发现，能够对整个科学起到不可估量的作用。<br>牛顿第二定律效果+200%",
+        show: "<b>数学研究</b><br>逐渐明晰化的定义。<br>跨时代的数学发现，能够对整个科学起到不可估量的作用。<br>牛顿第二定律效果+200%",
         price: [["thought", 2000], ["book", 430]],
         upgraded: false,
         unlocked: false
@@ -992,7 +1009,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('differential_equations')) return; maths++; },
-        show: "在各种学科中都有广泛的应用。<br>牛顿第一定律效果+100%",
+        show: "<b>数学研究</b><br>在各种学科中都有广泛的应用。<br>牛顿第一定律效果+100%",
         price: [["thought", 4000], ["book", 1000]],
         upgraded: false,
         unlocked: false
@@ -1011,7 +1028,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('newton_1')) return; physics++; push_button('newton_3', 'thoughts'); },
-        show: "不受力的物体总保持匀速直线运动或静止。<br>每个物理学研究增加0.5%全体资源产出",
+        show: "<b>物理研究</b><br>不受力的物体总保持匀速直线运动或静止。<br>每个物理研究增加0.5%全体资源产出",
         price: [["thought", 300], ["book", 21]],
         upgraded: false,
         unlocked: false
@@ -1023,7 +1040,7 @@ let dictionary = {
         togglable: false,
         clicked: function() { if (!upgrade('newton_3')) return; physics++; push_button_if('newton_2', 'thoughts', 'algebra');
                 push_button('stellars', 'thoughts'); push_button('E_and_P', 'thoughts'); },
-        show: "作用力和反作用力是相等的。<br>总有人问，为什么东西还能动起来呢？<br>全部建筑成本-5%",
+        show: "<b>物理研究</b><br>作用力和反作用力是相等的。<br>总有人问，为什么东西还能动起来呢？<br>全部建筑成本-5%",
         price: [["thought", 350], ["book", 100]],
         upgraded: false,
         unlocked: false
@@ -1034,7 +1051,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('E_and_P')) return; physics++; push_button('heat', 'thoughts'); },
-        show: "本质上是通过牛顿定律规定的物理量。<br>牛顿定律的效果+20%",
+        show: "<b>物理研究</b><br>本质上是通过牛顿定律规定的物理量。<br>牛顿定律的效果+20%",
         price: [["thought", 410], ["book", 70]],
         upgraded: false,
         unlocked: false
@@ -1045,7 +1062,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('heat')) return; physics++; push_button('vehicle', 'thoughts'); },
-        show: "掌握对热量的更好利用方法。<br>火堆的效果变为+8%<br>冶金产出+10%",
+        show: "<b>物理研究</b><br>掌握对热量的更好利用方法。<br>火堆的效果变为+8%<br>冶金产出+10%",
         price: [["thought", 500], ["wood", 5000], ["carbon", 350]],
         upgraded: false,
         unlocked: false
@@ -1056,7 +1073,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('vehicle')) return; physics++; push_button('transportations', 'thoughts'); push_button('electricity', 'thoughts'); },
-        show: "吸气，压缩，做功，排气。<br>所有的燃料消耗-50%",
+        show: "<b>物理研究</b><br>吸气，压缩，做功，排气。<br>所有的燃料消耗-50%",
         price: [["thought", 700], ["alloy", 15], ["steel", 150]],
         upgraded: false,
         unlocked: false
@@ -1089,7 +1106,7 @@ let dictionary = {
             push_button("wind_power_station", "thoughts");
             setguide("解锁电力系统。当供电不足的时候，需要电力的建筑将会停止工作。");
         },
-        show: "第一次观察到电磁感应，并且通过它来发电。<br>解锁电力系统",
+        show: "<b>物理研究</b><br>第一次观察到电磁感应，并且通过它来发电。<br>解锁电力系统",
         price: [["thought", 1200], ["alloy", 50], ["steel", 600], ["book", 70]],
         upgraded: false,
         unlocked: false
@@ -1100,7 +1117,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('factories')) return; push_button('factory', 'bonfire'); },
-        show: "利用电力更好地处理物品。<br>解锁<b>工厂</b>",
+        show: "利用电力更好地处理物品。<br>解锁<b>工厂</b>，能够熔炼<b>钛</b>",
         price: [["thought", 1300], ["alloy", 25]],
         upgraded: false,
         unlocked: false
@@ -1112,7 +1129,7 @@ let dictionary = {
         togglable: false,
         clicked: function() { if (!upgrade('illumination')) return; push_button("theater", "bonfire"); },
         show: "夜晚不再令人惧怕。<br>解锁<b>剧场</b><br>还可以利用多余的电力举办晚间活动，提升稳定度<br>",
-        price: [["thought", 1300], ["paper", 1200]],
+        price: [["thought", 1300], ["paper", 3200]],
         upgraded: false,
         unlocked: false
     },
@@ -1134,7 +1151,7 @@ let dictionary = {
         togglable: false,
         clicked: function() { if (!upgrade('newton_2')) return; physics++; push_button_if('kinetics', 'thoughts', 'epsilon');
                 push_button('research_lab', 'bonfire'); },
-        show: "F=ma<br>每个数学研究增加0.5%全体资源产出",
+        show: "<b>物理研究</b><br>F=ma<br>每个数学研究增加0.5%全体资源产出",
         price: [["thought", 550], ["book", 85]],
         upgraded: false,
         unlocked: false
@@ -1145,7 +1162,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('stellars')) return; physics++; push_button('kepler', 'thoughts'); push_button('optics', 'thoughts'); push_button('observatory', 'bonfire'); },
-        show: "天上的大火球是什么？<br>解锁<b>天文台</b>",
+        show: "<b>物理研究</b><br>天上的大火球是什么？<br>解锁<b>天文台</b>",
         price: [["thought", 800], ["book", 120], ["structure", 80]],
         upgraded: false,
         unlocked: false
@@ -1156,7 +1173,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('kepler')) return; physics++; push_button("gravity", "thoughts"); },
-        show: "摸清楚天体运行的规律。<br>天文台的效果增加80%",
+        show: "<b>物理研究</b><br>摸清楚天体运行的规律。<br>天文台的效果增加80%",
         price: [["thought", 1375], ["book", 175], ["glass", 400]],
         upgraded: false,
         unlocked: false
@@ -1167,7 +1184,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('gravity')) return; physics++; },
-        show: "两个物体之间一定会存在相互吸引的力。<br>牛顿第一定律的效果增加50%",
+        show: "<b>物理研究</b><br>两个物体之间一定会存在相互吸引的力。<br>牛顿第一定律的效果增加50%",
         price: [["thought", 1585], ["book", 420]],
         upgraded: false,
         unlocked: false
@@ -1184,7 +1201,7 @@ let dictionary = {
             push_button("telescope", "crafts");
             push_button("inflection_law", "thoughts");
         },
-        show: "用校正过的望远镜更好地观察天体。<br>解锁<b>望远镜</b>",
+        show: "<b>物理研究</b><br>用校正过的望远镜更好地观察天体。<br>解锁<b>望远镜</b>",
         price: [["thought", 1025], ["book", 255], ["glass", 500]],
         upgraded: false,
         unlocked: false
@@ -1195,7 +1212,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('inflection_law')) return; physics++; },
-        show: "把筷子伸到水面下就像折断了一样。<br>望远镜的效率提高20%",
+        show: "<b>物理研究</b><br>把筷子伸到水面下就像折断了一样。<br>望远镜的效率提高20%",
         price: [["thought", 1370], ["book", 390], ["glass", 600]],
         upgraded: false,
         unlocked: false
@@ -1206,7 +1223,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('kinetics')) return; physics++; push_button('engineering_mechanics', 'thoughts'); push_button_if("calculus", "thoughts", "epsilon"); },
-        show: "小木块在光滑的平面上滑来滑去。<br>牛顿定律的效果翻倍<br>开普勒定律的效果增加50%",
+        show: "<b>物理研究</b><br>小木块在光滑的平面上滑来滑去。<br>牛顿定律的效果翻倍<br>开普勒定律的效果增加50%",
         price: [["thought", 2000], ["book", 605]],
         upgraded: false,
         unlocked: false
@@ -1217,7 +1234,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('engineering_mechanics')) return; physics++; push_button('flight', 'thoughts'); },
-        show: "让价格增长的底数减少0.01<br>同时，还能让无数物理学子脑袋变秃。",
+        show: "<b>物理研究</b><br>让价格增长的底数减少0.01<br>同时，还能让无数物理学子脑袋变秃。",
         price: [["thought", 2275], ["book", 2440]],
         upgraded: false,
         unlocked: false
@@ -1228,7 +1245,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('flight')) return; physics++; push_button_if("rocket", "thoughts", "atomic_fission"); },
-        show: "一双翅膀和一架轻巧的机械。<br>交通枢纽的效果+250%，但燃料消耗+50%",
+        show: "<b>物理研究</b><br>一双翅膀和一架轻巧的机械。<br>交通枢纽的效果+250%，但燃料消耗+50%",
         price: [["thought", 2500], ["book", 4500], ["titanium", 4000], ["structure", 6000]],
         upgraded: false,
         unlocked: false
@@ -1246,7 +1263,7 @@ let dictionary = {
             push_button("heavy_element_collision", "thoughts");
             push_button_if("rocket", "thoughts", "flight");
         },
-        show: "从人类的视野之外爆发出的惊人力量。<br>解锁裂变反应堆，以极高的污染为代价产出大量电力<br>需要<b>铀</b>运作；铀可以通过探索发现",
+        show: "<b>物理研究</b><br>从人类的视野之外爆发出的惊人力量。<br>解锁裂变反应堆，以极高的污染为代价产出大量电力<br>需要<b>铀</b>运作；铀可以通过探索发现",
         price: [["thought", 2825], ["book", 3500], ["alloy", 600], ["titanium", 3000]],
         upgraded: false,
         unlocked: false
@@ -1258,7 +1275,7 @@ let dictionary = {
         togglable: false,
         clicked: function() { if (!upgrade('heavy_element_collision')) return; physics++; },
         show: "利用更重的粒子，大幅提高对撞机的能力。<br>对撞机会少量消耗铀和贵金属，但是效果+100%",
-        price: [["thought", 2975], ["book", 1600], ["gold", 8000], ["uranium", 100]],
+        price: [["thought", 3375], ["book", 1600], ["gold", 8000], ["uranium", 100]],
         upgraded: false,
         unlocked: false
     },
@@ -1275,7 +1292,7 @@ let dictionary = {
             push_button("moon_probe", "thoughts");
         },
         show: "向天空发起第一次挑战。<br>解锁<b>太空</b>面板<br>",
-        price: [["thought", 3500], ["book", 3200], ["titanium", 600], ["structure", 4000], ["steel", 10000], ["uranium", 150]],
+        price: [["thought", 4500], ["book", 3200], ["titanium", 600], ["structure", 4000], ["steel", 10000], ["uranium", 150]],
         upgraded: false,
         unlocked: false
     },
@@ -1297,7 +1314,7 @@ let dictionary = {
             push_button_if("moon_base_research", "thoughts", "artificial_biome");
         },
         show: "向月球发送无人机，探查其上的情况。<br>如果要建立月球基地，必须先构建<b>人造生物圈</b>",
-        price: [["thought", 4000], ["book", 5000], ["titanium", 1500], ["steel", 17500], ["uranium", 225]],
+        price: [["thought", 5000], ["book", 5000], ["titanium", 1500], ["steel", 17500], ["uranium", 225]],
         upgraded: false,
         unlocked: false
     },
@@ -1314,7 +1331,7 @@ let dictionary = {
             push_button("moon_base", "space");
         },
         show: "在月球上建立复杂的综合设施，供研究与生活使用。<br>解锁<b>月球基地</b>",
-        price: [["thought", 4500], ["steel", 16000]],
+        price: [["thought", 5700], ["steel", 16000]],
         upgraded: false,
         unlocked: false
     },
@@ -1327,18 +1344,18 @@ let dictionary = {
             if (!upgrade('moon_back'))
                 return;
             push_button_if("exotic_tech", "thoughts", "education");
-            push_button_if("");
+            push_button_if("ancient_theology", "thoughts", "faithful");
         },
         show: "在月球背面发现了本不应该存在的建筑。",
         mutant: function() {
             let text = "";
             if (get("education").upgraded)
-                text += "<br>有人说这是上古文明留下的遗迹，值得系统研究。<br>解锁进一步的洞察研究";
-            if (get("faith").upgraded)
-                text += "<br>有人说这是神明留下的启示，值得以法术祭祀。<br>解锁进一步的玄学研究";
-            return text; // TODO
+                text += "<br>有人说这是外星留下的遗迹，值得系统研究。<br>解锁进一步的科技研究";
+            if (get("faithful").upgraded)
+                text += "<br>有人说这是神明留下的启示，值得虔诚祭祀。<br>解锁进一步的玄学研究";
+            return text;
         },
-        price: [["thought", 4750], ["discovery", 1000000]],
+        price: [["thought", 6650], ["discovery", 500000]],
         upgraded: false,
         unlocked: false
     },
@@ -1352,11 +1369,43 @@ let dictionary = {
                 return;
         },
         show: "月球富含钛元素。改装月球基地，使它能产生钛。<br>月球基地每秒产出0.2钛",
-        price: [["thought", 4900], ["titanium", 2000], ["REE", 1050]],
+        price: [["thought", 8000], ["titanium", 2000], ["REE", 10500]],
         upgraded: false,
         unlocked: false
     },
-    
+    'exotic_tech': {
+        name: '外星技术',
+        level: 0,
+        ratio: 1,
+        togglable: false,
+        clicked: function() {
+            if (!upgrade('exotic_tech'))
+                return;
+            physics++;
+            push_button("moon_exotic_lab", "space");
+            push_button("superconductivity", "thoughts");
+        },
+        show: "<b>物理研究</b><br>围绕着月球背面的建筑设立实验室。<br>解锁<b>外星科学实验室</b>",
+        price: [["thought", 9000], ["insight", 800], ["REE", 14000]],
+        upgraded: false,
+        unlocked: false
+    },
+    'superconductivity': {
+        name: '超导体',
+        level: 0,
+        ratio: 1,
+        togglable: false,
+        clicked: function() {
+            if (!upgrade('superconductivity'))
+                return;
+            physics++;
+            unlock("superconductor");
+        },
+        show: "<b>物理研究</b><br>通过对外星技术的进一步研究，掌握了常温下的超导体技术。<br>解锁<b>超导体</b>",
+        price: [["thought", 9900], ["insight", 900], ["dark_matter", 2000]],
+        upgraded: false,
+        unlocked: false
+    },
 
     /*
     
@@ -1371,7 +1420,7 @@ let dictionary = {
         togglable: false,
         clicked: function() { if (!upgrade('mineral_research')) return; chemistry++; push_button('metal_forge', 'thoughts'); push_button('basic_materials', 'thoughts');
                                 push_button('elements', 'thoughts');},
-        show: "你发现这块石头与别的不一样。<br>在探索达到一定值的时候，冶炼能够产出新的资源",
+        show: "<b>化学研究</b><br>你发现这块石头与别的不一样。<br>在探索达到一定值的时候，冶炼能够产出新的资源",
         price: [["thought", 200], ["book", 25]],
         upgraded: false,
         unlocked: false
@@ -1382,7 +1431,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('metal_forge')) return; chemistry++; },
-        show: "三块铁和两个木棍可以合成铁斧。<br>猎人、矿工与探险者的产出+15%",
+        show: "<b>化学研究</b><br>三块铁和两个木棍可以合成铁斧。<br>猎人、矿工与探险者的产出+15%",
         price: [["thought", 360], ["copper", 2700], ["iron", 1550]],
         upgraded: false,
         unlocked: false
@@ -1393,7 +1442,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('basic_materials')) return; chemistry++; unlock("glass"); push_button("furnace", "bonfire"); push_button("basic_instruments", "thoughts"); },
-        show: "在熔炉中煅烧沙子会得到一种透明的材料。<br>解锁<b>熔炉</b>与<b>玻璃</b><br>熔炉熔炼玻璃需要消耗石头",
+        show: "<b>化学研究</b><br>在熔炉中煅烧沙子会得到一种透明的材料。<br>解锁<b>熔炉</b>与<b>玻璃</b><br>熔炉熔炼玻璃需要消耗石头",
         price: [["thought", 425], ["book", 55], ["carbon", 50], ["stone", 600]],
         upgraded: false,
         unlocked: false
@@ -1404,7 +1453,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('basic_instruments')) return; chemistry++; push_button('chemlab', 'bonfire'); },
-        show: "玻璃和铁组成的仪器，都长得很像但是用途各不相同。<br>解锁<b>化学实验室</b>",
+        show: "<b>化学研究</b><br>玻璃和铁组成的仪器，都长得很像但是用途各不相同。<br>解锁<b>化学实验室</b>",
         price: [["thought", 600], ["book", 120], ["glass", 125], ["iron", 200]],
         upgraded: false,
         unlocked: false
@@ -1416,7 +1465,7 @@ let dictionary = {
         togglable: false,
         clicked: function() { if (!upgrade('elements')) return; chemistry++; push_button('atoms_and_molecules', 'thoughts'); push_button("pv_nrt", "thoughts");
                                 push_button("element_analysis", "thoughts"); },
-        show: "过去残存的资料显示一共有118种元素。<br>每个化学研究增加0.5%全局产量",
+        show: "<b>化学研究</b><br>过去残存的资料显示一共有118种元素。<br>每个化学研究增加0.5%全局产量",
         price: [["thought", 350], ["book", 65], ["iron", 75]],
         upgraded: false,
         unlocked: false
@@ -1427,7 +1476,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('atoms_and_molecules')) return; chemistry++; },
-        show: "想像极小尺度的样子。<br>有100思考不再计入遗忘",
+        show: "<b>化学研究</b><br>想像极小尺度的样子。<br>有100思考不再计入遗忘",
         price: [["thought", 450], ["book", 110]],
         upgraded: false,
         unlocked: false
@@ -1438,7 +1487,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('pv_nrt')) return; chemistry++; },
-        show: "pV=nRT<br>化学研究也计入物理研究之中",
+        show: "<b>化学研究</b><br>pV=nRT<br>化学研究也计入物理研究之中",
         price: [["thought", 550], ["book", 235]],
         upgraded: false,
         unlocked: false
@@ -1451,7 +1500,7 @@ let dictionary = {
         clicked: function() { if (!upgrade('element_analysis')) return; chemistry++; push_button("AsHg", "thoughts");
                                 push_button("organic", "thoughts"); push_button("periodic_table", "thoughts"); push_button("redox", "thoughts");
                                 if (get("factory").level) unlock("titanium"); },
-        show: "大量的探索与分析，使人们认识到了自然元素中的65种。<br>解锁化学分支的进一步研究",
+        show: "<b>化学研究</b><br>大量的探索与分析，使人们认识到了自然元素中的65种。<br>解锁化学分支的进一步研究",
         price: [["thought", 1350], ["discovered_area", 150000], ["book", 440]],
         upgraded: false,
         unlocked: false
@@ -1462,7 +1511,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('redox')) return; chemistry++; },
-        show: "对已经了解的反应机制的研究，增加了不常见金属的产量。<br>钛的产量+100%",
+        show: "<b>化学研究</b><br>对已经了解的反应机制的研究，增加了不常见金属的产量。<br>钛的产量+100%",
         price: [["thought", 1440], ["copper", 3000], ["iron", 3000], ["carbon", 1000]],
         upgraded: false,
         unlocked: false
@@ -1473,7 +1522,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('periodic_table')) return; chemistry++; push_button("collider", "bonfire"); },
-        show: "不仅归纳了已发现的元素，更为没发现的留出了位置。<br>解锁<b>对撞机</b>，以触碰未知的领域",
+        show: "<b>化学研究</b><br>不仅归纳了已发现的元素，更为没发现的留出了位置。<br>解锁<b>对撞机</b>，以触碰未知的领域",
         price: [["thought", 1500], ["book", 75]],
         upgraded: false,
         unlocked: false
@@ -1484,7 +1533,7 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() { if (!upgrade('organic')) return; chemistry++; push_button_if("GM", "thoughts", "inherit");  },
-        show: "第一次在人体外获得了尿素。<br>每个化学研究额外增加0.1%全局产量",
+        show: "<b>化学研究</b><br>第一次在人体外获得了尿素。<br>每个化学研究额外增加0.1%全局产量",
         price: [["thought", 1800]],
         upgraded: false,
         unlocked: false
@@ -1577,10 +1626,9 @@ let dictionary = {
         clicked: function() {
             if (!upgrade('memory_study')) 
                 return;
-            memory_elapsed -= 1000;
         },
-        show: "研究人脑的运作原理，探寻记忆的奥秘。<br>令额外1%的记忆生效<br>令记忆获取的间隔减少20年",
-        price: [["thought", 1980], ["book", 475]],
+        show: "研究人脑的运作原理，探寻记忆的奥秘。<br>令额外2%的记忆生效",
+        price: [["thought", 1980], ["book", 200], ["memory", 1]],
         upgraded: false,
         unlocked: false
     },
@@ -1942,7 +1990,7 @@ let dictionary = {
             physics++;
             push_button_if("relativity", "thoughts", "two_slit_diffraction");
         },
-        show: "光电效应证明光是一种粒子。<br>教授现在可以略微增加科学加成",
+        show: "<b>物理研究</b><br>光电效应证明光是一种粒子。<br>教授现在可以略微增加科学加成",
         price: [["thought", 1270], ["insight", 100], ["copper", 15000]],
         upgraded: false,
         unlocked: false
@@ -1958,7 +2006,7 @@ let dictionary = {
             physics++;
             push_button_if("relativity", "thoughts", "photoelectric");
         },
-        show: "双缝衍射证明光是一种波。<br>洞察现在可以略微增加科学加成",
+        show: "<b>物理研究</b><br>双缝衍射证明光是一种波。<br>洞察现在可以略微增加科学加成",
         price: [["thought", 1315], ["glass", 8000]],
         upgraded: false,
         unlocked: false
@@ -2287,7 +2335,7 @@ let dictionary = {
                 return;
             magics++;
         },
-        show: "饮用含有魔力的液体，与天地共鸣，看到不该看到的信息。<br><font color='red'>至少需要130%稳定度才能研究</font><br>稳定度-5%<br>遗忘的效果变为25%",
+        show: "饮用含有魔力的液体，与天地共鸣，看到不该看到的信息。<br><font color='red'>至少需要130%稳定度才能研究</font><br>稳定度-3%<br>遗忘的效果变为60%",
         price: [["thought", 1855]],
         upgraded: false,
         unlocked: false
@@ -2639,7 +2687,7 @@ let dictionary = {
         unlocked: false
     },
     'normalized': {
-        name: '统一化',
+        name: '归一化',
         level: 0,
         ratio: 1,
         genetics: 1,
@@ -2689,8 +2737,8 @@ let dictionary = {
         genetics: 1,
         togglable: false,
         clicked: function() { if (!upgrade('scientize')) return; },
-        show: "书的成本-25%。<br>书的效果+100%。",
-        price: [["memory", 600]],
+        show: "书的成本-25%。<br>工匠合成书的效率+50%。",
+        price: [["memory", 400]],
         upgraded: false,
         unlocked: false
     },
@@ -2735,7 +2783,7 @@ let dictionary = {
             if (!upgrade('restep'))
                 return;
             push_button("anti_flow", "gene");
-            memory_elapsed -= 1000;
+            memory_elapsed = 4000;
         },
         show: "有额外2%的记忆生效。<br>记忆获取的间隔减少20年；每次额外获得1记忆。",
         price: [["memory", 150]],
@@ -2752,7 +2800,7 @@ let dictionary = {
             if (!upgrade('anti_flow'))
                 return;
             push_button("memory_retrace", "gene");
-            memory_elapsed -= 1000;
+            memory_elapsed = 3000;
         },
         show: "有额外4%的记忆生效。<br>记忆获取的间隔减少20年；每次额外获得3记忆。",
         price: [["memory", 1500]],
@@ -2768,7 +2816,7 @@ let dictionary = {
         clicked: function() {
             if (!upgrade('memory_retrace'))
                 return;
-            memory_elapsed -= 1000;
+            memory_elapsed = 2000;
         },
         show: "有额外6%的记忆生效。<br>记忆获取的间隔减少20年；每次额外获得5记忆。",
         price: [["memory", 15000]],
@@ -2946,6 +2994,18 @@ let dictionary = {
         craftable: true,
         unlocked: false
     },
+    'superconductor': {
+        name: '超导体',
+        storage: 0,
+        ratio: 1,
+        togglable: false,
+        clicked: function() { craft("superconductor"); },
+        show: "在常温下没有电阻，是曾经科学家们梦寐以求的材料。",
+        price: [["alloy", 80], ["REE", 600], ["dark_matter", 500]],
+        upgraded: false,
+        craftable: true,
+        unlocked: false
+    },
 
     /*
 
@@ -3062,10 +3122,6 @@ let dictionary = {
     },
     'crafts': {
         name: '制作',
-        unlocked: false
-    },
-    'trade': {
-        name: '贸易',
         unlocked: false
     },
     'metaphysics': {
@@ -3218,10 +3274,11 @@ let craft_effect = function(x, is_manual) {
     base += 0.4 * (electricity > 0) * get("AI").on;
 
     if (x == "book") {
-        base += get("university").level * get("professor").on * 0.1;
         base *= (1 + 0.15 * get("collider").on * (1 + get("heavy_element_collision").upgraded));
         if (get("literacy").upgraded)
-            base *= (1 + (is_manual ? 1 : 2));
+            base *= 2;
+        if (!is_manual)
+            base *= 1 + 0.5 * get("literacy").upgraded + 0.5 * get("scientize").upgraded;
     }
     if (x == "structure") {
         if (get("sin_cos_tan").upgraded)
@@ -3369,7 +3426,7 @@ let show_string = function(id) {
         base += "<br>工艺制作加成：" + eff;
     }
     if (id.startsWith("craftsman_")) {
-        let eff = craft_effect(id, false);
+        let eff = craft_effect(id.substring(10), false);
         base += "<br>工艺制作加成：" + percentage(eff - 1, true);
         base += sprintf("<br>实际产量：<font color='green'>$</font>/s", format(eff * 0.0025 * (1 + get("workshop_2").level * 0.1)));
     }
@@ -3385,7 +3442,7 @@ let show = function(self, type) {
     let float = $("float");
     let height = window.innerHeight;
     let x = place.left + place.width + 50 * get(type).togglable;
-    let y = Math.min(height - 200, place.top);
+    let y = Math.min(height - 200, place.top) + window.scrollY;
     float.innerHTML = text;
     float.style.left = x + "px";
     float.style.top = y + "px";
@@ -3454,9 +3511,6 @@ let save = function() {
     save_item("maths", maths);
     save_item("magics", magics);
     save_item("current_nav", current_nav);
-    save_item("trader", trader);
-    save_item("name_randomized", name_randomized);
-    save_item("relationship", relationship);
     save_item("electricity", electricity);
     save_item("pollution", pollution);
     save_item("pollution_guided", pollution_guided);
@@ -3516,9 +3570,6 @@ let load = function() {
     pollution = load_item("pollution");
     pollution_guided = load_item("pollution_guided");
     current_nav = load_item("current_nav");
-    trader = load_item("trader");
-    relationship = load_item("relationship");
-    name_randomized = load_item("name_randomized");
     autoc_ratio = load_item("autoc_ratio");
     autoc_storage = load_item("autoc_storage");
     highest_lvl = load_item("highest_lvl");
@@ -3535,15 +3586,17 @@ let delete_save = function(no_reload) {
     save_item("chemistry", 0);
     save_item("maths", 0);
     save_item("current_nav", "bonfire");
-    save_item("trader", [0, 0, 0, 0, 0, 0, 0, 0]);
-    save_item("name_randomized", country_name);
-    save_item("relationship", [1, 1, 1, 1, 1, 1, 1, 1]);
     save_item("electricity", 0);
     save_item("pollution", 0);
     save_item("pollution_guided", 0);
     save_item("highest_lvl", 0);
     if (!no_reload)
         location.reload();
+}
+
+let hard_reset = function() {
+    localStorage.clear();
+    delete_save();
 }
 
 let change_navigation = function(x) {
@@ -3569,7 +3622,7 @@ let setguide = function(text) {
     guide.innerHTML = text + "<br>" + guide.innerHTML;
 }
 
-let push_button_0 = function(x, place) {
+let push_button_0 = function(x, place, disable_click) {
     let content = $("content_" + place);
     let last_row = content.rows[content.rows.length - 1];
 
@@ -3593,7 +3646,8 @@ let push_button_0 = function(x, place) {
     button.innerHTML = item.name;
     td.appendChild(button);
 
-    $(x).onclick = item.clicked;
+    if (!disable_click)
+        $(x).onclick = item.clicked;
     $(x).onmouseover = show.bind(null, $(x), x);
     $(x).onmouseleave = hide;
 
@@ -3610,15 +3664,17 @@ let push_button_0 = function(x, place) {
         minus.innerHTML = "-";
         td.appendChild(minus);
 
-        $(plus.id).onclick = turn_on.bind(null, x, 1);
-        $(minus.id).onclick = turn_on.bind(null, x, -1);
+        if (!disable_click) {
+            $(plus.id).onclick = turn_on.bind(null, x, 1);
+            $(minus.id).onclick = turn_on.bind(null, x, -1);
+        }
     }
 }
 
 let push_button = function(x, place) {
     if (place == "crafts" && get("craftsman").upgraded)
         push_button_0("craftsman_" + x, "society");
-    push_button_0(x, place);
+    push_button_0(x, place, false);
     
     self_reload();
 }
@@ -3629,7 +3685,7 @@ let push_button_if = function(x, place, condition) {
     push_button(x, place);
 }
 
-// refreshes all the button in all divs
+// refreshes all buttons in all divs
 let self_reload = function() {
     let keys = Object.keys(dictionary);
     let empty = "<tr></tr>"
@@ -3637,6 +3693,7 @@ let self_reload = function() {
     $("nav").innerHTML = "";
     $("content_bonfire").innerHTML = empty;
     $("content_thoughts").innerHTML = empty;
+    $("content_thoughts_completed").innerHTML = empty;
     $("content_society").innerHTML = empty;
     $("content_crafts").innerHTML = empty;
     $("content_challenge").innerHTML = empty;
@@ -3651,32 +3708,36 @@ let self_reload = function() {
         let name = keys[i];
         let item = dictionary[keys[i]];
         if (!item.unlocked) continue;
-        if (item.upgraded) continue;
         if (!item.show) { // it is a resource or a navigation tab
             if (resources.find(function(elem) { return elem == name; }) !== undefined) continue; // it is a resource
             add_navigation(name);
             continue;
         }
-        if (item.challenge) { // it must be a challenge
+        if (item.challenge) {
             push_button_0(name, "challenge");
             $(name).innerHTML = item.name + " (" + item.on + "/" + item.level + ")";
-        } else if (item.genetics) { // it must be a genetic upgrade
+        } else if (item.genetics) {
             push_button_0(name, "gene");
+        } else if (item.spatial) {
+            push_button_0(name, "space");
         } else if (item.metaphysics) {
             push_button_0(name, "metaphysics");
             $(name).innerHTML = building_text(item);
         } else if (item.technology) {
             push_button_0(name, "technology");
             $(name).innerHTML = building_text(item);
-        } else if (is_craftable(name)) { // it must be a crafted resource
+        } else if (is_craftable(name)) {
             push_button_0(name, "crafts");
             $(name).innerHTML = item.name + ": " + format(item.storage);
-        } else if (item.ratio == 1) { // it must be a science research
-            push_button_0(name, "thoughts");
-        } else if (!item.price) { // it must be a worker
+        } else if (item.ratio == 1) {
+            if (!item.upgraded)
+                push_button_0(name, "thoughts");
+            else if ($("show_completed_thoughts").checked)
+                push_button_0(name, "thoughts_completed", false);
+        } else if (!item.price) {
             push_button_0(name, "society");
             $(name).innerHTML = item.name + " (" + item.on + ")";
-        } else { // it must be a building
+        } else {
             push_button_0(name, "bonfire");
             $(name).innerHTML = building_text(item);
         }
@@ -3740,10 +3801,9 @@ let forgetting_ignored = function() {
 
 let forgetting_ratio = function() {
     let deration = 0.0001 * get("book").storage;
-    deration *= 1 + get("scientize").upgraded;
     deration *= 1 + get("basic_science").upgraded;
-    deration = dim(deration, 0.3 * (1 + get("scientize").upgraded));
-    deration *= 1 + 0.05 * get("library").level * get("book_categorization").upgraded * (1 + 7.5 * get("zlibrary").upgraded);
+    deration = dim(deration, 0.3);
+    deration *= 1 + 0.01 * get("library").level * get("book_categorization").upgraded * (1 + 7.5 * get("zlibrary").upgraded);
     deration += 0.0025 * get("research_lab").level;
 
     let deration_max = 0.1 * (1 + 0.6 * get("basic_science").upgraded);
@@ -3759,9 +3819,9 @@ let forgetting_ratio = function() {
 let forgetting_denominator = function() {
     let denominator = 4e5;
     denominator *= (1 + 9 * get("record").upgraded);
-    denominator += 100 * dim(get("book").storage, 10000) * (1 + 9 * get("basic_science").upgraded) * (1 + get("scientize").upgraded);
-    denominator *= (1 + 0.1 * get("chemlab").level);
-    denominator *= (1 + 3 * get("magic_insight").upgraded);
+    denominator += 10 * dim(get("book").storage, 10000) * (1 + 9 * get("basic_science").upgraded);
+    denominator *= (1 + 0.05 * get("chemlab").level);
+    denominator /= (1 - 0.4 * get("magic_insight").upgraded);
     let mult = 1 + Math.max(0, get("memory_loss").on * 0.5 - 0.5);
     return denominator / mult;
 }
@@ -3772,7 +3832,7 @@ let forgetting = function() {
 
 let book_effect = function() {
     let base = 1 + dim(get("book").storage * 0.01, 4);
-    base *= (1 + get("library").level * (1 + 7.5 * get("zlibrary").upgraded) * (0.01 + get("book_categorization").upgraded * 0.01));
+    base *= (1 + 0.002 * get("library").level * (1 + 7.5 * get("zlibrary").upgraded) * (1 + get("book_categorization").upgraded));
     base *= (1 + get("algebra").upgraded * 0.15);
     return base;
 }
@@ -3882,7 +3942,7 @@ let stability = function() {
     if (get("myth").upgraded)
         alter -= 0.1;
     if (get("magic_insight").upgraded)
-        alter -= 0.05;
+        alter -= 0.03;
     return 1 - person * base - pollu + alter;
 }
 
@@ -3930,7 +3990,7 @@ let memory_buff = function() {
         ratio = 0.25;
     if (get("catastrophe").on == 3)
         ratio = 0;
-    ratio += 0.01 * get("memory_study").upgraded;
+    ratio += 0.02 * get("memory_study").upgraded;
     ratio += 0.02 * get("restep").upgraded;
     ratio += 0.04 * get("anti_flow").upgraded;
     ratio += 0.06 * get("memory_retrace").upgraded;
@@ -4134,6 +4194,7 @@ let production = function() {
         prod.gold -= 1.5 * get("collider").on;
         
     prod.titanium = get("factory").on * 0.035 * (1 + get("carbon_usage").upgraded * 0.1) * (1 + get("redox").upgraded);
+    prod.titanium += get("moon_base").on * 0.2 * get("moon_titanium").upgraded;
     prod.titanium += get("alchemy_tower").on * 0.7 * alchemy_tower_buff();
     prod.titanium *= global_buff * crossroaded;
     if (!get("titanium").unlocked)
@@ -4167,11 +4228,12 @@ let production = function() {
     if (!get("techno_explosion").upgraded)
         prod.insight = 0;
 
-    prod.book = 0.0006 * get("library").level * (1 + 7.5 * get("zlibrary").upgraded);
-    if (!get("education").upgraded)
-        prod.book = 0;
+    prod.book = 0.0006 * get("library").level * (1 + 7.5 * get("zlibrary").upgraded) * get("education").upgraded;
+    prod.book -= 0.3 * get("moon_exotic_lab").on;
 
-    prod.REE = 2 * get("moon_base").level;
+    prod.REE = 2 * get("moon_base").on;
+
+    prod.dark_matter = 1 * get("moon_exotic_lab").on;
 
     // craftsman
     for (let i = 0; i < craftables.length; i++) {
@@ -4198,16 +4260,6 @@ let production = function() {
             show_crafts[price[j][0]] = -get("craftsman_" + res).on * price[j][1] * eff;
         }
     }
-
-
-    // calculating trades
-    if (prod.gold < 0 && get("gold").storage <= 1e-8) // cannot use running_out(), or it will be an infinite recursion
-        return prod;
-    for (let i = 0; i < 8; i++) {
-        prod[country_sell[i]] += trader[i] * trader_efficiency(i);
-        prod[country_take[i]] -= trader[i] * trader_efficiency(i);
-        prod.gold -= 1.5 * trader[i];
-    }
     
     global_prod = prod;
     return prod;
@@ -4224,12 +4276,12 @@ let percentage = function(x, clr) {
 let entext = function(x, what, is_percent) {
     if (what == 0)
         return "";
-    return x + "  " + "<font color='" + (what < 0 ? "red" : is_percent ? "green" : "black") + "'>" + (what > 0 ? "+" : "") + (is_percent ? percentage(what) : format(what)) + "</font><br>";
+    return sprintf("<tr class='entext'><td>$</td><td><font color='$'>$$</font></td></tr>", x, what < 0 ? "red" : is_percent ? "green" : "black", what > 0 ? "+" : "", is_percent ? percentage(what) : format(what));
 }
 
 let show_crafts = {};
 let show_production = function(x, self) {
-    let text = "";
+    let text = "<table id='show_prod'>";
     let prod = production();
     if (!prod[x] || prod[x] <= 1e-8 && prod[x] >= -1e-8)
         return;
@@ -4252,7 +4304,7 @@ let show_production = function(x, self) {
         text += entext("空闲", get("person").storage * 0.15);
         if (get("research_fund").upgraded)
             text += entext(get("university").name, get("university").level * 0.25 * (1 + 0.15 * get("collider").on * (1 + get("heavy_element_collision").upgraded)));
-        text += "遗忘  /" + format(forgetting()) + "<br>";
+        text += sprintf("<tr class='entext'><td>遗忘</td><td><font color='red'>/$</font></td></tr>", format(forgetting()));
         if (get("discussion").upgraded)
             text += entext("商讨", get("person").storage * (0.05 + 0.05 * get("record").upgraded) * (1 + 0.1 * get("research_lab").level) * (1 + 2 * get("myth").upgraded), true);
         text += entext(get("observatory").name, get("observatory").level * 1 * (1 + 0.8 * get("kepler").upgraded + 0.4 * get("kinetics").upgraded
@@ -4324,6 +4376,7 @@ let show_production = function(x, self) {
         text += entext(get("factory").name, get("factory").on * 0.035 * metal_buff * crossroaded);
         text += entext("升级", get("redox").upgraded * 1, true);
         text += entext(get("alchemy_tower").name, get("alchemy_tower").on * 0.7 * alchemy_tower_buff() * crossroaded);
+        text += entext(get("moon_base").name, get("moon_base").on * 0.2 * get("moon_titanium").upgraded * metal_buff * crossroaded);
     }
     if (x == "magic") {
         text += entext(get("cathedral").name, get("cathedral").level * 0.001);
@@ -4337,6 +4390,9 @@ let show_production = function(x, self) {
     }
     if (x == "uranium") {
         text += entext(get("mine").name, get("mine").level * 0.0007 * crossroaded);
+    }
+    if (x == "dark_matter") {
+        text += entext(get("moon_exotic_lab").name, get("moon_exotic_lab").on * 1);
     }
     if (is_craftable(x)) {
         text += entext("工匠", get("craftsman_" + x).on * 0.0025);
@@ -4393,29 +4449,17 @@ let show_production = function(x, self) {
     if (x == "insight") {
         text += entext(get("fusion_powerplant").name, -get("fusion_powerplant").on * 0.045);
     }
+    if (x == "book") {
+        text += entext(get("moon_exotic_lab").name, -get("moon_exotic_lab").on * 0.3);
+    }
     if (show_crafts[x]) {
         text += entext("工匠", show_crafts[x]);
-    }
-    if (x == "gold") {
-        if (!running_out("gold")) {
-            let total_trade = 0;
-            for (let i = 0; i < 8; i++) {
-                // total_trade += sell_price(i) * trader[i] * trader_efficiency(i);
-            }
-            text += entext("贸易", total_trade);
-        }
-        text += entext(get("collider").name, get("heavy_element_collision").upgraded * 1.5 * get("collider").on);
     }
     if (x == "uranium") {
         text += entext(get("collider").name, get("heavy_element_collision").upgraded * 0.0025 * get("collider").on);
         text += entext(get("fission_powerplant").name, get("fission_powerplant").on * 0.01);
     }
-    for (let i = 0; i < 8; i++) {
-        if (country_sell[i] == x)
-            text += entext("贸易", trader[i] * trader_efficiency(i));
-        if (country_take[i] == x)
-            text += entext("贸易", -trader[i] * trader_efficiency(i));
-    }
+    text += "</table>";
 
     /*show*/
     let place = self.getBoundingClientRect();
@@ -4454,7 +4498,7 @@ let capacity_calc = function(x) {
         "gold": 100,
         "steel": 150,
         "titanium": 1000,
-        "REE": 350,
+        "REE": 3500,
         "magic": 60,
         "insight": 60,
     };
@@ -4491,7 +4535,7 @@ let capacity_calc = function(x) {
         base *= common_buff;
     }
     if (x == "REE") {
-        base = 350 + 350 * get("moon_base").level;
+        base = 3500 + 3500 * get("moon_base").level;
         base *= common_buff;
     }
     return base;
@@ -4530,7 +4574,7 @@ let autocraft = function() {
         get(id).storage += max * craft_effect(id, true);
     }
     craftables.forEach(function(id) {
-        if (get(id).unlocked && requirement(id).reduce(function(flag, elem) { return flag && able(elem[0]); }, true))
+        if (get(id).unlocked && requirement(id).reduce(function(flag, elem) { return flag || able(elem[0]); }, false))
             craft_all(id);
     });
 }
@@ -4591,7 +4635,7 @@ let refresh_resource = function() {
     let productions = production();
     let is_active = get("carnival").active;
     get("carnival").active = true;      // let food_eaten() return the correct result
-    get("carnival").active = is_active ? !running_out("food") : (get("food").storage > 0.5 * get("food").capacity || productions.food > food_eaten());
+    get("carnival").active = is_active ? !running_out("food") : (get("food").storage > 0.5 * get("food").capacity || productions.food > 0);
     if (!get("carnival").upgraded)
         get("carnival").active = false;
 
@@ -4688,53 +4732,6 @@ let refresh_resource = function() {
         if (!get(id).unlocked)
             continue;
         $(id + "_storage").innerHTML = format(get(id).storage);
-    }
-}
-
-let add_trader = function(x, delta) {
-    let ev = window.event;
-    let mult = 1;
-    if (ev.ctrlKey)
-        mult = 100;
-    else if (ev.altKey)
-        mult = 10;
-    delta *= mult;
-    if (ev.shiftKey)
-        delta = (delta < 0 ? -trader[x] : get("person").storage);
-    let old_on = trader[x], old_ava = get("person").storage;
-    trader[x] += delta;
-    get("person").storage -= delta;
-    if (get("person").storage < 0 || trader[x] < 0 || get("person").storage > get("person").capacity) {
-        get("person").storage = old_ava;
-        trader[x] = old_on;
-    }
-    $("country_" + x).innerHTML = "贸易特使 " + " (" + trader[x] + ")";
-}
-
-let trader_efficiency = function(x) {
-    return 1;
-}
-
-let name_randomized = [];
-let last_discovered = -1;
-let trade_refresh = function() {
-    // TODO: refactor
-    if (current_nav != "trade")
-        return;
-    for (let i = last_discovered + 1; i < countries.length; i++) {
-        if (countries[i] > get("discovered_area").storage)
-            break;
-        let x = "country_" + i;
-        let text =
-        "<div style='border:1px solid'>" + name_randomized[i] + "<br>" +
-        "该国家出售：" + get(country_sell[i]).name + "<br>" +
-        "该国家购买：" + get(country_take[i]).name + "<br>" +
-        "贸易特使效率：每人每秒交易" + trader_efficiency(i) + "单位物资，但消耗1.5贵金属<br>" +
-        "<button id=\"" + x + "\"class='button-border' style='width:250;height:50' onclick='add_trader(" + i + ", 1)' onmouseleave='hide()'>" + "贸易特使 (" + trader[i] + ")</button>" +
-        '<button id="' + x + '" class="button-border" style="width:25;height:50" onclick="add_trader(' + i + ', 1)">+</button><button id="' + x + '-" class="button-border" style="width:25;height:50" onclick="add_trader(' + i + ', -1);">-</button><br>' +
-        "</div>";
-        $("trade").innerHTML += text;
-        last_discovered = i;
     }
 }
 
@@ -4848,7 +4845,6 @@ let unlocks = function() {
     if (get("gold").unlocked && !get("blast_furnace").unlocked) {
         push_button("blast_furnace", "bonfire");
         push_button("bank", "bonfire");
-        // add_navigation("trade");
         setguide("发现贵金属，可以作为货币使用。这将促进大学或是教堂的兴建。");
     }
     if (get("uranium").unlocked && !get("uranium_extraction").unlocked) {
@@ -4896,7 +4892,6 @@ let refresh = function() {
     refresh_resource();
     refresh_button();
     unlocks();
-    trade_refresh();
     statistics_refresh();
     time_update();
 
@@ -4930,6 +4925,8 @@ let prestige = function(x) {
 }
 
 let init_0 = function() {
+    memory_elapsed = 5000;
+
     add_navigation("challenge");
     push_button("memory_loss", "challenge");
     push_button("catastrophe", "challenge");
@@ -4957,7 +4954,6 @@ let init_1 = function() {
         unlock("memory");
     activate_gene();
     
-    name_randomized = country_name;
     setguide("你们是末世之后的几个未受教育的年轻人，试图在这片焦土之上从零开始重建文明。");
 }
 
