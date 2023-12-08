@@ -3541,6 +3541,10 @@ let save_item = function(id, val) {
 }
 
 let load_item = function(id) {
+    if (localStorage.getItem(id) == null) {
+        console.log("item not loaded: ", id);
+        return null;
+    }
     return JSON.parse(localStorage.getItem(id)).value ?? dictionary[id];
 }
 
@@ -3575,7 +3579,7 @@ let save_export = function() {
     let save_blob = new Blob([to_base64(JSON.stringify(Object.assign(temp_config, dictionary)))], { type: "text/plain" });
     let download_link = document.createElement("a");
     let date = new Date();
-    download_link.download = sprintf("AdCaelum savefile $-$-$ $$$.txt",
+    download_link.download  = sprintf("AdCaelum savefile $-$-$ $-$-$.txt",
         date.getFullYear(), date.getMonth() + 1, date.getDay(),
         date.getHours(), date.getMinutes(), date.getSeconds());
     download_link.href = window.URL.createObjectURL(save_blob);
@@ -3626,8 +3630,13 @@ let assign = function(id, val) {
 
 let load = function() {
     let saving = load_item("saving");
-    if (!saving) {
+    if (load_item("to_prestige") == 1) {
         init_1();
+        save_item("to_prestige", 0);
+        return true;
+    }
+    if (!saving) {
+        init_0();
         return false;
     }
     let dict = JSON.parse(saving);
@@ -3640,7 +3649,7 @@ let load = function() {
     render_craft();
     render_auto();
 
-    /*
+    
     time = load_item("time");
     memory_elapsed = load_item("memory_elapsed");
     last_memory = load_item("last_memory");
@@ -3655,7 +3664,6 @@ let load = function() {
     autoc_ratio = load_item("autoc_ratio");
     autoc_storage = load_item("autoc_storage");
     highest_lvl = load_item("highest_lvl");
-    */
     
     activate_gene();
     change_navigation(current_nav);
@@ -4865,7 +4873,7 @@ let statistics_refresh = function() {
     text += sprintf("数学：+$（研究了$个科技）<br>", percentage(newton_2(), true), maths + get("atomic_clock").level * get("inspiration").upgraded);
     text += sprintf("化学：+$（研究了$个科技）<br>", percentage(element_buff(), true), chemistry + get("atomic_clock").level * get("inspiration").upgraded);
     if (get("arcane").upgraded)
-        text += sprintf("魔法学：$（研究了$个科技）<br>", percentage(magic_buff(), true), magics);
+        text += sprintf("魔法学：+$（研究了$个科技）<br>", percentage(magic_buff(), true), magics);
     if (get("equations").upgraded)
         text += sprintf("当前思考总量使科学加成提升了$<br>", percentage(Math.log(get("thought").storage + 1) / Math.log(2) / 100, true));
     if (get("fundamental").upgraded)
@@ -5043,12 +5051,14 @@ let prestige = function(x) {
     save_item("highest_lvl", Math.max(lvl, load_item("highest_lvl") ?? 0));
 
     save_item("genetics_upgrades", genetics_upgrades);
-    delete_save();
+    delete_save(true);
+    save_item("to_prestige", 1);
     save_disabled = false;
+    location.reload();
 }
 
-let init_0 = function() {
-    memory_elapsed = 5000;
+let init_1 = function() {
+    memory_elapsed = 5000 - 1000 * get("restep").upgraded - 1000 * get("anti_flow").upgraded - 1000 * get("memory_retrace").upgraded;
 
     add_navigation("challenge");
     push_button("memory_loss", "challenge");
@@ -5065,7 +5075,7 @@ let init_0 = function() {
         unlock("memory");
 }
 
-let init_1 = function() {
+let init_0 = function() {
     add_navigation("bonfire");
     add_navigation("society");
     add_navigation("statistics");
