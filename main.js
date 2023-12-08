@@ -1,33 +1,35 @@
-let tick_persec = 5;
-let $ = function(x) { return document.getElementById(x); }
-let sprintf = (x, ...args) => args.length ? sprintf(x.replace('$', "" + args[0]), ...args.slice(1)) : x;
-let divs = [];
-let current_nav = 'bonfire';
-let resources = ['food', 'wood', 'person', 'thought', 'stone', 'mineral', 'fur', 'discovered_area', 'paper',
+// Use var here to view these as attributes of globalThis
+// This is to facilitate save_import()
+
+var tick_persec = 5;
+var $ = function(x) { return document.getElementById(x); }
+var sprintf = (x, ...args) => args.length ? sprintf(x.replace('$', "" + args[0]), ...args.slice(1)) : x;
+var divs = [];
+var current_nav = 'bonfire';
+var resources = ['food', 'wood', 'person', 'thought', 'stone', 'mineral', 'fur', 'discovered_area', 'paper',
     'copper', 'carbon', 'iron', 'glass', 'steel', 'gold', 'titanium', 'uranium', 'faith', 'insight', 'magic',
     'REE', 'dark_matter',
     'book', 'structure', 'alloy', 'telescope', 'supply', 'superconductor',
     'memory',];
-let craftables = ['book', 'structure', 'alloy', 'telescope', 'superconductor'];
-let time = 0;
-let debug = 0;
-let physics = 0;
-let chemistry = 0;
-let maths = 0;
-let magics = 0;
-let electricity = 0;
-let pollution = 0;
-let pollution_guided = 0;
-let current_buttons = [];
-let elements = [['carbon', 3000], ['iron', 12000], ['gold', 20000], ['uranium', 250000]];
-let genetics_upgrades = [];
-let autoc_ratio = 0.95;
-let autoc_storage = 0.8;
-let global_prod = [];
-let highest_lvl = 0;
-let last_memory = 0;
-let memory_elapsed = 5000;
-let config = {};
+var craftables = ['book', 'structure', 'alloy', 'telescope', 'superconductor'];
+var time = 0;
+var debug = 0;
+var physics = 0;
+var chemistry = 0;
+var maths = 0;
+var magics = 0;
+var electricity = 0;
+var pollution = 0;
+var pollution_guided = 0;
+var current_buttons = [];
+var elements = [['carbon', 3000], ['iron', 12000], ['gold', 20000], ['uranium', 250000]];
+var genetics_upgrades = [];
+var autoc_ratio = 0.95;
+var autoc_storage = 0.8;
+var global_prod = [];
+var highest_lvl = 0;
+var last_memory = 0;
+var memory_elapsed = 5000;
 
 let dictionary = {
     'food': {
@@ -3638,6 +3640,7 @@ let load = function() {
     render_craft();
     render_auto();
 
+    /*
     time = load_item("time");
     memory_elapsed = load_item("memory_elapsed");
     last_memory = load_item("last_memory");
@@ -3652,6 +3655,7 @@ let load = function() {
     autoc_ratio = load_item("autoc_ratio");
     autoc_storage = load_item("autoc_storage");
     highest_lvl = load_item("highest_lvl");
+    */
     
     activate_gene();
     change_navigation(current_nav);
@@ -3674,6 +3678,9 @@ let delete_save = function(no_reload) {
 }
 
 let hard_reset = function() {
+    let text = prompt("硬重置会永久删除你的存档！如果一定要这么做，请输入'Yes'。");
+    if (!(text == "Yes" || text == "yes" || text == "'Yes'" || text == "Y" || text == "y"))
+        return;
     localStorage.clear();
     save_item("memory", 0);
     save_item("genetics_upgrades", []);

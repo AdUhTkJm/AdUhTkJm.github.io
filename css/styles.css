@@ -50,6 +50,12 @@ body { margin:0; }
     padding: 0;
     margin: 0;
 }
+#version {
+    padding: 1vw;
+}
+#time {
+    padding: 1vw;
+}
 tr {
     width: 40vw;
 }
