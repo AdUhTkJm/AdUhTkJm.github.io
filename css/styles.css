@@ -95,9 +95,9 @@ tr.entext {
     width: 11vw;
 }
 tr.entext td {
-    width: 4vw;
-    padding-left: 1vw;
-    padding-right: 1vw;
+    width: 5vw;
+    padding-left: 0.5vw;
+    padding-right: 0.5vw;
 }
 tbody#content_challenge .game-button-togglable {
     width: 11vw;
