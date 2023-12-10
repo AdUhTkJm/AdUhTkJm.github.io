@@ -758,6 +758,7 @@ let dictionary = {
         togglable: false,
         clicked: function() {
             if (!upgrade('craftsman')) return;
+            $("craftsman_show").style = "display: block";
             for (let i = 0; i < craftables.length; i++) {
                 let res = craftables[i];
                 if (get(res).unlocked && !get("craftsman_" + res).unlocked) {
@@ -1951,6 +1952,7 @@ let dictionary = {
             crbook.unlocked = false;
             crbook.on = 0;
             delete_button("craftsman_book", "society");
+            get("craftsman_book").unlocked = false;
             unlock("professor");
         },
         show: "<b>与信仰互斥</b><br>解锁教授与大学，取代工匠合成书<br>图书馆开始缓慢产出书",
@@ -3099,7 +3101,7 @@ let dictionary = {
         challenge: true,
         togglable: true,
         clicked: function() {},
-        show: "上一场文明毁灭得过于突然，他们留下的记忆语焉不详。<br>1级：只有25%的记忆生效<br>2级：记忆的效果只有25%<br>3级：记忆不再生效",
+        show: "上一场文明毁灭得过于突然，他们留下的记忆语焉不详。<br>1级：生效的记忆数量-75%<br>2级：记忆的效果只有25%<br>3级：在2级的基础上，记忆的生效数量-100%",
         unlocked: false
     },
     'memory_loss': {
@@ -3122,7 +3124,7 @@ let dictionary = {
         togglable: true,
         clicked: function() {},
         show: "在笨拙的操作中，制作原料常常有惊人的损耗。<br>1级：合成效率-15%<br>2级：合成效率-30%，成本增加25%<br>" +
-            "3级：合成效率-45%，基础成本+50%，工匠效率-50%",
+            "3级：合成效率-45%，基础成本+50%",
         unlocked: false
     },
     'gluttony': {
@@ -3366,7 +3368,6 @@ let craft_effect = function(x, is_manual) {
 
     base *= (1 + (get("craftive").upgraded ? (is_manual ? 0.1 : 1) : 0));
     base *= (1 + (get("magic_workshop").upgraded ? (is_manual ? 0.1 : 1) : 0));
-    base *= ((get("clumsy").on == 3 && !is_manual) ? 0.5 : 1);
     base *= (1 - 0.15 * get("clumsy").on);
     if (!is_manual) {
         base *= (1 + global_buffs() * 0.1);
@@ -4099,7 +4100,7 @@ let memory_buff = function() {
     effective *= ratio;
 
     let buff = 1;
-    if (get("catastrophe").on == 2)
+    if (get("catastrophe").on >= 2)
         buff *= 0.25;
     if (get("anthropology").upgraded)
         buff *= 1 + Math.log(1 + get("thought").storage / 100) / 100 * get("university").level;
@@ -4355,15 +4356,15 @@ let production = function() {
             }
         if (!tag) continue;
         let eff = 0.0025 * (1 + get("workshop_2").level * 0.1) * (1 + get("magic_workshop").upgraded);
-        let person = get("craftsman_" + res).on;
+        let person = get("craftsman_" + res);
         if (res == "book" && get("education").upgraded) {
             eff = 0.025 * (1 + get("workshop_2").level * 0.1 + get("university").level * 0.1) * (1 + get("magic_workshop").upgraded);
-            person = get("professor").on;
+            person = get("professor");
         }
-        prod[res] += eff * person * craft_effect(res, false);
+        prod[res] += eff * person.on * craft_effect(res, false);
         for (let j = 0; j < price.length; j++) {
-            prod[price[j][0]] -= get("craftsman_" + res).on * price[j][1] * eff;
-            show_crafts[price[j][0]] = -get("craftsman_" + res).on * price[j][1] * eff;
+            prod[price[j][0]] -= person.on * price[j][1] * eff;
+            show_crafts[price[j][0]] = -person.on * price[j][1] * eff;
         }
     }
     
@@ -4685,7 +4686,7 @@ let autocraft = function() {
         get(id).storage += max * craft_effect(id, true);
     }
     craftables.forEach(function(id) {
-        if (get(id).unlocked && requirement(id).reduce(function(flag, elem) { return flag || able(elem[0]); }, false))
+        if (get(id).unlocked && requirement(id).reduce(function(flag, elem) { return flag && able(elem[0]); }, true))
             craft_all(id);
     });
 }
