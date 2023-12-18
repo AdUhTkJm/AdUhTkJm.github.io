@@ -92,7 +92,7 @@ let dictionary = {
         capacity: 500,
         unlocked: false
     },
-    'carbon': {
+    'carbon': { // TODO: 矿井升级
         name: '煤炭',
         storage: 0,
         capacity: 250,
@@ -511,7 +511,7 @@ let dictionary = {
             let doubled = get("heavy_element_collision").upgraded;
             let base = sprintf("<br>科学加成提高$%", doubled ? 3 : 1.5);
             if (doubled)
-                base += "<br>每秒消耗15贵金属与0.25铀";
+                base += "<br>每秒消耗15贵金属与0.125铀";
             return base + "<br>消耗15电力";
         },
         price: [["copper", 13500], ["titanium", 1800], ["structure", 2000], ["book", 1000]],
@@ -741,7 +741,7 @@ let dictionary = {
                 push_button("mars_site_research", "thoughts");
             }
         },
-        show: "",
+        show: "重塑火星的大气与温度，让其与地球一致。",
         mutant: function() {
             let text = "";
             let self = get("mars_reform_device");
@@ -750,7 +750,6 @@ let dictionary = {
                 text += "<br>火星已经完全重塑。<br>可供12人入住";
             } else {
                 text += sprintf("<font color='red'>还需要建成$%</font><br>构建1%火星重塑器。", 100 - self.level);
-                text += "<br>重塑火星的大气与温度，让其与地球一致。<br>";
             }
             return text;
         },
@@ -1484,6 +1483,7 @@ let dictionary = {
             push_button_if("moon_base_research", "thoughts", "artificial_biome");
             unlock("astronaut");
             unlock("supply");
+            unlock("craftsman_supply");
         },
         show: "向月球发送无人机，探查其上的情况。<br>如果要建立月球基地，必须先构建<b>人造生物圈</b>",
         price: [["thought", 6500], ["book", 50000], ["titanium", 1500], ["steel", 17500], ["uranium", 225]],
@@ -1575,7 +1575,7 @@ let dictionary = {
             push_button("space_pollution", "thoughts");
         },
         show: "<b>物理研究</b><br>围绕着月球背面的建筑设立实验室。<br>解锁<b>外星材料实验室</b>",
-        price: [["thought", 10800], ["insight", 800], ["REE", 14000]],
+        price: [["thought", 10800], ["REE", 14000]],
         upgraded: false,
         unlocked: false
     },
@@ -1589,9 +1589,10 @@ let dictionary = {
                 return;
             physics++;
             unlock("superconductor");
+            unlock("craftsman_superconductor");
         },
         show: "<b>物理研究</b><br>通过对外星技术的进一步研究，掌握了常温下的超导体技术。<br>解锁<b>超导体</b>",
-        price: [["thought", 12600], ["insight", 900], ["dark_matter", 2000]],
+        price: [["thought", 12600], ["dark_matter", 12000]],
         upgraded: false,
         unlocked: false
     },
@@ -1606,7 +1607,7 @@ let dictionary = {
             push_button("moon_pollution_tube", "space");
         },
         show: "将污染排放入太空。解锁<b>地外污染管道</b>",
-        price: [["thought", 13000], ["insight", 1200], ["book", 2000000]],
+        price: [["thought", 13000], ["book", 2000000]],
         upgraded: false,
         unlocked: false
     },
@@ -2829,14 +2830,13 @@ let dictionary = {
                 push_button("LHC_consumption", "thoughts");
             }
         },
-        show: "",
+        show: "每秒产出0.0035超重元素。<br>",
         mutant: function() {
             let text = "";
             if (get("LHC").level >= 25)
-                text += "<font color='red'>已建成，不需要继续建造</color>";
+                text += "<font color='green'>已建成</color>";
             else
-                text += "<font color='red'>只有建成25段之后才有效果</color>";
-            text += "<br>每秒产出0.0035超重元素";
+                text += sprintf("<font color='red'>还需要建造$段</color>", 25 - get("LHC").level);
             return text;
         },
         price: [["insight", 25], ["titanium", 1500], ["steel", 18000], ["alloy", 875], ["structure", 3000], ["gold", 7200]],
@@ -3325,7 +3325,7 @@ let dictionary = {
         togglable: false,
         clicked: function() { craft("alloy"); },
         show: "以铁为主的合金。比建筑结构更加坚固，因此使用更加频繁。",
-        price: [["iron", 200], ["copper", 300], ["carbon", 350]],
+        price: [["iron", 200], ["copper", 300], ["carbon", 225]],
         upgraded: false,
         craftable: true,
         unlocked: false
@@ -4594,9 +4594,9 @@ let production = function() {
     prod.uranium = get("mine").level * 0.0007;
     prod.uranium *= (1 + get("AI").on * 0.1);
     prod.uranium *= global_buff * crossroaded;
-    prod.uranium -= 0.01 * get("fission_powerplant").on;
+    prod.uranium -= 0.01 * get("fission_powerplant").on * fuel_ratio();
     if (get("heavy_element_collision").upgraded)
-        prod.uranium -= 0.25 * get("collider").on;
+        prod.uranium -= 0.125 * get("collider").on * fuel_ratio();
     if (!get("uranium_extraction").upgraded)
         prod.uranium = 0;
     
@@ -4866,8 +4866,8 @@ let show_production = function(x, self) {
         text += entext("工匠", show_crafts[x]);
     }
     if (x == "uranium") {
-        text += entext(get("collider").name, -get("heavy_element_collision").upgraded * 0.25 * get("collider").on);
-        text += entext(get("fission_powerplant").name, -get("fission_powerplant").on * 0.1);
+        text += entext(get("collider").name, -get("heavy_element_collision").upgraded * 0.125 * get("collider").on * fuel_ratio());
+        text += entext(get("fission_powerplant").name, -get("fission_powerplant").on * 0.1 * fuel_ratio());
     }
     text += "</table>";
 
