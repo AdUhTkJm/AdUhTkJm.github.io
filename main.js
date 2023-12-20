@@ -4111,7 +4111,7 @@ let hide = function() {
 }
 
 let save_item = function(id, val) {
-    localStorage.setItem(id, JSON.stringify({ value: val }));
+    localStorage.setItem(id, JSON.stringify( { value: val }));
 }
 
 let load_item = function(id) {
@@ -4119,7 +4119,7 @@ let load_item = function(id) {
         console.log("item not loaded: ", id);
         return null;
     }
-    return JSON.parse(localStorage.getItem(id)).value ?? dictionary[id];
+    return JSON.parse(localStorage.getItem(id)).value;
 }
 
 let to_base64 = function(text) {
@@ -4262,6 +4262,9 @@ let delete_save = function(no_reload) {
     save_item("electricity", 0);
     save_item("pollution", 0);
     save_item("pollution_guided", 0);
+    save_item("memory", get("memory").storage);
+    save_item("genetics_upgrades", genetics_upgrades);
+    save_item("highest_lvl", highest_lvl);
     if (!no_reload)
         location.reload();
 }
