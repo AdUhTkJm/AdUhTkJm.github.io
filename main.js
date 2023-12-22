@@ -8,9 +8,9 @@ var divs = [];
 var current_nav = 'bonfire';
 var resources = ['food', 'wood', 'person', 'thought', 'stone', 'mineral', 'fur', 'discovered_area', 'paper',
     'copper', 'carbon', 'iron', 'glass', 'steel', 'gold', 'titanium', 'uranium', 'faith', 'insight', 'magic',
-    'REE', 'dark_matter', 'element_126', 'energy_crystal', 'ancient_bio',
+    'REE', 'dark_matter', 'element_126', 'energy_crystal', 'unobtainium', 'ancient_bio',
     'book', 'structure', 'alloy', 'telescope', 'supply', 'superconductor',
-    'memory',];
+    'memory', 'history', 'relic'];
 var craftables = ['book', 'structure', 'alloy', 'telescope', 'supply', 'superconductor'];
 var time = 0;
 var debug = 0;
@@ -162,6 +162,13 @@ let dictionary = {
         spatial: true,
         unlocked: false
     },
+    'unobtainium': {
+        name: '难得素',
+        storage: 0,
+        capacity: 350,
+        spatial: true,
+        unlocked: false
+    },
     'ancient_bio': {
         name: '古代生物',
         storage: 0,
@@ -194,7 +201,20 @@ let dictionary = {
         special: true,
         unlocked: false
     },
-    
+    'history': {
+        name: '历史',
+        storage: 0,
+        capacity: -1,
+        special: true,
+        unlocked: false
+    },
+    'relic': {
+        name: '遗物',
+        storage: 0,
+        capacity: -1,
+        special: true,
+        unlocked: false
+    },
 
 
     'fire': {
@@ -562,7 +582,7 @@ let dictionary = {
         clicked: function() { if (!construct('brewery')) return; },
         show: "把吃不完的食物都酿成酒。",
         mutant: function() {
-            let text = sprintf("<br>每秒消耗15食物，为全局产量提供$%加成", get("magic_alcohol").upgraded ? 6 : 2);
+            let text = sprintf("<br>为全局产量提供$%加成，但是食物产量-$%", get("magic_alcohol").upgraded ? 3 : 1.5, get("magic_alcohol").upgraded ? 6 : 3);
             return text;
         },
         price: [["food", 2500], ["copper", 700], ["structure", 18]],
@@ -671,7 +691,7 @@ let dictionary = {
         ratio: 1.26,
         on: 0,
         togglable: true,
-        spatial: true,
+        spatial: "moon",
         require: 3,
         clicked: function() {
             if (construct('moon_base') && !get("REE").unlocked)
@@ -691,12 +711,14 @@ let dictionary = {
         ratio: 1.28,
         on: 0,
         togglable: true,
-        spatial: true,
+        spatial: "moon",
         require: 0,
         clicked: function() {
-            if (!construct('moon_living_quarter'))
+            let num = construct('moon_living_quarter');
+            if (!num)
                 return;
-            get("person").storage += 2;
+            get("person").storage += 2 * num;
+            get("person").capacity += 2 * num;
         },
         show: "两个人在月球上定居。<br>食物运输损耗极其严重，每秒需要额外消耗0.01补给",
         price: [["mineral", 64000], ["carbon", 8000], ["REE", 3000], ["food", 500000]],
@@ -708,7 +730,7 @@ let dictionary = {
         ratio: 1.28,
         on: 0,
         togglable: true,
-        spatial: true,
+        spatial: "moon",
         require: 2,
         clicked: function() {
             if (construct("moon_exotic_lab") && !get("dark_matter").unlocked)
@@ -724,7 +746,7 @@ let dictionary = {
         ratio: 1.28,
         on: 0,
         togglable: false,
-        spatial: true,
+        spatial: "moon",
         require: 0,
         clicked: function() {
             construct("moon_pollution_tube");
@@ -740,14 +762,13 @@ let dictionary = {
         on: 0,
         ratio: 1,
         togglable: false,
-        spatial: true,
+        spatial: "moon",
         clicked: function() {
             if (get("LHC").level >= 25)
                 return;
             let success = construct("LHC");
             if (success && get("LHC").level >= 25) {
                 push_button("LHC_consumption", "thoughts");
-                get("LHC").price = [];
             }
         },
         show: "每秒产出0.0035超重原子。<br>",
@@ -769,15 +790,14 @@ let dictionary = {
         ratio: 1,
         on: 0,
         togglable: false,
-        spatial: true,
+        spatial: "mars",
         require: 0,
         clicked: function() {
             if (get("mars_reform_device").level >= 100)
                 return;
             let success = construct("mars_reform_device");
             if (success && get("mars_reform_device").level >= 100) {
-                get("person").storage += 12;
-                get("mars_reform_device").price = [];
+                get("person").storage += 16;
                 push_button("mars_shipment", "thoughts");
                 push_button("mars_site_research", "thoughts");
                 setguide("火星已经可以入住。对于如何开发火星，人们涌现出了许多思考。");
@@ -789,7 +809,7 @@ let dictionary = {
             let self = get("mars_reform_device");
             if (self.level == 100) {
                 text += "<font color='green'>已建成</font>";
-                text += "<br>火星已经完全重塑。<br>可供12人入住";
+                text += "<br>火星已经完全重塑。<br>可供16人入住";
             } else {
                 text += sprintf("<font color='red'>还需要建成$%</font><br>构建1%火星重塑器。", 100 - self.level);
             }
@@ -804,7 +824,7 @@ let dictionary = {
         ratio: 1.28,
         on: 0,
         togglable: false,
-        spatial: true,
+        spatial: "mars",
         require: 0,
         clicked: function() {
             construct("mars_cargo");
@@ -819,13 +839,13 @@ let dictionary = {
         ratio: 1.31,
         on: 0,
         togglable: true,
-        spatial: true,
+        spatial: "mars",
         require: 2,
         clicked: function() {
             if (!construct("mars_site"))
                 return;
             if (!get("relics_station").unlocked) {
-                push_button("relics_station", "space");
+                push_button("relics_station", "space_mars");
             }
         },
         show: "提取古代火星生物的DNA，并尝试克隆它们。<br>每秒产出0.001古生物<br><font color='red'>这个产出无法被大部分加成影响</font><br>需要2名宇航员<br>消耗16电力",
@@ -838,7 +858,7 @@ let dictionary = {
         ratio: 1.45,
         on: 0,
         togglable: false,
-        spatial: true,
+        spatial: "mars",
         require: 0,
         clicked: function() {
             construct("relics_station");
@@ -853,18 +873,22 @@ let dictionary = {
         ratio: 1.26,
         on: 0,
         togglable: true,
-        spatial: true,
+        spatial: "mercury",
         require: 1,
         clicked: function() {
             construct("mercury_station");
         },
-        show: "利用水星的高温，进行各种制造活动。<br>需要1名宇航员",
+        show: "利用水星的高温，进行各种制造活动。",
         mutant: function() {
             let text = "";
             let elec = 7;
             if (get("energy_crystal_research").upgraded)
-                text += "<br>每秒消耗250矿石，0.3铀与0.01超重元素，制造1能量晶体";
-            return text + sprintf("<br>消耗$电力", elec);
+                text += "<br>每秒消耗250矿石，0.3铀与0.03超重元素，制造1能量晶体<br>这个消耗不视作燃料";
+            if (get("dyson_sphere").upgraded) {
+                text += "<br>使戴森球的成本-3%";
+                elec += 1;
+            }
+            return text + sprintf("<br>需要1名宇航员<br>消耗$电力", elec);
         },
         price: [["supply", 400], ["superconductor", 440], ["structure", 25000]],
         unlocked: false
@@ -875,13 +899,60 @@ let dictionary = {
         ratio: 1.31,
         on: 0,
         togglable: false,
-        spatial: true,
+        spatial: "mercury",
         require: 0,
         clicked: function() {
             construct("mercury_storage");
         },
         show: "绝大多数资源的储量+8%<br>能量晶体的储量+100.000K",
         price: [["stone", 525000], ["energy_crystal", 100000]],
+        unlocked: false
+    },
+    'asteroid_station': {
+        name: '小行星带采矿站',
+        level: 0,
+        ratio: 1.29,
+        on: 0,
+        togglable: true,
+        spatial: "asteroid",
+        require: 6,
+        clicked: function() {
+            construct("asteroid_station");
+        },
+        show: "在小行星带采集从未见过的合金。<br>每秒开采0.0008难得素<br>难得素的储量上限+100<br>每秒消耗17.5能量晶体<br>需要6名宇航员<br>消耗17.5电力",
+        price: [["titanium", 11000], ["REE", 60000], ["alloy", 7000]],
+        unlocked: false
+    },
+    'dyson_sphere': {
+        name: '戴森球',
+        level: 0,
+        ratio: 1,
+        on: 0,
+        togglable: false,
+        spatial: "sun",
+        require: 0,
+        clicked: function() {
+            if (get("dyson_sphere").level >= 100)
+                return;
+            let success = construct("dyson_sphere");
+            if (success && get("dyson_sphere").level >= 100) {
+                push_button("dyson_experiment", "thoughts");
+                setguide("有些人依旧不满意戴森球的效率。他们提出了利用戴森球的更高效的方法。");
+            }
+        },
+        show: "围绕太阳建造戴森球，提取近乎无穷的能量。<br>",
+        mutant: function() {
+            let text = "";
+            let self = get("dyson_sphere");
+            if (self.level == 100) {
+                text += "<font color='green'>已建成</font>";
+                text += sprintf("<br>戴森球已经完成。<br>提供$电力，这个值随着时间增加", format(time / 600));
+            } else {
+                text += sprintf("<font color='red'>还需要建成$%</font><br>构建1%戴森球。", 100 - self.level);
+            }
+            return text;
+        },
+        price: [["titanium", 10000], ["steel", 30000], ["glass", 7000], ["energy_crystal", 2048], ["superconductor", 1000], ["unobtainium", 750], ["structure", 20000]],
         unlocked: false
     },
 
@@ -1538,7 +1609,7 @@ let dictionary = {
             if (!upgrade('atomic_stable_island'))
                 return;
             physics++;
-            push_button("LHC", "space");
+            push_button("LHC", "space_moon");
             unlock("element_126");
         },
         show: "<b>物理研究</b><br>一些超重的原子核并不会瞬间裂变，这让我们能找到126号元素的踪迹。<br>解锁<b>大型强子对撞机</b>",
@@ -1580,7 +1651,7 @@ let dictionary = {
 
     /*
     
-    -- SPACE
+    -- SPACE UPGRADES
     
     */
 
@@ -1614,7 +1685,7 @@ let dictionary = {
             push_button("moon_titanium", "thoughts");
             push_button("moon_living", "thoughts");
             push_button("mars_launch", "thoughts");
-            push_button("moon_base", "space");
+            push_button("moon_base", "space_moon");
         },
         show: "在月球上建立复杂的综合设施，供研究与生活使用。<br>解锁<b>月球基地</b>",
         price: [["thought", 8000], ["steel", 16000]],
@@ -1652,7 +1723,7 @@ let dictionary = {
         clicked: function() {
             if (!upgrade('moon_living'))
                 return;
-            push_button("moon_living_quarter", "space");
+            push_button("moon_living_quarter", "space_moon");
         },
         show: "在月球基地增加一个附属的生活区。<br>解锁<b>生活区</b>",
         price: [["thought", 10125], ["book", 500000], ["uranium", 250]],
@@ -1682,7 +1753,7 @@ let dictionary = {
             if (!upgrade('exotic_tech'))
                 return;
             physics++;
-            push_button("moon_exotic_lab", "space");
+            push_button("moon_exotic_lab", "space_moon");
             push_button("superconductivity", "thoughts");
             push_button("space_pollution", "thoughts");
         },
@@ -1716,7 +1787,7 @@ let dictionary = {
         clicked: function() {
             if (!upgrade('space_pollution'))
                 return;
-            push_button("moon_pollution_tube", "space");
+            push_button("moon_pollution_tube", "space_moon");
         },
         show: "将污染排放入太空。解锁<b>地外污染管道</b>",
         price: [["thought", 13000], ["book", 2000000]],
@@ -1735,7 +1806,7 @@ let dictionary = {
             push_button("elem126_power", "thoughts");
         },
         show: "向火星发射火箭。<br>解锁<b>火星</b>有关的思考和建筑",
-        price: [["thought", 11750], ["uranium", 250], ["superconductor", 800]],
+        price: [["thought", 15200], ["uranium", 250], ["superconductor", 800]],
         upgraded: false,
         unlocked: false
     },
@@ -1747,10 +1818,10 @@ let dictionary = {
         clicked: function() {
             if (!upgrade('mars_reform'))
                 return;
-            push_button("mars_reform_device", "space");
+            push_button("mars_reform_device", "space_mars");
         },
         show: "火星是太阳系中与地球最相近的星球。<br>提出火星改造计划，使它能够支撑生命。",
-        price: [["thought", 12700], ["book", 5000000]],
+        price: [["thought", 17000], ["book", 5000000]],
         upgraded: false,
         unlocked: false
     },
@@ -1763,10 +1834,10 @@ let dictionary = {
             if (!upgrade('mars_shipment'))
                 return;
             push_button("mars_fuel", "thoughts");
-            push_button("mars_cargo", "space");
+            push_button("mars_cargo", "space_mars");
         },
         show: "从火星向整个太阳系运输物资，减少补给的消耗。<br>解锁<b>货运港</b>",
-        price: [["thought", 13125], ["steel", 40000]],
+        price: [["thought", 19125], ["steel", 40000]],
         upgraded: false,
         unlocked: false
     },
@@ -1780,7 +1851,7 @@ let dictionary = {
                 return;
         },
         show: "火星的质量较小，火箭消耗的燃料也比地球更少。<br>所有的燃料消耗-10%",
-        price: [["thought", 14000], ["carbon", 75000]],
+        price: [["thought", 22500], ["carbon", 75000]],
         upgraded: false,
         unlocked: false
     },
@@ -1794,12 +1865,12 @@ let dictionary = {
                 return;
             unlock("ancient_bio");
             get("ancient_bio").storage = 1;
-            push_button("mars_site", "space");
+            push_button("mars_site", "space_mars");
             push_button_if("paleobiology", "thoughts", "education");
             push_button_if("ancient_theology", "thoughts", "faithful");
         },
         show: "在火星上发现了生命留存的痕迹。<br>建造<b>火星基地</b>，研究古代生命",
-        price: [["thought", 14800]],
+        price: [["thought", 26000]],
         upgraded: false,
         unlocked: false
     },
@@ -1815,7 +1886,7 @@ let dictionary = {
             push_button("dna_peculiarity", "thoughts");
         },
         show: "研究古代生物，找出高效复制它们的方法。<br>解锁<b>测序中心</b>",
-        price: [["thought", 16000], ["insight", 1580], ["book", 7500000]],
+        price: [["thought", 30000], ["insight", 1580], ["book", 7500000]],
         upgraded: false,
         unlocked: false
     },
@@ -1830,7 +1901,7 @@ let dictionary = {
             push_button("dna_replica", "thoughts");
         },
         show: "古代生物的某些DNA位点含有化学上不可能稳定存在的碱基。<br><font color='red'>至少需要10个测序中心才能研究</font><br>测序中心的效果+15%",
-        price: [["thought", 25500], ["insight", 2700], ["ancient_bio", 50], ["book", 10000000]],
+        price: [["thought", 33250], ["insight", 2700], ["ancient_bio", 50], ["book", 10000000]],
         upgraded: false,
         unlocked: false
     },
@@ -1845,7 +1916,7 @@ let dictionary = {
             // TODO: path to 3rd reset
         },
         show: "科学家们相信古代生物DNA的特殊结构为奇异碱基提供了存在的环境。<br>虽然不完全理解其中的原理，科学家们设法合成出了完全一致的分子。<br>每个化学实验室为古代生物提供1%加成",
-        price: [["thought", 31800], ["insight", 3500], ["ancient_bio", 100], ["book", 12500000]],
+        price: [["thought", 60000], ["insight", 3500], ["ancient_bio", 100], ["book", 12500000]],
         upgraded: false,
         unlocked: false
     },
@@ -1860,7 +1931,7 @@ let dictionary = {
             push_button("deification", "thoughts");
         },
         show: "将古代生物作为神明，为它们献上祭品。<br>信仰可以加成古代生物的产出",
-        price: [["thought", 16000], ["magic", 1280], ["ancient_bio", 15]],
+        price: [["thought", 30000], ["magic", 1280], ["ancient_bio", 15]],
         upgraded: false,
         unlocked: false
     },
@@ -1876,7 +1947,7 @@ let dictionary = {
             push_button("ancient_resonance", "thoughts");
         },
         show: "为古代生物创作传说，传播它们的信仰。<br>解锁<b>寺庙</b>",
-        price: [["thought", 25500], ["magic", 2700], ["ancient_bio", 150]],
+        price: [["thought", 33250], ["magic", 2700], ["ancient_bio", 150]],
         upgraded: false,
         unlocked: false
     },
@@ -1891,7 +1962,7 @@ let dictionary = {
             // TODO: path to 3rd reset
         },
         show: "将古代生物用作材料，感受与它的共鸣。<br>古代生物的数量将会略微加成信仰的效果<br>不会有超过2500古代生物起效",
-        price: [["thought", 31800], ["magic", 3500], ["ancient_bio", 1500]],
+        price: [["thought", 60000], ["magic", 3500], ["ancient_bio", 1500]],
         upgraded: false,
         unlocked: false
     },
@@ -1904,10 +1975,10 @@ let dictionary = {
             if (!upgrade('elem126_power'))
                 return;
             push_button("mercury_discovery", "thoughts");
-            // push_button("asteroid_discovery", "thoughts"); // TODO
+            push_button("asteroid_discovery", "thoughts");
         },
         show: "为飞船搭载超重原子发电机，让它们更容易逃逸火星，到达更远的星球。<br>解锁<b>水星</b>与<b>小行星带</b>",
-        price: [["thought", 16000], ["element_126", 1180]],
+        price: [["thought", 31250], ["element_126", 1180]],
         upgraded: false,
         unlocked: false
     },
@@ -1920,10 +1991,11 @@ let dictionary = {
             if (!upgrade('mercury_discovery'))
                 return;
             push_button("energy_crystal_research", "thoughts");
-            push_button("mercury_station", "space");
+            push_button("mercury_station", "space_mercury");
+            push_button("sun_launch", "thoughts");
         },
         show: "水星离太阳太近，无法供人居住。<br>然而，我们能利用水星的高温节省大量能量。<br>建造<b>水星科考站</b>，以备将来的工业制造",
-        price: [["thought", 17250], ["element_126", 600], ["uranium", 300]],
+        price: [["thought", 36000], ["element_126", 600], ["uranium", 300]],
         upgraded: false,
         unlocked: false
     },
@@ -1933,12 +2005,12 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() {
-            if (!upgrade('energy_crystal'))
+            if (!upgrade('energy_crystal_research'))
                 return;
             push_button("ec_storage", "thoughts");
         },
         show: "将多余的能量存储在特别的晶体中，便于太空旅行。<br>水星科考站可以产出<b>能量晶体</b>",
-        price: [["thought", 19000], ["mineral", 100000], ["uranium", 325]],
+        price: [["thought", 40000], ["mineral", 100000], ["uranium", 325]],
         upgraded: false,
         unlocked: false
     },
@@ -1950,10 +2022,65 @@ let dictionary = {
         clicked: function() {
             if (!upgrade('ec_storage'))
                 return;
-            push_button("mercury_storage", "space");
+            push_button("mercury_storage", "space_mercury");
         },
         show: "易燃易爆的能量晶体需要特别小心地储存。<br>在水星上建立<b>储存站</b>，储存各类物资",
-        price: [["thought", 21850], ["energy_crystal", 1024], ["book", 5000000]],
+        price: [["thought", 44000], ["energy_crystal", 1024], ["book", 5000000]],
+        upgraded: false,
+        unlocked: false
+    },
+    'asteroid_discovery': {
+        name: '小行星带探索',
+        level: 0,
+        ratio: 1,
+        togglable: false,
+        clicked: function() {
+            if (!upgrade('asteroid_discovery'))
+                return;
+            push_button("asteroid_station", "space_asteroid");
+            unlock("unobtainium");
+        },
+        show: "小行星带是矿产的丰富宝库。<br>向小行星带发射飞船，准备采矿。",
+        price: [["thought", 48000], ["energy_crystal", 2048], ["alloy", 25000]],
+        upgraded: false,
+        unlocked: false
+    },
+    'sun_launch': {
+        name: '戴森球计划',
+        level: 0,
+        ratio: 1,
+        togglable: false,
+        clicked: function() {
+            if (!upgrade('sun_launch'))
+                return;
+            push_button("dyson_sphere", "space_sun");
+        },
+        show: "从水星发射太阳探测器，试图围绕太阳建造戴森球。<br>每个水星科考站可以使戴森球的价格-3%，但额外消耗1电力",
+        price: [["thought", 52000], ["energy_crystal", 16384], ["superconductor", 5000], ["unobtainium", 650]],
+        upgraded: false,
+        unlocked: false
+    },
+    'dyson_experiment': {
+        name: '戴森球实验',
+        level: 0,
+        ratio: 1,
+        togglable: false,
+        clicked: function() {
+            let gain = prestige_gain(2);
+            let want = confirm(sprintf("这会触发重置。你将获取$记忆、$历史与$遗物，然后从头开始发展文明。确定要这么做吗？", gain.memory, gain.history, gain.relic));
+            if (!want || !upgrade('dyson_experiment')) {
+                self_reload();
+                return;
+            }
+            prestige(2);
+        },
+        show: "试图高效地利用戴森球。<br><font color='red'>稍有差池，就可能让太阳不稳定，从而摧毁整个文明</font>",
+        mutant: function() {
+            let gain = prestige_gain(2);
+            text = sprintf("<br><br>获得<font color='green'>$</font>记忆<br>获得<font color='green'>$</font>历史<br>获得<font color='green'>$</font>遗物", gain.memory, gain.history, gain.relic);
+            return text;
+        },
+        price: [["thought", 53500]],
         upgraded: false,
         unlocked: false
     },
@@ -2112,18 +2239,16 @@ let dictionary = {
         ratio: 1,
         togglable: false,
         clicked: function() {
-            if (!upgrade('AsHg_experiment'))
-                return;
-            let want = confirm(sprintf("这会触发重置。你将获取$记忆，然后从头开始发展文明。确定要这么做吗？", prestige_memory(1)));
-            if (!want) {
-                get("AsHg_experiment").upgraded = false;
+            let want = confirm(sprintf("这会触发重置。你将获取$记忆，然后从头开始发展文明。确定要这么做吗？", prestige_gain(1).memory));
+            if (!want || !upgrade('AsHg_experiment')) {
+                self_reload();
                 return;
             }
             prestige(1);
         },
         show: "有人想出了一个更好地处理砷汞富集器内的物质的方法。<br><font color='red'>一旦泄漏，能毁灭整个文明</font>",
         mutant: function() {
-            text = sprintf("<br><br>获得<font color='green'>$</font>记忆", prestige_memory(1));
+            text = sprintf("<br><br>获得<font color='green'>$</font>记忆", prestige_gain(1).memory);
             return text;
         },
         price: [["thought", 2035]],
@@ -2862,7 +2987,7 @@ let dictionary = {
             magics++;
             push_button("magic_insight", "thoughts");
         },
-        show: "将酿酒产的产出物用魔法祝福，增加人们的快感。<br>希望不会有更多人酒精中毒。<br>酿酒厂的效果+200%",
+        show: "将酿酒产的产出物用魔法祝福，增加人们的快感。<br>希望不会有更多人酒精中毒。<br>酿酒厂的正面与负面效果均+100%",
         price: [["thought", 1780], ["food", 155000]],
         upgraded: false,
         unlocked: false
@@ -3004,7 +3129,7 @@ let dictionary = {
         clicked: function() { if (!construct('potion_factory')) return; },
         show: "混合未知的物质，向世界发问原理。<br>",
         mutant: function() {
-            let text = sprintf("每座炼药工厂可以让每个教堂使全局产量+$%<br>每秒消耗250食物", format(0.1 + 0.01 * get("temple").level));
+            let text = sprintf("每座炼药工厂可以让每个教堂使全局产量+$%<br>每秒消耗250食物", format((0.1 + 0.01 * get("temple").level) * (1 + Math.log(1 + get("discovered_area").storage) / Math.log(1.125) / 1000)));
             return text;
         },
         price: [["magic", 250], ["food", 100000], ["iron", 5000]],
@@ -3030,7 +3155,7 @@ let dictionary = {
         metaphysics: true,
         togglable: false,
         clicked: function() { if (!construct('temple')) return; },
-        show: "遵从远古的信念，向过去寻求知识。<br>古代生物的产量+15%<br>炼药工厂的加成数值增加0.01%<br>星象仪的加成数值增加2.5%<br>法术发电厂的发电+2<br>炼金塔的成本-10%",
+        show: "遵从远古的信念，向过去寻求知识。<br>古代生物的产量+15%<br>炼药工厂的加成数值增加0.01%<br>星象仪的加成数值增加2.5%<br>法术发电厂的发电+2<br>炼金塔的成本-5%",
         price: [["magic", 1500], ["ancient_bio", 50], ["glass", 20000]],
         unlocked: false
     },
@@ -3230,7 +3355,7 @@ let dictionary = {
         genetics: 1,
         togglable: false,
         clicked: function() { if (!upgrade('closed_packing')) return; },
-        show: "每1记忆使得大部分资源的储存上限额外+0.025%。",
+        show: "每1记忆使得大部分资源的储存上限额外+0.015%。",
         price: [["memory", 600]],
         upgraded: false,
         unlocked: false
@@ -3272,7 +3397,10 @@ let dictionary = {
         ratio: 1,
         genetics: 1,
         togglable: false,
-        clicked: function() { if (!upgrade('memory_implant')) return; },
+        clicked: function() {
+            if (!upgrade('memory_implant'))
+                return;
+        },
         show: "不再计入遗忘的思考增加至8%（至少800）。",
         price: [["memory", 4000]],
         upgraded: false,
@@ -3615,7 +3743,7 @@ let dictionary = {
         togglable: false,
         clicked: function() { craft("alloy"); },
         show: "以铁为主的合金。比建筑结构更加坚固，因此使用更加频繁。",
-        price: [["iron", 200], ["copper", 300], ["carbon", 225]],
+        price: [["iron", 250], ["copper", 350], ["carbon", 450]],
         upgraded: false,
         craftable: true,
         unlocked: false
@@ -3667,7 +3795,7 @@ let dictionary = {
         level: 3,
         ratio: 1,
         on: 0,
-        challenge: true,
+        challenge: "default",
         togglable: true,
         clicked: function() {},
         show: "上一场文明毁灭得过于突然，他们留下的记忆语焉不详。<br>1级：生效的记忆数量-75%<br>2级：记忆的效果只有25%<br>3级：在2级的基础上，记忆的生效数量-100%",
@@ -3678,7 +3806,7 @@ let dictionary = {
         level: 3,
         ratio: 1,
         on: 0,
-        challenge: true,
+        challenge: "default",
         togglable: true,
         clicked: function() {},
         show: "思考并不容易，遗忘困扰着所有人。<br>1级：遗忘的基础指数变为3.5<br>2级：遗忘的基础指数变为4，并且效果+50%<br>3级：遗忘的基础指数变为4.5，并且效果+100%",
@@ -3689,7 +3817,7 @@ let dictionary = {
         level: 3,
         ratio: 1,
         on: 0,
-        challenge: true,
+        challenge: "default",
         togglable: true,
         clicked: function() {},
         show: "在笨拙的操作中，制作原料常常有惊人的损耗。<br>1级：合成效率-15%<br>2级：合成效率-30%，成本增加25%<br>" +
@@ -3701,7 +3829,7 @@ let dictionary = {
         level: 3,
         ratio: 1,
         on: 0,
-        challenge: true,
+        challenge: "default",
         togglable: true,
         clicked: function() {},
         show: "对食物的贪婪正在困扰着整个种族。<br>1级：食物的消耗量变为人数的二次函数<br>2级：食物的消耗量变为人数的三次函数<br>3级：食物的消耗量变为人数的指数函数",
@@ -3712,7 +3840,7 @@ let dictionary = {
         level: 1,
         ratio: 1,
         on: 0,
-        challenge: true,
+        challenge: "default",
         togglable: true,
         clicked: function() {},
         show: "人们不希望业余的人来掺和复杂物品的制作。<br>现在只能通过工匠合成物品。<br><b>价值2危机等级</b>",
@@ -3723,10 +3851,54 @@ let dictionary = {
         level: 3,
         ratio: 1,
         on: 0,
-        challenge: true,
+        challenge: "default",
         togglable: true,
         clicked: function() {},
         show: "在利用有限的空间时，人们总是在做无用功。<br>1级：价格增长底数增加0.02<br>2级：价格增长底数增加0.04<br>3级：价格增长底数增加0.06",
+        unlocked: false
+    },
+    'inefficiency': {
+        name: '低效',
+        level: 3,
+        ratio: 1,
+        on: 0,
+        challenge: "space",
+        togglable: true,
+        clicked: function() {},
+        show: "燃烧的能量消散殆尽，补给的运输难以为继。<br>1级：燃料与补给的消耗+20%<br>2级：燃料与补给的消耗+75%<br>3级：燃料与补给的消耗+160%",
+        unlocked: false
+    },
+    'unordered': {
+        name: '失序',
+        level: 3,
+        ratio: 1,
+        on: 0,
+        challenge: "space",
+        togglable: true,
+        clicked: function() {},
+        show: "散乱的资源散落一地，无人愿意整理。<br>1级：资源上限降低10%<br>2级：资源上限降低35%<br>3级：资源上限降低60%",
+        unlocked: false
+    },
+    'resistance': {
+        name: '电阻',
+        level: 3,
+        ratio: 1,
+        on: 0,
+        challenge: "space",
+        togglable: true,
+        clicked: function() {},
+        show: "电力的传输损耗惊人。<br>1级：耗电量+20%<br>2级：耗电量+50%<br>3级：耗电量+50%，且发电量-50%",
+        unlocked: false
+    },
+    'kenka': {
+        name: '喧哗',
+        level: 3,
+        ratio: 1,
+        on: 0,
+        challenge: "space",
+        togglable: true,
+        clicked: function() {},
+        show: "自由的想法层出不穷，你的管理成效不佳。<br>1级：稳定度给予的加成-50%<br>2级：稳定度给予的加成-75%，且稳定度-10%<br>3级：稳定度给予的加成-90%，且稳定度-20%",
         unlocked: false
     },
     'endeavour': {
@@ -3734,7 +3906,7 @@ let dictionary = {
         level: 0,
         ratio: 1,
         on: 0,
-        challenge: true,
+        challenge: "space",
         togglable: false,
         clicked: function() {
             get("challenge").unlocked = false;
@@ -3828,7 +4000,14 @@ let derationate = function(id) {
 }
 
 let construct = function(x) {
+    let limited = {
+        LHC: 25,
+        dyson_sphere: 100,
+        mars_reform_device: 100,
+    };
     let building = get(x);
+    if (limited[x] && building.level >= limited[x])
+        return 0;
     let ev = window.event;
     let price = requirement(x);
     if (price.find(function(need) { return get(need[0]).storage < need[1]; }) !== undefined)
@@ -3953,7 +4132,7 @@ let craft = function(x, n, is_percent) {
     let price = requirement(x);
     let craftmax = price.reduce(function(mult, need) { return Math.min(mult, parseInt(get(need[0]).storage / need[1] / more)); }, 1e9);
     if (is_percent && n) {
-        mult = craftmax * 100 / n;
+        mult = craftmax * n / 100;
     } else if (n) {
         mult = Math.min(craftmax, n);
     } else if (ev.shiftKey) {
@@ -4015,6 +4194,10 @@ let requirement = function(id) {
 
     building_ratio *= Math.pow(0.994, get("arXiv").level);
     science_ratio *= Math.pow(0.992, get("arXiv").level);
+    if (id == "alchemy_tower")
+        building_ratio *= Math.pow(0.95, get("temple").level);
+    if (id == "dyson_sphere")
+        building_ratio *= Math.pow(0.97, get("mercury_station").level);
     for (let i = 0; i < price.length; i++) {
         let elem = price[i];
         let requirement = 0;
@@ -4032,8 +4215,6 @@ let requirement = function(id) {
             requirement *= 0.75;
         if (id == "book" && get("writing_training").upgraded)
             requirement *= Math.pow(0.99 - 0.075 * get("zlibrary").upgraded, get("library").level);
-        if (id == "alchemy_tower")
-            requirement *= Math.pow(0.9, get("temple").level);
         if (elem[0] == "uranium" && get("fusion_energizer").upgraded)
             requirement *= 0.85;
         price[i][1] = requirement;
@@ -4068,7 +4249,8 @@ let dim = function(x, limit) {
 }
 
 let challenge_level = function() {
-    return get("clumsy").on + get("catastrophe").on + get("memory_loss").on + 2 * get("professional").on + get("gluttony").on + get("redundancy").on;
+    return get("clumsy").on + get("catastrophe").on + get("memory_loss").on + 2 * get("professional").on + get("gluttony").on + get("redundancy").on +
+           get("kenka").on + get("unordered").on + get("inefficiency").on + get("resistance").on;
 }
 
 let show_type = null;
@@ -4097,7 +4279,7 @@ let show = function(self, type) {
     let float = $("float");
     let height = window.innerHeight;
     let x = place.left + place.width + 50 * get(type).togglable;
-    let y = Math.min(height - 200, place.top) + window.scrollY;
+    let y = Math.min(height - 300, place.top) + window.scrollY;
     float.innerHTML = text;
     float.style.left = x + "px";
     float.style.top = y + "px";
@@ -4154,7 +4336,7 @@ let save_export = function() {
     let download_link = document.createElement("a");
     let date = new Date();
     download_link.download  = sprintf("AdCaelum savefile $-$-$ $-$-$.txt",
-        date.getFullYear(), date.getMonth() + 1, date.getDay(),
+        date.getFullYear(), date.getMonth() + 1, date.getDate(),
         date.getHours(), date.getMinutes(), date.getSeconds());
     download_link.href = window.URL.createObjectURL(save_blob);
     download_link.style.display = "none";
@@ -4180,6 +4362,8 @@ let save = function() {
     save_item("memory_elapsed", memory_elapsed);
     save_item("highest_lvl", highest_lvl);
     save_item("memory", get("memory").storage);
+    save_item("history", get("history").storage);
+    save_item("relic", get("relic").storage);
     save_item("saving", JSON.stringify(dictionary));
 }
 
@@ -4225,6 +4409,8 @@ let load = function() {
     highest_lvl = load_item("highest_lvl") ?? 0;
     genetics_upgrades = load_item("genetics_upgrades") ?? [];
     get("memory").storage = load_item("memory") ?? 0;
+    get("history").storage = load_item("history") ?? 0;
+    get("relic").storage = load_item("relic") ?? 0;
 
     if (load_item("to_prestige") == 1) {
         init_1();
@@ -4263,6 +4449,8 @@ let delete_save = function(no_reload) {
     save_item("pollution", 0);
     save_item("pollution_guided", 0);
     save_item("memory", get("memory").storage);
+    save_item("history", get("history").storage);
+    save_item("relic", get("relic").storage);
     save_item("genetics_upgrades", genetics_upgrades);
     save_item("highest_lvl", highest_lvl);
     if (!no_reload)
@@ -4366,21 +4554,38 @@ let push_button_if = function(x, place, condition) {
 // refreshes all buttons in all divs
 let self_reload = function() {
     // deal with special circumstances
+    let displayed = "display: block";
     if (get("craftsman").upgraded)
-        $("craftsman_show").style = "display: block";
+        $("craftsman_show").style = displayed;
+    if (get("moon_probe").upgraded)
+        $("moon_show").style = displayed;
+    if (get("mars_launch").upgraded)
+        $("mars_show").style = displayed;
+    if (get("mercury_discovery").upgraded)
+        $("mercury_show").style = displayed;
+    if (get("asteroid_discovery").upgraded)
+        $("asteroid_show").style = displayed;
+    if (get("sun_launch").upgraded)
+        $("sun_show").style = displayed;
 
     let keys = Object.keys(dictionary);
-    let empty = "<tr></tr>"
+    let empty = "<tr></tr>";
+
     // first, clear all tabs and buttons
     $("nav").innerHTML = "";
     $("content_bonfire").innerHTML = empty;
-    $("content_space").innerHTML = empty;
+    $("content_space_moon").innerHTML = empty;
+    $("content_space_mercury").innerHTML = empty;
+    $("content_space_mars").innerHTML = empty;
+    $("content_space_asteroid").innerHTML = empty;
+    $("content_space_sun").innerHTML = empty;
     $("content_thoughts").innerHTML = empty;
     $("content_thoughts_completed").innerHTML = empty;
     $("content_society").innerHTML = empty;
     $("content_society_craftsman").innerHTML = empty;
     $("content_crafts").innerHTML = empty;
-    $("content_challenge").innerHTML = empty;
+    $("content_challenge_default").innerHTML = empty;
+    $("content_challenge_space").innerHTML = empty;
     $("content_gene").innerHTML = empty;
     $("content_gene_completed").innerHTML = empty;
     $("content_metaphysics").innerHTML = empty;
@@ -4394,12 +4599,12 @@ let self_reload = function() {
         let item = dictionary[keys[i]];
         if (!item.unlocked) continue;
         if (!item.show) { // it is a resource or a navigation tab
-            if (resources.find(function(elem) { return elem == name; }) !== undefined) continue; // it is a resource
+            if (resources.find(function(elem) { return elem == name; }) !== undefined) continue;
             add_navigation(name);
             continue;
         }
         if (item.challenge) {
-            push_button_0(name, "challenge");
+            push_button_0(name, "challenge_" + item.challenge);
             $(name).innerHTML = item.name + " (" + item.on + "/" + item.level + ")";
         } else if (item.genetics) {
             if (!item.upgraded)
@@ -4407,7 +4612,7 @@ let self_reload = function() {
             else if ($("show_completed_gene").checked)
                 push_button_0(name, "gene_completed", true);
         } else if (item.spatial) {
-            push_button_0(name, "space");
+            push_button_0(name, "space_" + item.spatial);
             $(name).innerHTML = building_text(item);
         } else if (item.metaphysics) {
             push_button_0(name, "metaphysics");
@@ -4628,6 +4833,8 @@ let stability = function() {
         alter -= 0.07;
     if (get("magic_insight").upgraded)
         alter -= 0.03;
+    if (get("kenka").on)
+        alter -= [0, 0.1, 0.2][get("kenka").on - 1];
     return 1 - person * base - pollu + alter;
 }
 
@@ -4647,6 +4854,7 @@ let fuel_ratio = function() {
     base *= (1 - 0.1 * get("vehicle").upgraded);
     base *= (1 - 0.1 * get("mars_fuel").upgraded);
     base *= Math.pow(0.985, get("chemlab").level);
+    base *= [1, 1.2, 1.75, 2.6][get("inefficiency").on];
     return base;
 }
 
@@ -4695,7 +4903,10 @@ let memory_buff = function() {
         buff *= 1 + Math.log(1 + get("thought").storage / 100) / 100;
     if (get("worship").upgraded)
         buff *= 1 + Math.log(1 + get("faith").storage / 1000) / 2000 * get("cathedral").level;
-    return dim(Math.sqrt(effective) / 30, 2) * buff;
+
+    let max = 2;
+    max *= 1 + Math.log(1 + get("history").storage) / Math.log(4) / 200;
+    return dim(Math.sqrt(effective) / 30, max) * buff;
 }
 
 let potion_buff = function() {
@@ -4709,14 +4920,14 @@ let potion_buff = function() {
 let global_buffs = function() {
     return 1
         * (get("food").storage <= 1e-8 ? 0.25 : 1)
-        * (stability() < 0.5 ? 0.25 : stability())
+        * (stability() < 0.5 ? 0.25 : stability() < 1 ? stability() : 1 + (stability() - 1) * [1, 0.5, 0.25, 0.1][get("kenka").on])
         * (1 + memory_buff())
         * (1 + potion_buff())
         * (1 + faith_buff())
-        * (1 + get("brewery").on * 0.02 * (1 + 2 * get("magic_alcohol").upgraded))
+        * (1 + get("brewery").on * 0.015 * (1 + 1 * get("magic_alcohol").upgraded))
         * (1 + highest_lvl * 0.02)
         * (1 + get("HE_lab").on * get("collider").on * 0.001)
-        * (debug ? 1000 : 1);
+        * (debug ? 100000 : 1);
 }
 
 let food_eaten = function() {
@@ -4760,6 +4971,12 @@ let elec_usage = function() {
     base += get("moon_base").on * 18;
     base += get("moon_exotic_lab").on * 4;
     base += get("mars_site").on * 16;
+    base += get("mercury_station").on * (7 + 1 * get("sun_launch").upgraded);
+    base += get("asteroid_station").on * 17.5;
+    if (get("resistance").on == 1)
+        base *= 1.2;
+    else if (get("resistance").on >= 2)
+        base *= 1.5;
     return base;
 }
 
@@ -4769,6 +4986,9 @@ let elec_produce = function() {
     base += get("fission_powerplant").on * 45;
     base += get("magic_powerplant").on * (12 + 2 * get("temple").level);
     base += get("fusion_powerplant").on * 60;
+    base += get("dyson_sphere").level >= 100 ? time / 600 : 0;
+    if (get("resistance").on == 3)
+        base *= 0.5;
     return base;
 }
 
@@ -4786,6 +5006,7 @@ let production = function() {
                     + get("metal_forge").upgraded * 0.15 + get("titanium_equip").upgraded * 0.5);
     prod.food *= (1 + get("AI").on * 0.15);
     prod.food *= global_buff * crossroaded;
+    prod.fodd *= Math.pow(get("magic_alcohol").upgraded ? 0.94 : 0.97, get("brewery").on);
     prod.food *= (get("food").storage <= 1e-8 ? 4 : 1);     // mitigates the debuff of hunger
     prod.food -= food_eaten();
 
@@ -4840,6 +5061,7 @@ let production = function() {
     prod.mineral -= get("smelter").on * 2;
     prod.mineral -= get("furnace").on * (5 * get("steel").unlocked);
     prod.mineral -= get("blast_furnace").on * 12.5;
+    prod.mineral -= get("mercury_station").on * 250;
 
     prod.copper = get("smelter").on * 1;
     prod.copper *= (1 + get("carbon_usage").upgraded * 0.1) * (1 + get("heat").upgraded * 0.1);
@@ -4896,6 +5118,7 @@ let production = function() {
     prod.uranium *= (1 + get("AI").on * 0.1);
     prod.uranium *= global_buff * crossroaded;
     prod.uranium -= 0.01 * get("fission_powerplant").on * fuel_ratio();
+    prod.uranium -= get("mercury_station").on * 0.3;
     if (get("heavy_element_collision").upgraded)
         prod.uranium -= 0.125 * get("collider").on * fuel_ratio();
     if (!get("uranium_extraction").upgraded)
@@ -4932,6 +5155,13 @@ let production = function() {
     prod.element_126 = 0.0035 * (get("LHC").level >= 25);
     prod.element_126 *= 1 + get("LHC_consumption").upgraded * Math.sqrt(electricity) / 100;
     prod.element_126 *= global_buff;
+    prod.element_126 -= get("mercury_station").on * 0.03;
+
+    prod.energy_crystal = 1 * get("mercury_station").on;
+    prod.energy_crystal *= global_buff;
+
+    prod.unobtainium = 0.0008 * get("asteroid_station").on;
+    prod.unobtainium *= global_buff;
 
     prod.ancient_bio = 0.001 * get("mars_site").on;
     prod.ancient_bio *= 1 + 0.225 * get("sequencing_center").level * (1 + 0.15 * get("dna_peculiarity").upgraded)
@@ -5091,7 +5321,7 @@ let show_production = function(x, self) {
     if (x == "magic") {
         text += entext(get("cathedral").name, get("cathedral").level * 0.001);
         text += entext(get("priest").name, get("priest").on * 0.001);
-        text += entext(get("planetarium").name, get("planetarium").level * 0.01);
+        text += entext(get("planetarium").name, get("planetarium").level * 0.001);
     }
     if (x == "insight") {
         text += entext(get("university").name, get("university").level * 0.001);
@@ -5119,6 +5349,9 @@ let show_production = function(x, self) {
         if (get("faith").unlocked && get("ancient_theology").upgraded)
             text += entext(get("faith").name, faith_buff(), true);
     }
+    if (x == "unobtainium") {
+        text += entext("小行星采矿", 0.0008 * get("asteroid_station").on);
+    }
     if (is_craftable(x)) {
         text += entext("工匠", get("craftsman_" + x).on * 0.0025);
         text += entext("效率", craft_effect(x, true) - 1, true);
@@ -5127,7 +5360,7 @@ let show_production = function(x, self) {
         if (get("faith").unlocked)
             text += entext(get("faith").name, faith_buff(), true);
         if (get("brewery").on)
-            text += entext(get("brewery").name, 0.02 * get("brewery").on * (1 + 2 * get("magic_alcohol").upgraded), true);
+            text += entext(get("brewery").name, 0.015 * get("brewery").on * (1 + 1 * get("magic_alcohol").upgraded), true);
         if (get("potion_factory").on >= 1)
             text += entext(get("potion_factory").name, get("potion_factory").on * get("cathedral").level * 0.002, true);
         if (get("HE_lab").on >= 1)
@@ -5141,13 +5374,14 @@ let show_production = function(x, self) {
         if (get("food").storage <= 1e-8 && x != "food")
             text += entext("饥饿", -0.75, true);
         if (debug)
-            text += entext("调试", 1000, true);
+            text += entext("调试", 100000, true);
     }
 
     
     // consumption
     // cannot be migrated with previous ones, because these are calculated after global_buff is applied
     if (x == "food") {
+        text += entext(get("brewery").name, Math.pow(get("magic_alcohol").upgraded ? 0.94 : 0.97, get("brewery").on) - 1, true);
         text += entext("消耗", -food_eaten());
     }
     if (x == "wood") {
@@ -5164,6 +5398,7 @@ let show_production = function(x, self) {
         text += entext(get("smelter").name, -2 * get("smelter").on);
         text += entext(get("furnace").name, -5 * get("furnace").on * get("iron_enhancement").upgraded);
         text += entext(get("blast_furnace").name, -12.5 * get("blast_furnace").on);
+        text += entext(get("mercury_station").name, -250 * get("mercury_station").on);
     }
     if (x == "gold") {
         text += entext(get("collider").name, -get("heavy_element_collision").upgraded * 15 * get("collider").on);
@@ -5184,10 +5419,14 @@ let show_production = function(x, self) {
     if (x == "uranium") {
         text += entext(get("collider").name, -get("heavy_element_collision").upgraded * 0.125 * get("collider").on * fuel_ratio());
         text += entext(get("fission_powerplant").name, -get("fission_powerplant").on * 0.1 * fuel_ratio());
+        text += entext(get("mercury_station").name, -get("mercury_station").on * 0.3);
+    }
+    if (x == "element_126") {
+        text += entext(get("mercury_station").name, -get("mercury_station").on * 0.03);
     }
     text += "</table>";
 
-    /*show*/
+    /* show */
     let place = self.getBoundingClientRect();
     let float = $("float");
     let x0 = place.left + place.width;
@@ -5226,7 +5465,10 @@ let capacity_calc = function(x) {
 
     let storages = get("harbor").level * 3 + get("warehouse").level + get("warehouse_2").level * 0.5;
     let normal_buff = 1 + get("crossroad").level * 0.03 * (1 + 1.5 * get("flight").upgraded) + get("mercury_storage").level * 0.08;
-    let common_buff = 1 + get("memory").storage * (get("closed_packing").upgraded ? 0.0004 : get("hoarding").upgraded * 0.00015);
+    let common_buff = 1 + get("memory").storage * (get("closed_packing").upgraded ? 0.0003 : get("hoarding").upgraded * 0.00015);
+    if (debug)
+        common_buff *= 1000;
+    common_buff *= [1, 0.9, 0.65, 0.4][get("unordered").on];
 
     let res = get(x);
     if (res.capacity == -1)
@@ -5261,6 +5503,9 @@ let capacity_calc = function(x) {
     }
     if (x == "energy_crystal") {
         base = 100000 + 100000 * get("mercury_storage").level;
+    }
+    if (x == "unobtainium") {
+        base = 350 + 100 * get("asteroid_station").on;
     }
     return base * common_buff;
 }
@@ -5410,6 +5655,9 @@ let refresh_resource = function() {
     }
     if (running_out("gold") || running_out("uranium")) {
         turn_off("collider");
+    }
+    if (running_out("mineral") || running_out("uranium") || running_out("element_126")) {
+        turn_off("mercury_station");
     }
     let spatial = Object.keys(dictionary).filter((id) => get(id).spatial);
     let astro = get("astronaut").on;
@@ -5656,19 +5904,39 @@ let refresh = function() {
         save();
 }
 
-let prestige_memory = function(type) {
+let prestige_gain = function(type) {
+    let gain = {
+        memory: 0,
+        history: 0,
+        relic: 0,
+    };
     if (type == 1) {
-        let base = parseInt(get("person").capacity * 1.5 + Math.log(1 + get("thought").storage) / Math.log(1.05));
+        let base = get("person").capacity * 1.5 + Math.log(1 + get("thought").storage) / Math.log(1.05);
         base *= (1 + challenge_level() * 0.1);
-        return parseInt(base);
+        gain.memory = parseInt(base);
     }
-    return 0;
+    if (type == 2) {
+        let base = get("person").capacity * 1.8 + Math.log(1 + get("thought").storage) / Math.log(1.04);
+        base *= (1 + challenge_level() * 0.1);
+        gain.memory = parseInt(base);
+
+        base = Math.log(1 + base) * 3;
+        gain.history = parseInt(base);
+
+        gain.relic = parseInt(dim(get("relics_station").level, 25));
+    }
+    return gain;
 }
 
 let prestige = function(x) {
     save_disabled = true;
-    get("memory").storage += prestige_memory(x);
+    let gain = prestige_gain(x);
+    get("memory").storage += gain.memory;
+    get("history").storage += gain.history;
+    get("relic").storage += gain.relic;
     save_item("memory", get("memory").storage);
+    save_item("history", get("history").storage);
+    save_item("relic", get("relic").storage);
 
     let lvl = challenge_level();
     highest_lvl = Math.max(lvl, load_item("highest_lvl") ?? 0);
@@ -5687,18 +5955,31 @@ let init_1 = function() {
     memory_elapsed = 5000 - 1000 * get("restep").upgraded - 1000 * get("anti_flow").upgraded - 1000 * get("memory_retrace").upgraded;
 
     add_navigation("challenge");
-    push_button("memory_loss", "challenge");
-    push_button("catastrophe", "challenge");
-    push_button("clumsy", "challenge");
-    push_button("gluttony", "challenge");
-    push_button("professional", "challenge");
-    push_button("redundancy", "challenge");
-    push_button("endeavour", "challenge");
-
-    change_navigation("challenge");
+    push_button("memory_loss", "challenge_default");
+    push_button("catastrophe", "challenge_default");
+    push_button("clumsy", "challenge_default");
+    push_button("gluttony", "challenge_default");
+    push_button("professional", "challenge_default");
+    push_button("redundancy", "challenge_default");
 
     if (get("memory").storage = load_item("memory"))
         unlock("memory");
+    if (get("history").storage = load_item("history"))
+        unlock("history");
+    if (get("relic").storage = load_item("relic"))
+        unlock("relic");
+    if (get("history").storage) {
+        $("challenge_space_show").style = "display:block";
+        push_button("inefficiency", "challenge_space");
+        push_button("unordered", "challenge_space");
+        push_button("resistance", "challenge_space");
+        push_button("kenka", "challenge_space");
+    }
+
+    // Remember to change this: always push to the last <div>
+    push_button("endeavour", "challenge_space");
+
+    change_navigation("challenge");
 }
 
 let init_0 = function() {
@@ -5709,11 +5990,21 @@ let init_0 = function() {
     push_button("collector", "society");
     change_navigation("bonfire");
 
-    if (get("memory").storage = load_item("memory"))
-        unlock("memory");
-    activate_gene();
-    
     setguide("你们是末世之后的几个未受教育的年轻人，试图在这片焦土之上从零开始重建文明。");
+
+    if (get("memory").storage = load_item("memory")) {
+        setguide("记忆可以加成全局产量，但效果有上限。");
+        unlock("memory");
+    }
+    if (get("history").storage = load_item("history")) {
+        setguide("历史可以提升记忆的效果上限。");
+        unlock("history");
+    }
+    if (get("relic").storage = load_item("relic")) {
+        setguide("遗物的效果还未实装。");
+        unlock("relic");
+    }
+    activate_gene();
 }
 
 load();
