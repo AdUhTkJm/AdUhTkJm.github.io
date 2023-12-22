@@ -919,7 +919,7 @@ let dictionary = {
         clicked: function() {
             construct("asteroid_station");
         },
-        show: "在小行星带采集从未见过的合金。<br>每秒开采0.0008难得素<br>难得素的储量上限+100<br>每秒消耗17.5能量晶体<br>需要6名宇航员<br>消耗17.5电力",
+        show: "在小行星带采集从未见过的合金。<br>每秒开采0.0008难得素<br>难得素的储量上限+100<br>每秒消耗70能量晶体<br>需要6名宇航员<br>消耗17.5电力",
         price: [["titanium", 11000], ["REE", 60000], ["alloy", 7000]],
         unlocked: false
     },
@@ -2007,6 +2007,7 @@ let dictionary = {
         clicked: function() {
             if (!upgrade('energy_crystal_research'))
                 return;
+            unlock("energy_crystal");
             push_button("ec_storage", "thoughts");
         },
         show: "将多余的能量存储在特别的晶体中，便于太空旅行。<br>水星科考站可以产出<b>能量晶体</b>",
@@ -5161,6 +5162,7 @@ let production = function() {
 
     prod.energy_crystal = 1 * get("mercury_station").on;
     prod.energy_crystal *= global_buff;
+    prod.energy_crystal -= 70 * get("asteroid_station").on;
 
     prod.unobtainium = 0.0008 * get("asteroid_station").on;
     prod.unobtainium *= global_buff;
@@ -5345,11 +5347,14 @@ let show_production = function(x, self) {
         text += entext("电力", Math.sqrt(electricity) / 100, true);
     }
     if (x == "ancient_bio") {
-        text += entext(get("mars_site").name, 0.001 * get("mars_site").level);
+        text += entext(get("mars_site").name, 0.001 * get("mars_site").on);
         text += entext("升级", 0.225 * get("sequencing_center").level * (1 + 0.15 * get("dna_peculiarity").upgraded) + 0.05 * get("relics_station").level
              + 0.01 * get("chemlab").level * get("dna_replica").upgraded + 0.15 * get("temple").level, true);
         if (get("faith").unlocked && get("ancient_theology").upgraded)
             text += entext(get("faith").name, faith_buff(), true);
+    }
+    if (x == "energy_crystal") {
+        text += entext(get("mercury_station").name, 1 * get("mercury_station").on);
     }
     if (x == "unobtainium") {
         text += entext("小行星采矿", 0.0008 * get("asteroid_station").on);
@@ -5425,6 +5430,9 @@ let show_production = function(x, self) {
     }
     if (x == "element_126") {
         text += entext(get("mercury_station").name, -get("mercury_station").on * 0.03);
+    }
+    if (x == "energy_crystal") {
+        text += entext(get("mercury_station").name, -70 * get("asteroid_station").on);
     }
     text += "</table>";
 
