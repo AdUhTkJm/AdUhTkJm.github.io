@@ -5039,6 +5039,8 @@ let production = function() {
         - 3 * get("furnace").on * get("basic_materials").upgraded;
 
     prod.fur = 0.005 * (prod.food + food_eaten());
+    // compensate for brewery
+    prod.fur /= Math.pow(get("magic_alcohol").upgraded ? 0.94 : 0.97, get("brewery").on);
     if (!get("stone_ax").upgraded)
         prod.fur = 0;
 
