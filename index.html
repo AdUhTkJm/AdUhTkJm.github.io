@@ -48,6 +48,8 @@
 			</div>
 
 			<div id="space" style="display:none;">
+				<div id="spacemen_show">
+				</div>
 				<h3 id="moon_show" style="display:none">月球</h3>
 				<table>
 					<tbody id="content_space_moon">
@@ -118,9 +120,6 @@
 				</table>
 			</div>
 
-			<div id="trade" style="display:none;">
-			</div>
-
 			<div id="statistics" style="display:none;">
 			</div>
 
@@ -173,12 +172,29 @@
 				</table>
 				<br>
 			</div>
+
+			<div id="settings_auto" style="display:none;">
+				<div id="settings_autocraft" style="display:block">
+				</div>
+				<div id="settings_autoupgrade" style="display:block">
+					<div id="settings_autoupgrade_content">
+						
+					</div>
+					<input type="checkbox" id="show_thoughts_list" value="show_thoughts_list" onclick="render_auto()">
+					<label id="thoughts_list_prompt">显示所有研究，调整它们的优先级（按下上面的“设置”按钮以保存）</label>
+					<table>
+						<tbody id="thoughts_list" class="priority-list">
+							<tr></tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
 		</div>
 
 		<div id="right">
 			<div>
 				<div id="version">
-					Ver 0.1.0<br>
+					Ver 0.2.1<br>
 					<font size="2em">若无法加载过去版本的存档，请尝试软重置与硬重置</font>
 				</div>
 				<br>&nbsp;&nbsp;&nbsp;&nbsp;
@@ -203,8 +219,6 @@
 					硬重置
 				</button>
 			</div><br>
-			<div id="auto" style="display:block">
-			</div>
 			<br>
 			<div id="guide">
 			</div>

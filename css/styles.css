@@ -6,14 +6,15 @@ body { margin:0; }
 }
 .nav li {
     float: left;
-    padding: 5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
     width: 50px;
     color: #666;
     list-style: none;
     border-left: 1px solid #F4F4F4;
     cursor: pointer;
 }
-.nav li: hover, .selected {
+.nav li:hover, .selected {
     background: #ECEBEB;
     border-left: 1px solid #ECEBEB;
 }
@@ -67,10 +68,7 @@ td {
 table {
     border-collapse: collapse;
 }
-tbody#resources tr:nth-child(even) td {
-    background-color: #DCDCDC;
-}
-tbody#crafting tr:nth-child(even) td {
+tbody#resources tr:nth-child(even) td, .priority-list tr:nth-child(even) td, tbody#crafting tr:nth-child(even) td  {
     background-color: #DCDCDC;
 }
 tbody#resources tr td {
@@ -89,12 +87,31 @@ tbody#crafting tr td button {
     width: 5vw;
     height: 15px;
 }
+.priority-list tr td:nth-child(even) {
+    text-align: right;
+}
 .game-button {
-    width: 15.8vw;
+    padding: 0;
+    margin: 0;
+    width: 15.3vw;
     height: 50px;
 }
 .game-button-togglable {
-    width: 13vw;
+    padding: 0;
+    margin: 0;
+    width: 12.5vw;
+    height: 50px;
+}
+.game-button-spatial {
+    padding: 0;
+    margin: 0;
+    width: 15.3vw;
+    height: 50px;
+}
+.game-button-spatial-togglable {
+    padding: 0;
+    margin: 0;
+    width: 12.5vw;
     height: 50px;
 }
 tr.entext {
@@ -110,6 +127,8 @@ tbody#content_challenge .game-button-togglable {
     height: 50px;
 }
 .toggler {
+    padding: 0;
+    margin: 0;
     width: 1.4vw;
     height: 50px;
 }
