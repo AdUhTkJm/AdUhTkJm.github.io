@@ -102,18 +102,6 @@ tbody#crafting tr td button {
     width: 12.5vw;
     height: 50px;
 }
-.game-button-spatial {
-    padding: 0;
-    margin: 0;
-    width: 15.3vw;
-    height: 50px;
-}
-.game-button-spatial-togglable {
-    padding: 0;
-    margin: 0;
-    width: 12.5vw;
-    height: 50px;
-}
 tr.entext {
     width: 11vw;
 }
