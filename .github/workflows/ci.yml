@@ -1,0 +1,58 @@
+name: CI
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+  workflow_call:
+
+jobs:
+  build:
+    name: Code standards & build
+    runs-on: ubuntu-latest
+    # The build compiles Typst snapshots and downloads the pinned compiler on
+    # a cold cache, so the template's original 3 minutes is not enough.
+    timeout-minutes: 15
+
+    steps:
+      - name: "☁️ Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "📦 Install pnpm"
+        uses: pnpm/action-setup@v4
+        with:
+          version: "11.3.0"
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: "🐢 Cache the pinned typst binary"
+        uses: actions/cache@v4
+        with:
+          path: .tools
+          key: typst-${{ hashFiles('blog.toml') }}
+
+      # PDF export needs a CJK font; HTML export does not.
+      - name: "🔤 Install CJK font"
+        run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
+
+      - name: "📦 Install dependencies"
+        run: pnpm install --frozen-lockfile
+
+      - name: "🔎 Lint code"
+        run: pnpm run lint
+
+      - name: "📝 Checking code format"
+        run: pnpm run format:check
+
+      - name: "🚀 Build the project"
+        run: pnpm run build

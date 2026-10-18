@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Refuse to push if sources/ no longer matches the live documents.
+#
+# Enable once per clone:
+#   git config --local core.hooksPath .githooks
+#
+# This is a cheap, read-only comparison: it never runs typst and never rebuilds.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+if ! ./compile.sh --check; then
+  cat >&2 <<'MSG'
+
+pre-push: the committed snapshots are stale.
+
+    ./compile.sh --no-build     # refresh sources/ + provenance from the live docs
+    git add sources
+    git commit -m "notes: sync sources"
+
+(Or push once with `git push --no-verify`.)
+MSG
+  exit 1
+fi

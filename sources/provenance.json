@@ -1,0 +1,17 @@
+{
+  "aw/planner-algorithm": {
+    "commit": "3aea21f",
+    "declared": "~/projects/aw/docs/algorithm.typ",
+    "dirty": false
+  },
+  "seedsearch/map-path-pruning": {
+    "commit": "5c6fa25",
+    "declared": "~/projects/seedsearch/docs/optimizations.typ",
+    "dirty": false
+  },
+  "seedsearch/rng-streams": {
+    "commit": "5c6fa25",
+    "declared": "~/projects/seedsearch/docs/rng.typ",
+    "dirty": true
+  }
+}

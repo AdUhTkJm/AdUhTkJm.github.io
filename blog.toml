@@ -1,0 +1,90 @@
+# ============================================================================
+# blog.toml — the curated allowlist of published notes.
+#
+# Nothing is published unless it is listed here. To publish a document, add a
+# [[note]] block. The source file stays in its project repo; this repository
+# only keeps a snapshot (sources/) and the compiled output (src/generated/).
+#
+# Run ./compile.sh after editing this file.
+# ============================================================================
+
+[site]
+# GitHub Pages *project* site → https://AdUhTkJm.github.io/blogs/
+# For a *user* site (a repo named AdUhTkJm.github.io), set url = "https://AdUhTkJm.github.io" and base = "/".
+url = "https://AdUhTkJm.github.io"
+base = "/blogs"
+lang = "zh-CN"
+title = "AdUhTkJm"
+description = "笔记与随笔：Minecraft 合成规划、杀戮尖塔 2 种子搜索、抽象机、形式化数学。"
+author = "AdUhTkJm"
+
+[typst]
+# Pinned on purpose. HTML export is behind `--features html` and is documented
+# as unstable; upgrading typst can change the generated markup, so upgrades are
+# deliberate acts that go through a diff review.
+version = "0.15.1"
+
+# ---------------------------------------------------------------------------
+# Projects. Used to group notes on /notes/ and to label each page.
+# ---------------------------------------------------------------------------
+
+[[project]]
+id = "seedsearch"
+title = "Slay the Spire 2 Seed Search"
+description = "用 C++ 复刻 STS2 的地图与奖励生成，并对其做穷举式的种子搜索。"
+order = 1
+
+[[project]]
+id = "aw"
+title = "应用工作台 (AW)"
+description = "基于 Minecraft 全部配方的合成规划器。"
+order = 2
+
+[[project]]
+id = "vm"
+title = "JVM 实现"
+description = "一个 JVM 的阅读与实现笔记。"
+order = 3
+
+# ---------------------------------------------------------------------------
+# Notes. Only these get published.
+#
+#   source   path to the .typ file (absolute, or relative to $HOME)
+#   slug     URL: /notes/<slug>/  (nested slugs give nicer grouping)
+#   project  must match a [[project]] id above
+#   title    shown as <h1> and in listings (the Typst title block is ignored)
+#   summary  one line, shown in listings and <meta name="description">
+#   tags     free-form
+#   date     YYYY-MM-DD, used for sorting and "updated" display
+#   order    within the project; lower first
+# ---------------------------------------------------------------------------
+
+[[note]]
+source = "~/projects/seedsearch/docs/optimizations.typ"
+slug = "seedsearch/map-path-pruning"
+project = "seedsearch"
+title = "地图路径剪枝"
+summary = "STS2 地图生成中按子路径字符串去重的那一步：必须保留的顺序性质，以及可以安全得到的优化。"
+tags = ["seedsearch", "优化", "地图生成"]
+date = "2025-10-17"
+order = 1
+
+[[note]]
+source = "~/projects/seedsearch/docs/rng.typ"
+slug = "seedsearch/rng-streams"
+project = "seedsearch"
+title = "12 + 3 条随机数流"
+summary = "MegaRandom 的 counter 语义、种子派生树、各条流之间的独立性，以及每一处消耗顺序。"
+tags = ["seedsearch", "RNG", "逆向"]
+date = "2025-10-16"
+order = 2
+
+[[note]]
+source = "~/projects/aw/docs/algorithm.typ"
+slug = "aw/planner-algorithm"
+project = "aw"
+title = "规划器的完整算法"
+summary = "巨型 SCC 为什么不可避免，以及支配剪枝、贪心 DAG 预扫描与 CP-SAT 如何协作求出最优合成步数。"
+tags = ["aw", "算法", "CP-SAT", "图论"]
+date = "2025-10-10"
+order = 1

@@ -1,0 +1,268 @@
+/*
+ * Typography for /notes/ pages.
+ *
+ * These pages are not Markdown: the body is produced by Typst's HTML exporter,
+ * so it arrives as bare <p>, <h2 id="sec-2-1">, <table>, <math>… markup with no
+ * classes. The job of this file is to make Typst's document intent survive on
+ * screen, and to mirror the PDF's page settings:
+ *
+ *     A4 / 2.3cm margin / 10.5pt serif   ->   42rem / 1.05rem / line-height 1.9
+ *
+ * Plain CSS on purpose (no @apply), using the theme's CSS variables so light
+ * and dark mode follow the rest of the site.
+ */
+
+.note-body {
+  max-width: 42rem;
+  font-family:
+    "Libertinus Serif",
+    "Source Serif 4",
+    "Source Serif Pro",
+    Georgia,
+    /* CJK: pick up whatever serif the reader's system actually has */
+    "Noto Serif CJK SC",
+    "Source Han Serif SC",
+    "Songti SC",
+    "SimSun",
+    serif;
+  font-size: 1.05rem;
+  line-height: 1.9;
+  color: var(--foreground);
+  /* Typst justifies; left is safer online because inline math inflates gaps.
+     Change to `justify` here if you prefer the PDF look. */
+  text-align: left;
+  overflow-wrap: break-word;
+}
+
+/* ----------------------------------------------------------------- heading */
+
+.note-body h1,
+.note-body h2,
+.note-body h3,
+.note-body h4,
+.note-body h5,
+.note-body h6 {
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+  color: var(--foreground);
+  scroll-margin-top: 5rem;
+}
+
+.note-body h2 {
+  font-size: 1.45em;
+  margin: 2.4em 0 0.7em;
+}
+
+.note-body h3 {
+  font-size: 1.18em;
+  margin: 2em 0 0.5em;
+}
+
+.note-body h4,
+.note-body h5,
+.note-body h6 {
+  font-size: 1.02em;
+  margin: 1.6em 0 0.4em;
+}
+
+/* Typst emits numbered headings ("2.1.5  关系索引"); keep the number a little
+   quieter than the title without having to parse it. */
+.note-body h2::first-line,
+.note-body h3::first-line {
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------------------------- text */
+
+.note-body p {
+  margin: 1.05em 0;
+}
+
+.note-body a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.note-body a:hover {
+  color: var(--accent);
+}
+
+.note-body strong {
+  font-weight: 600;
+}
+
+.note-body em {
+  font-style: italic;
+}
+
+.note-body ul,
+.note-body ol {
+  margin: 1.05em 0;
+  padding-left: 1.5em;
+}
+
+.note-body ul {
+  list-style: disc;
+}
+
+.note-body ol {
+  list-style: decimal;
+}
+
+.note-body li {
+  margin: 0.35em 0;
+}
+
+.note-body li::marker {
+  color: var(--muted-foreground);
+}
+
+.note-body hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 2.5em 0;
+}
+
+.note-body blockquote {
+  margin: 1.5em 0;
+  padding: 0.1em 0 0.1em 1.1em;
+  border-left: 3px solid var(--accent);
+  color: var(--muted-foreground);
+}
+
+/* ------------------------------------------------------------------- math */
+
+/* Display equations arrive as <math display="block">, wrapped by
+   scripts/compile.py in .math-block for horizontal scrolling.
+   IMPORTANT: never override `display` on <math>. The UA stylesheet sets
+   `display: block math`; forcing `display: block` drops the inner "math"
+   layout and every child (mi, mo, mfrac…) becomes a block box, which stacks
+   the equation vertically. */
+.note-body math {
+  font-size: 1.02em;
+}
+
+.note-body .math-block {
+  margin: 1.3em 0;
+  padding: 0.15em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* --------------------------------------------------------- code and tables */
+
+.note-body code {
+  font-family:
+    var(--font-google-sans-code), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.87em;
+  background: color-mix(in srgb, var(--muted) 70%, transparent);
+  padding: 0.12em 0.36em;
+  border-radius: 3px;
+  /* `break-word`, not `anywhere`: `anywhere` also shrinks the min-content size,
+     which made table cells split identifiers like NextUnsignedInt(min,max). */
+  overflow-wrap: break-word;
+}
+
+/* Inside a table, keep identifiers whole: the table grows and .table-wrap
+   scrolls instead of breaking the token across lines. CJK prose cells can
+   still wrap, so this does not blow tables up. */
+.note-body td code,
+.note-body th code {
+  white-space: nowrap;
+}
+
+.note-body pre {
+  overflow-x: auto;
+  margin: 1.5em 0;
+  padding: 0.9em 1em;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85em;
+  line-height: 1.65;
+}
+
+.note-body pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Wide tables scroll sideways instead of forcing the page to scroll. The
+   wrapper is added by scripts/compile.py, not by Typst. */
+.note-body .table-wrap {
+  overflow-x: auto;
+  margin: 1.6em 0;
+}
+
+.note-body table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.93em;
+  line-height: 1.6;
+}
+
+.note-body th {
+  text-align: left;
+  font-weight: 600;
+  vertical-align: bottom;
+  padding: 0.45em 0.7em;
+  border-bottom: 2px solid var(--border);
+}
+
+.note-body td {
+  vertical-align: top;
+  padding: 0.45em 0.7em;
+  border-bottom: 1px solid var(--border);
+}
+
+/* A floor on cell width. Without it, once `code { white-space: nowrap }` pushes
+   the table past the column width, the browser crushes the CJK prose column to
+   its min-content -- one character per line. 4em keeps CJK readable; the table
+   then scrolls inside .table-wrap instead. */
+.note-body td,
+.note-body th {
+  min-width: 4em;
+}
+
+.note-body tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ------------------------------------------------------- figures and notes */
+
+/* Diagrams drawn in Typst (cetz/html.frame) become inline <svg>. */
+.note-body svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.note-body figure {
+  margin: 2em 0;
+  text-align: center;
+}
+
+.note-body figcaption {
+  margin-top: 0.6em;
+  font-size: 0.87em;
+  color: var(--muted-foreground);
+}
+
+.note-body sup {
+  line-height: 0;
+  font-size: 0.75em;
+}
+
+/* Footnotes are emitted by Typst's HTML exporter as an endnotes section. */
+.note-body section[role="doc-endnotes"] {
+  margin-top: 3.5em;
+  padding-top: 1em;
+  border-top: 1px solid var(--border);
+  font-size: 0.88em;
+  color: var(--muted-foreground);
+}
+
+.note-body section[role="doc-endnotes"] li {
+  margin: 0.5em 0;
+}
