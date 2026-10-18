@@ -1,23 +1,16 @@
-# blogs
+# AdUhTkJm 的个人博客
 
-A notes-first static blog. The pages under `/notes/` are compiled from Typst
-documents that live in the project repositories — they are never rewritten here.
+这是存放我笔记的静态博客。构建方式：
 
 ```sh
-./compile.sh      # refresh sources/, compile notes, build the site
-pnpm preview      # serve dist/
+./compile.sh
+pnpm preview
 ```
 
-Only the sources are versioned: `blog.toml` (the allowlist) and
-`sources/<slug>.typ` (a snapshot per note, plus `provenance.json`). Compiled
-HTML and PDFs are built from those snapshots on every build, locally and in CI —
-so a clone builds without any of the project repositories.
+源文件是项目文件的快照，虽然也算是生成（复制）的文件，不过会放进 git。其他的 HTML 网页、PDF 等编译产物则自动构建。
 
-- **Publishing a document**: add a `[[note]]` block to `blog.toml`, run
-  `./compile.sh`, commit `blog.toml` and `sources/`.
-- **How it works, and its caveats**: [PIPELINE.md](./PIPELINE.md).
+文档由 `blog.toml` 中的 `[[note]]` 块声明。具体的工作原理可见[PIPELINE.md](./PIPELINE.md)。
 
-Built with [Astro](https://astro.build/) and the
-[AstroPaper](https://github.com/satnaing/astro-paper) theme; Typst's HTML
-exporter supplies the note bodies (MathML for equations), and the same snapshots
-are also compiled to A4 PDFs under `/pdf/`.
+基于 [Astro](https://astro.build/) 与 [AstroPaper](https://github.com/satnaing/astro-paper) 主题构建。
+
+笔记正文通过 Typst 编译为 HTML，其中公式由 MathML 显示。

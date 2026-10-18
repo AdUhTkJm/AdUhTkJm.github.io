@@ -38,3 +38,5 @@ compose.override.yaml
 # pipeline output — rebuilt from sources/ by ./compile.sh, never committed
 src/generated/
 public/pdf/
+
+AGENTS.md
