@@ -2,7 +2,6 @@ export interface UIStrings {
   nav: {
     home: string;
     posts: string;
-    notes: string;
     tags: string;
     about: string;
     archives: string;
@@ -29,8 +28,9 @@ export interface UIStrings {
   home: {
     socialLinks: string;
     featured: string;
-    recentPosts: string;
+    articles: string;
     allPosts: string;
+    other: string;
   };
   footer: {
     copyright: string;

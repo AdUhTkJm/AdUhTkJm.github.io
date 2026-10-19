@@ -1,29 +1,29 @@
 ---
-import { getCollection } from "astro:content";
 import { getRelativeLocaleUrl } from "astro:i18n";
-import IconRss from "@/assets/icons/IconRss.svg";
 import IconArrowRight from "@/assets/icons/IconArrowRight.svg";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Socials from "@/components/Socials.astro";
-import Card from "@/components/Card.astro";
+import ArticleCard from "@/components/ArticleCard.astro";
 import LinkButton from "@/components/LinkButton.astro";
-import { getSortedPosts } from "@/utils/getSortedPosts";
-import { notes, projectOf } from "@/lib/notes";
+import { getAllArticles, groupArticlesByProject } from "@/lib/articles";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
 
-const { socials, posts: postsConfig } = config;
+const { socials } = config;
 
 const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
 
-const posts = await getCollection("posts");
-const sortedPosts = getSortedPosts(posts);
-const featuredPosts = sortedPosts.filter(({ data }) => data.featured);
-const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
+const postsUrl = getRelativeLocaleUrl(locale, "posts");
 const homePath = getRelativeLocaleUrl(locale, "");
+const allArticles = await getAllArticles(locale);
+
+const featuredArticles = allArticles.filter(article => article.featured);
+const listedArticles = allArticles.filter(article => !article.featured);
+const groups = groupArticlesByProject(listedArticles);
+const ungroupedArticles = listedArticles.filter(article => !article.project);
 ---
 
 <Layout>
@@ -39,46 +39,13 @@ const homePath = getRelativeLocaleUrl(locale, "");
         AdUhTkJm
       </h1>
 
-      <p>
-        主要是一些技术记录，还有语言，小说，游戏之类的。
-      </p>
+      <p>主要是一些技术记录，还有语言，小说，游戏之类的。</p>
 
       <p>
-        我用最直白，最不绕弯子的话告诉你，这个博客不是由 AI，而是完全由我这个人类编写。当然，你要是觉得我未通过图灵测试，那也没有办法（
+        我用最直白，最不绕弯子的话告诉你，这个博客不是由
+        AI，而是完全由我这个人类编写。当然，你要是觉得我未通过图灵测试，那也没有办法（
       </p>
 
-      {
-        notes.length > 0 && (
-          <section id="notes" class="pt-8 pb-2">
-            <div class="mb-4 flex items-baseline justify-between">
-              <h2 class="text-2xl font-semibold tracking-wide">笔记</h2>
-              <LinkButton
-                class="hover:text-accent text-muted-foreground text-sm underline decoration-dashed underline-offset-4"
-                href={getRelativeLocaleUrl(locale, "notes")}
-              >
-                全部 {notes.length} 篇 →
-              </LinkButton>
-            </div>
-            <ul class="space-y-2">
-              {notes.slice(0, 5).map(note => (
-                <li class="border-border hover:border-accent/60 group rounded-md border p-3">
-                  <a
-                    href={getRelativeLocaleUrl(locale, `notes/${note.slug}`)}
-                    class="flex flex-wrap items-baseline justify-between gap-2"
-                  >
-                    <span class="group-hover:text-accent font-medium">
-                      {note.title}
-                    </span>
-                    <span class="text-muted-foreground font-mono text-xs">
-                      {projectOf(note).title}
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )
-      }
       {
         socials.length > 0 && (
           <div class="mt-4 flex max-sm:flex-col sm:items-center">
@@ -92,20 +59,20 @@ const homePath = getRelativeLocaleUrl(locale, "");
     </section>
 
     {
-      featuredPosts.length > 0 && (
+      featuredArticles.length > 0 && (
         <section
           id="featured"
           class:list={[
             "pt-12 pb-6",
-            { "border-border border-b": recentPosts.length > 0 },
+            { "border-border border-b": listedArticles.length > 0 },
           ]}
         >
           <h2 class="text-2xl font-semibold tracking-wide">
             {t.home.featured}
           </h2>
-          <ul>
-            {featuredPosts.map(data => (
-              <Card variant="h3" {...data} />
+          <ul class="space-y-3">
+            {featuredArticles.map(article => (
+              <ArticleCard article={article} variant="h3" />
             ))}
           </ul>
         </section>
@@ -113,22 +80,58 @@ const homePath = getRelativeLocaleUrl(locale, "");
     }
 
     {
-      recentPosts.length > 0 && (
-        <section id="recent-posts" class="pt-12 pb-6">
-          <h2 class="text-2xl font-semibold tracking-wide">
-            {t.home.recentPosts}
-          </h2>
-          <ul>
-            {recentPosts.slice(0, postsConfig.perIndex).map(data => (
-              <Card variant="h3" {...data} />
-            ))}
-          </ul>
+      listedArticles.length > 0 && (
+        <section id="articles" class="pt-12 pb-6">
+          <div class="mb-6 flex flex-wrap items-baseline justify-between gap-2">
+            <h2 class="text-2xl font-semibold tracking-wide">
+              {t.home.articles}
+            </h2>
+            <LinkButton
+              class="hover:text-accent text-muted-foreground text-sm underline decoration-dashed underline-offset-4"
+              href={postsUrl}
+            >
+              {t.home.allPosts} ({allArticles.length}) →
+            </LinkButton>
+          </div>
+
+          {groups.map(({ project, articles }) => (
+            <section id={project.id} class="mb-10 scroll-mt-20">
+              <div class="mb-4">
+                <h3 class="text-xl font-bold">{project.title}</h3>
+                {project.description && (
+                  <p class="text-muted-foreground mt-1 text-sm">
+                    {project.description}
+                  </p>
+                )}
+              </div>
+              <ul class="space-y-3">
+                {articles.map(article => (
+                  <ArticleCard
+                    article={article}
+                    variant="h4"
+                    showProject={false}
+                  />
+                ))}
+              </ul>
+            </section>
+          ))}
+
+          {ungroupedArticles.length > 0 && (
+            <section id="other" class="mb-10 scroll-mt-20">
+              <h3 class="text-xl font-bold">{t.home.other}</h3>
+              <ul class="mt-4 space-y-3">
+                {ungroupedArticles.map(article => (
+                  <ArticleCard article={article} variant="h4" />
+                ))}
+              </ul>
+            </section>
+          )}
         </section>
       )
     }
 
     <div class="my-8 text-center">
-      <LinkButton href={getRelativeLocaleUrl(locale, "posts")}>
+      <LinkButton href={postsUrl}>
         {t.home.allPosts}
         <IconArrowRight class="inline-block rtl:-rotate-180" />
       </LinkButton>

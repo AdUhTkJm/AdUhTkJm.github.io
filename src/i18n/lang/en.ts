@@ -4,7 +4,6 @@ export default {
   nav: {
     home: "Home",
     posts: "Posts",
-    notes: "Notes",
     tags: "Tags",
     about: "About",
     archives: "Archives",
@@ -31,8 +30,9 @@ export default {
   home: {
     socialLinks: "Social Links",
     featured: "Featured",
-    recentPosts: "Recent Posts",
-    allPosts: "All Posts",
+    articles: "Articles",
+    allPosts: "All Articles",
+    other: "Other",
   },
   footer: {
     copyright: "Copyright",
@@ -52,7 +52,7 @@ export default {
     archivesDesc: "All the articles I've archived.",
 
     searchTitle: "Search",
-    searchDesc: "Search any article ...",
+    searchDesc: "Search all articles ...",
   },
   a11y: {
     skipToContent: "Skip to content",

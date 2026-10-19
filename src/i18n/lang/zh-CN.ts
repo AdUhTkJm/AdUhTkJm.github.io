@@ -8,7 +8,6 @@ export default {
     about: "关于",
     archives: "归档",
     search: "搜索",
-    notes: "笔记",
   },
   post: {
     publishedAt: "发布于",
@@ -32,8 +31,9 @@ export default {
   home: {
     socialLinks: "社交链接",
     featured: "精选",
-    recentPosts: "最近的文章",
+    articles: "文章",
     allPosts: "全部文章",
+    other: "其他",
   },
   footer: {
     copyright: "版权所有",
@@ -53,7 +53,7 @@ export default {
     archivesDesc: "按时间归档的全部文章。",
 
     searchTitle: "搜索",
-    searchDesc: "搜索文章与笔记……",
+    searchDesc: "搜索全部文章……",
   },
   a11y: {
     skipToContent: "跳到正文",

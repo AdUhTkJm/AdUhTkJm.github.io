@@ -25,7 +25,7 @@ author = "AdUhTkJm"
 version = "0.15.1"
 
 # ---------------------------------------------------------------------------
-# Projects. Used to group notes on /notes/ and to label each page.
+# Projects. Used to group notes on the home page and to label each page.
 # ---------------------------------------------------------------------------
 
 [[project]]

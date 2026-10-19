@@ -1,0 +1,57 @@
+---
+import type { Article } from "@/lib/articles";
+import config from "@/config";
+
+type Props = {
+  article: Article;
+  variant?: "h2" | "h3" | "h4";
+  showProject?: boolean;
+};
+
+const { article, variant: Heading = "h2", showProject = true } = Astro.props;
+
+const locale = Astro.currentLocale ?? config.site.lang;
+const date = article.date;
+const dateLabel = date
+  ? new Intl.DateTimeFormat(locale, {
+      dateStyle: "medium",
+      timeZone: config.site.timezone,
+    }).format(date)
+  : null;
+---
+
+<li
+  class="border-border hover:border-accent/60 group rounded-md border p-4 transition-colors"
+>
+  <a href={article.href} class="block">
+    <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+      <Heading class="group-hover:text-accent text-lg font-medium">
+        {article.title}
+      </Heading>
+      {
+        dateLabel && date && (
+          <time
+            class="text-muted-foreground font-mono text-xs"
+            datetime={date.toISOString()}
+          >
+            {dateLabel}
+          </time>
+        )
+      }
+    </div>
+    {
+      article.description && (
+        <p class="text-muted-foreground mt-1 text-sm leading-relaxed">
+          {article.description}
+        </p>
+      )
+    }
+    {
+      showProject && article.project && (
+        <span class="text-muted-foreground mt-2 inline-block font-mono text-xs">
+          {article.project.title}
+        </span>
+      )
+    }
+  </a>
+</li>

@@ -1,13 +1,16 @@
-import type { CollectionEntry } from "astro:content";
-
 type GroupKey = string | number | symbol;
 type GroupFunction<T> = (item: T, index?: number) => GroupKey;
 
-export function getPostsByGroupCondition(
-  posts: CollectionEntry<"posts">[],
-  groupFunction: GroupFunction<CollectionEntry<"posts">>
+/**
+ * Buckets items by a computed key.
+ *
+ * Kept generic so both posts and the unified article model can use it.
+ */
+export function getPostsByGroupCondition<T>(
+  posts: T[],
+  groupFunction: GroupFunction<T>
 ) {
-  const result: Record<GroupKey, CollectionEntry<"posts">[]> = {};
+  const result: Record<GroupKey, T[]> = {};
 
   for (let i = 0; i < posts.length; i++) {
     const item = posts[i];

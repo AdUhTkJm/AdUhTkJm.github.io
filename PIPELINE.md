@@ -15,7 +15,8 @@ sources/provenance.json           每个快照来自哪个上游 commit
 scripts/compile.py                快照 -> HTML（MathML）+ PDF
 compile.sh                        唯一会运行的命令
 src/lib/notes.ts                  对生成清单的带类型访问器
-src/pages/notes/                  索引页 + [...slug].astro 渲染器
+src/lib/articles.ts               统一文章模型（笔记 + Markdown 随笔）
+src/pages/notes/                  [...slug].astro 渲染器（/notes 重定向到 /posts）
 src/styles/note.css               与 PDF 镜像一致的屏幕排版
 ```
 

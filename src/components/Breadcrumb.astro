@@ -35,10 +35,13 @@ const navLabels: Record<string, string> = {
 // if breadcrumb is Home > Posts > [page] <etc>
 // replace Posts with localized "Posts (page number)"
 if (breadcrumbList[0] === "posts") {
+  const pageNumber = Number(breadcrumbList[1] || 1);
   breadcrumbList.splice(
     0,
     2,
-    `${t.nav.posts} (${t.pagination.page.toLowerCase()} ${breadcrumbList[1] || 1})`
+    pageNumber === 1
+      ? t.nav.posts
+      : `${t.nav.posts} (${t.pagination.page.toLowerCase()} ${pageNumber})`
   );
 }
 
