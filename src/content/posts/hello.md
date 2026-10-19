@@ -3,7 +3,7 @@ title: "把散落各处的文档收进一个站点"
 author: AdUhTkJm
 pubDatetime: 2026-10-18T00:00:00Z
 featured: true
-draft: false
+draft: true
 tags: ["meta", "typst", "astro"]
 description: "这个博客的构建方式：Typst 源文件直接生成网页，一份源码同时产出 HTML、MathML 和 PDF。"
 ---

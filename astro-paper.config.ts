@@ -7,7 +7,7 @@ export default defineAstroPaperConfig({
     base: "/blogs",
     title: "AdUhTkJm",
     description:
-      "笔记与随笔：Minecraft 合成规划、杀戮尖塔 2 种子搜索、抽象机、形式化数学。",
+      "个人博客。",
     author: "AdUhTkJm",
     profile: "https://github.com/AdUhTkJm",
     ogImage: "default-og.jpg",

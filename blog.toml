@@ -15,7 +15,7 @@ url = "https://AdUhTkJm.github.io"
 base = "/blogs"
 lang = "zh-CN"
 title = "AdUhTkJm"
-description = "笔记与随笔：Minecraft 合成规划、杀戮尖塔 2 种子搜索、抽象机、形式化数学。"
+description = "AdUhTkJm 的个人博客。"
 author = "AdUhTkJm"
 
 [typst]
@@ -31,13 +31,13 @@ version = "0.15.1"
 [[project]]
 id = "seedsearch"
 title = "Slay the Spire 2 Seed Search"
-description = "用 C++ 复刻 STS2 的地图与奖励生成，并对其做穷举式的种子搜索。"
+description = "《杀戮尖塔 2》的种子搜索。"
 order = 1
 
 [[project]]
 id = "aw"
-title = "应用工作台 (AW)"
-description = "基于 Minecraft 全部配方的合成规划器。"
+title = "应用工作台"
+description = "Minecraft 的高速合成规划器。"
 order = 2
 
 [[project]]
@@ -63,28 +63,18 @@ order = 3
 source = "~/projects/seedsearch/docs/optimizations.typ"
 slug = "seedsearch/map-path-pruning"
 project = "seedsearch"
-title = "地图路径剪枝"
-summary = "STS2 地图生成中按子路径字符串去重的那一步：必须保留的顺序性质，以及可以安全得到的优化。"
-tags = ["seedsearch", "优化", "地图生成"]
-date = "2025-10-17"
+title = "地图生成优化"
+summary = "我加速了 100 倍的地图生成"
+tags = ["种子搜索", "优化", "地图生成"]
+date = "2026-10-17"
 order = 1
-
-[[note]]
-source = "~/projects/seedsearch/docs/rng.typ"
-slug = "seedsearch/rng-streams"
-project = "seedsearch"
-title = "12 + 3 条随机数流"
-summary = "MegaRandom 的 counter 语义、种子派生树、各条流之间的独立性，以及每一处消耗顺序。"
-tags = ["seedsearch", "RNG", "逆向"]
-date = "2025-10-16"
-order = 2
 
 [[note]]
 source = "~/projects/aw/docs/algorithm.typ"
 slug = "aw/planner-algorithm"
 project = "aw"
-title = "规划器的完整算法"
-summary = "巨型 SCC 为什么不可避免，以及支配剪枝、贪心 DAG 预扫描与 CP-SAT 如何协作求出最优合成步数。"
-tags = ["aw", "算法", "CP-SAT", "图论"]
-date = "2025-10-10"
+title = "Minecraft 合成规划算法"
+summary = "并没有看上去那么简单。"
+tags = ["算法", "CP-SAT", "图论", "优化"]
+date = "2026-10-10"
 order = 1

@@ -38,31 +38,13 @@ const homePath = getRelativeLocaleUrl(locale, "");
       <h1 class="my-4 inline-block text-4xl font-bold sm:my-8 sm:text-5xl">
         AdUhTkJm
       </h1>
-      <a
-        target="_blank"
-        href={`${import.meta.env.BASE_URL.replace(/\/?$/, "/")}rss.xml`}
-        class="inline-block"
-        aria-label="RSS Feed"
-        title="RSS Feed"
-      >
-        <IconRss
-          width={20}
-          height={20}
-          class="stroke-accent scale-125 stroke-3 rtl:-rotate-90"
-        />
-        <span class="sr-only">RSS Feed</span>
-      </a>
 
       <p>
-        合成规划、种子搜索、抽象机，以及顺手做的逆向。这里的
-        <LinkButton
-          class="hover:text-accent underline decoration-dashed underline-offset-4"
-          href={getRelativeLocaleUrl(locale, "notes")}
-        >
-          笔记
-        </LinkButton>
-        不是为博客重写的：它们就是各项目 <code>docs/</code> 里的 Typst 原文，公式用
-        MathML 渲染，每篇另有一份排版好的 PDF。
+        主要是一些技术记录，还有语言，小说，游戏之类的。
+      </p>
+
+      <p>
+        我用最直白，最不绕弯子的话告诉你，这个博客不是由 AI，而是完全由我这个人类编写。当然，你要是觉得我未通过图灵测试，那也没有办法（
       </p>
 
       {

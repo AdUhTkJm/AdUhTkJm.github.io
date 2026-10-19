@@ -5,13 +5,8 @@
     "dirty": false
   },
   "seedsearch/map-path-pruning": {
-    "commit": "5c6fa25",
+    "commit": "d933dd4",
     "declared": "~/projects/seedsearch/docs/optimizations.typ",
     "dirty": false
-  },
-  "seedsearch/rng-streams": {
-    "commit": "5c6fa25",
-    "declared": "~/projects/seedsearch/docs/rng.typ",
-    "dirty": true
   }
 }
