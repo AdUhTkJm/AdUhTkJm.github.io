@@ -4,6 +4,36 @@
     "declared": "~/projects/aw/docs/algorithm.typ",
     "dirty": false
   },
+  "llm/llm-compression": {
+    "commit": "e8476b5",
+    "declared": "~/blogs/src/content/docs/llm-compression.typ",
+    "dirty": false
+  },
+  "novels/conquer": {
+    "commit": "e8476b5",
+    "declared": "~/blogs/src/content/novels/Conquer.typ",
+    "dirty": false
+  },
+  "novels/danitz": {
+    "commit": "e8476b5",
+    "declared": "~/blogs/src/content/novels/Danitz.typ",
+    "dirty": false
+  },
+  "novels/feist": {
+    "commit": "e8476b5",
+    "declared": "~/blogs/src/content/novels/Feist.typ",
+    "dirty": false
+  },
+  "novels/kinich": {
+    "commit": "e8476b5",
+    "declared": "~/blogs/src/content/novels/Kinich.typ",
+    "dirty": false
+  },
+  "novels/uni": {
+    "commit": "e8476b5",
+    "declared": "~/blogs/src/content/novels/Uni.typ",
+    "dirty": false
+  },
   "seedsearch/map-path-pruning": {
     "commit": "d933dd4",
     "declared": "~/projects/seedsearch/docs/optimizations.typ",

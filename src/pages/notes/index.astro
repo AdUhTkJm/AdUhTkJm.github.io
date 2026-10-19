@@ -25,14 +25,8 @@ const formatDate = (date: string | null) =>
   <main id="main-content" class="app-layout my-8">
     <section id="hero" class="border-border mb-10 border-b pb-6">
       <h1 class="my-2 text-4xl font-bold tracking-tight sm:text-5xl">笔记</h1>
-      <p class="text-muted-foreground mt-3 leading-relaxed">
-        这些页面直接由各项目的 Typst 源文件生成：公式是
-        MathML，图表是矢量图，每页另有一份排版好的
-        PDF。源文件的改动只需要重新跑一次
-        <code>./compile.sh</code>。
-      </p>
       <p class="text-muted-foreground mt-2 font-mono text-xs">
-        {notes.length} 篇 · 由 typst {typstVersion} 生成
+        共 {notes.length} 篇
       </p>
     </section>
 

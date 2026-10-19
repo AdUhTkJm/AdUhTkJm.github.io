@@ -53,7 +53,7 @@ description = "JVM 的个人实现"
 order = 4
 
 [[project]]
-id = "novel"
+id = "novels"
 title = "小说"
 description = "各种小说，主要是同人。"
 order = 5

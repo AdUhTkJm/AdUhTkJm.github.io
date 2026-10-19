@@ -118,16 +118,6 @@ const dateLabel = note.date
     </article>
 
     <footer class="border-border mt-14 border-t pt-6">
-      <p class="text-muted-foreground mb-4 text-xs">
-        由 <code>scripts/compile.py</code> 从 Typst 源码生成（typst {
-          typstVersion
-        }
-        ，公式使用 MathML）。源快照见
-        <a
-          href={`https://github.com/AdUhTkJm/blogs/blob/main/${note.snapshot}`}
-          class="hover:text-accent underline">{note.snapshot}</a
-        >。
-      </p>
       <nav class="flex flex-col gap-2 text-sm sm:flex-row sm:justify-between">
         {
           prev ? (

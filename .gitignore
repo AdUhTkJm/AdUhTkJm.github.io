@@ -40,3 +40,5 @@ src/generated/
 public/pdf/
 
 AGENTS.md
+
+src/content/docs/*
