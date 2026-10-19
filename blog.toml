@@ -30,21 +30,33 @@ version = "0.15.1"
 
 [[project]]
 id = "seedsearch"
-title = "Slay the Spire 2 Seed Search"
-description = "《杀戮尖塔 2》的种子搜索。"
+title = "种子搜索"
+description = "《杀戮尖塔 2》的种子搜索"
 order = 1
 
 [[project]]
 id = "aw"
 title = "应用工作台"
-description = "Minecraft 的高速合成规划器。"
+description = "Minecraft 的高速合成规划器"
 order = 2
 
 [[project]]
-id = "vm"
-title = "JVM 实现"
-description = "一个 JVM 的阅读与实现笔记。"
+id = "llm"
+title = "大语言模型"
+description = "尝试魔改 LLM"
 order = 3
+
+[[project]]
+id = "vm"
+title = "JVM"
+description = "JVM 的个人实现"
+order = 4
+
+[[project]]
+id = "novel"
+title = "小说"
+description = "各种小说，主要是同人。"
+order = 5
 
 # ---------------------------------------------------------------------------
 # Notes. Only these get published.
@@ -78,3 +90,67 @@ summary = "并没有看上去那么简单。"
 tags = ["算法", "CP-SAT", "图论", "优化"]
 date = "2026-10-10"
 order = 1
+
+[[note]]
+source = "~/blogs/src/content/docs/llm-compression.typ"
+slug = "llm/llm-compression"
+project = "llm"
+title = "Qwen 3.8 27B 三值量化的无损压缩"
+summary = "只能减少 3.5%，但毕竟无损。"
+tags = ["LLM", "优化"]
+date = "2026-10-19"
+order = 1
+
+# Novels
+
+[[note]]
+source = "~/blogs/src/content/novels/Feist.typ"
+slug = "novels/feist"
+project = "novels"
+title = "费斯特想要从诡异校园里逃出去"
+summary = "明日方舟/安科"
+tags = ["明日方舟", "小说"]
+date = "2024-05-26"
+order = 1
+
+[[note]]
+source = "~/blogs/src/content/novels/Conquer.typ"
+slug = "novels/conquer"
+project = "novels"
+title = "征服"
+summary = "诡秘之主，安德森x克莱恩"
+tags = ["诡秘之主", "小说"]
+date = "2024-04-07"
+order = 2
+
+[[note]]
+source = "~/blogs/src/content/novels/Danitz.typ"
+slug = "novels/danitz"
+project = "novels"
+title = "猎人走上海岸"
+summary = "诡秘之主，海上组（安德森、克莱恩、达尼兹）"
+tags = ["诡秘之主", "小说"]
+date = "2024-03-09"
+order = 3
+
+[[note]]
+source = "~/blogs/src/content/novels/Uni.typ"
+slug = "novels/uni"
+project = "novels"
+title = "愚者进校园"
+summary = "诡秘之主，全员"
+tags = ["原神", "小说"]
+date = "2024-05-14"
+order = 4
+
+[[note]]
+source = "~/blogs/src/content/novels/Kinich.typ"
+slug = "novels/kinich"
+project = "novels"
+title = "无名之人，迎向深渊"
+summary = "原神（纳塔）"
+tags = ["原神", "小说"]
+date = "2024-10-19"
+order = 5
+
+
