@@ -6,6 +6,7 @@
  * Both are committed; run `./compile.sh` after editing blog.toml.
  */
 import manifest from "@/generated/notes.json";
+import { htmlWordCount } from "@/utils/wordCount";
 
 export interface TocEntry {
   level: number;
@@ -74,6 +75,22 @@ export function noteBody(slug: string): string {
     );
   }
   return body;
+}
+
+const wordCounts = new Map<string, number>();
+
+/**
+ * Prose length of a note: CJK characters plus Latin words, with code blocks and
+ * equations left out (see `@/utils/wordCount`). Computed from the generated
+ * HTML once per build, then cached by slug.
+ */
+export function noteWords(note: Note): number {
+  const cached = wordCounts.get(note.slug);
+  if (cached !== undefined) return cached;
+
+  const words = htmlWordCount(noteBody(note.slug));
+  wordCounts.set(note.slug, words);
+  return words;
 }
 
 export function projectOf(note: Note): Project {

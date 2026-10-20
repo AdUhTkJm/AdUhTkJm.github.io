@@ -35,28 +35,34 @@ description = "主要是模组制作"
 order = 10000
 
 [[project]]
+id = "compiler"
+title = "编译器"
+description = "LLVM 和 MLIR"
+order = 20000
+
+[[project]]
 id = "llm"
 title = "大语言模型"
 description = "尝试魔改 LLM"
-order = 20000
+order = 30000
 
 [[project]]
 id = "vm"
 title = "JVM"
 description = "JVM 的个人实现"
-order = 30000
+order = 40000
 
 [[project]]
 id = "novels"
 title = "小说"
 description = "各种小说，主要是同人。"
-order = 40000
+order = 50000
 
 [[project]]
 id = "seedsearch"
 title = "种子搜索"
 description = "《杀戮尖塔 2》的种子搜索"
-order = 50000
+order = 60000
 
 # ---------------------------------------------------------------------------
 # Notes. Only these get published.
@@ -152,5 +158,3 @@ summary = "原神（纳塔）"
 tags = ["原神", "小说"]
 date = "2024-10-19"
 order = 5
-
-
