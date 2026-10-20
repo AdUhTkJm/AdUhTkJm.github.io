@@ -9,10 +9,13 @@
 # ============================================================================
 
 [site]
-# GitHub Pages *project* site → https://AdUhTkJm.github.io/blogs/
-# For a *user* site (a repo named AdUhTkJm.github.io), set url = "https://AdUhTkJm.github.io" and base = "/".
+# GitHub Pages *user* site (repo AdUhTkJm.github.io) → served at the domain root.
+# Keep base = "/" here AND in astro-paper.config.ts. A *project* site (repo
+# named e.g. `blogs`, URL /<user>.github.io/blogs/) would instead need
+# base = "/blogs" — Astro does not put `base` into the build output paths, so
+# with a mismatched base every asset and link 404s.
 url = "https://AdUhTkJm.github.io"
-base = "/blogs"
+base = "/"
 lang = "zh-CN"
 title = "AdUhTkJm"
 description = "AdUhTkJm 的个人博客。"

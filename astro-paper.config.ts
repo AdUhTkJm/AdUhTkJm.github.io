@@ -2,9 +2,10 @@ import { defineAstroPaperConfig } from "./src/types/config";
 
 export default defineAstroPaperConfig({
   site: {
-    // GitHub Pages project site. Keep in sync with blog.toml [site].
+    // GitHub Pages *user* site (repo AdUhTkJm.github.io) → domain root.
+    // Keep in sync with blog.toml [site].
     url: "https://AdUhTkJm.github.io",
-    base: "/blogs",
+    base: "/",
     title: "AdUhTkJm",
     description:
       "个人博客。",
@@ -29,7 +30,7 @@ export default defineAstroPaperConfig({
     showBackButton: true,
     editPost: {
       enabled: true,
-      url: "https://github.com/AdUhTkJm/blogs/edit/main/",
+      url: "https://github.com/AdUhTkJm/AdUhTkJm.github.io/edit/main/",
     },
     search: "pagefind",
   },

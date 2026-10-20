@@ -76,6 +76,8 @@ Typst 文档也可以为 JavaScript 留一个挂载点：
 
 项目站点（仓库 `blogs`，URL `/<user>.github.io>/blogs/`）：`base = "/blogs"`。用户站点（仓库 `<user>.github.io`）：`base = "/"` 要设在 `blog.toml` 和 `astro-paper.config.ts` 两处。
 
+`base` 配错的症状很好认，因为 Astro **不会**把 `base` 写进构建产物路径：`dist/` 里仍然是 `index.html`、`posts/...`，而 HTML 里的资源指向 `/<base>/_astro/...`。上传的是 `dist/`、由 Pages 挂在域名根上，于是 CSS 全部 404（裸 HTML 的样子），文章链接也全 404（页面显示“不存在”），但 `pnpm preview` 一切正常——因为 preview 会真的在 `/<base>/` 下提供服务。
+
 ## 踩过的坑
 
 永远不要给 `<math>` 设 `display`。UA 样式表给 `math[display=block]` 的值是 `block math`，正是 `math` 这半段让 MathML 排版子元素；用 `display: block` 覆盖会让 `mi`、`mo`、`mfrac` 变成普通块级盒子，公式就坍缩成一列垂直的符号。所以 `compile.py` 把显示式公式包进 `<div class="math-block">`——滚动需要一个块级盒子，但必须是外层容器，不能是 `math` 本身。
