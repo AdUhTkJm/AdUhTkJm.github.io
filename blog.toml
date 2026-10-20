@@ -62,7 +62,7 @@ order = 5
 # Notes. Only these get published.
 #
 #   source   path to the .typ file (absolute, or relative to $HOME)
-#   slug     URL: /notes/<slug>/  (nested slugs give nicer grouping)
+#   slug     URL: /posts/<slug>/  (nested slugs give nicer grouping)
 #   project  must match a [[project]] id above
 #   title    shown as <h1> and in listings (the Typst title block is ignored)
 #   summary  one line, shown in listings and <meta name="description">

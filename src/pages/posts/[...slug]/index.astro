@@ -1,5 +1,6 @@
 ---
 import { type CollectionEntry, getCollection, render } from "astro:content";
+import { getRelativeLocaleUrl } from "astro:i18n";
 import PostLayout from "@/layouts/PostLayout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
@@ -7,22 +8,32 @@ import Datetime from "@/components/Datetime.astro";
 import Tag from "@/components/Tag.astro";
 import { getPostSlug, getPostUrl } from "@/utils/getPostPaths";
 import { getSortedPosts } from "@/utils/getSortedPosts";
+import { getAssetPath } from "@/utils/withBase";
 import { slugifyStr } from "@/utils/slugify";
 import { toTransitionName } from "@/utils/toTransitionName";
+import {
+  noteBody,
+  notes,
+  projectOf,
+  sourceLabel,
+  type Note,
+} from "@/lib/notes";
 import EditPost from "./_components/EditPost.astro";
 import ShareLinks from "./_components/ShareLinks.astro";
 import BackButton from "./_components/BackButton.astro";
 import BackToTopButton from "./_components/BackToTopButton.astro";
 import AdjacentPostNav from "./_components/AdjacentPostNav.astro";
 import config from "@/config";
+import "@/styles/note.css";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts");
   const sortedPosts = getSortedPosts(posts);
 
-  return sortedPosts.map((post, index) => ({
+  const postPaths = sortedPosts.map((post, index) => ({
     params: { slug: getPostSlug(post.id, post.filePath) },
     props: {
+      kind: "post" as const,
       post,
       // sortedPosts is newest-first, so "older" (prev) is a higher index
       // and "newer" (next) is a lower index.
@@ -44,6 +55,45 @@ export async function getStaticPaths() {
           : null,
     },
   }));
+
+  const postSlugs = new Set(
+    postPaths.map(path => path.params.slug.replace(/^\/+/, ""))
+  );
+
+  const notePaths = notes.map(note => {
+    if (postSlugs.has(note.slug)) {
+      throw new Error(
+        `Duplicate article slug "${note.slug}": a post and a note would share /posts/${note.slug}/.`
+      );
+    }
+
+    const siblings = notes.filter(sibling => sibling.project === note.project);
+    const index = siblings.findIndex(sibling => sibling.slug === note.slug);
+
+    return {
+      params: { slug: note.slug },
+      props: {
+        kind: "note" as const,
+        note,
+        prevNote:
+          index > 0
+            ? {
+                slug: siblings[index - 1].slug,
+                title: siblings[index - 1].title,
+              }
+            : null,
+        nextNote:
+          index >= 0 && index < siblings.length - 1
+            ? {
+                slug: siblings[index + 1].slug,
+                title: siblings[index + 1].title,
+              }
+            : null,
+      },
+    };
+  });
+
+  return [...postPaths, ...notePaths];
 }
 
 type AdjacentPost = {
@@ -52,43 +102,71 @@ type AdjacentPost = {
   filePath: string | undefined;
 } | null;
 
-type Props = {
-  post: CollectionEntry<"posts">;
-  prevPost: AdjacentPost;
-  nextPost: AdjacentPost;
-};
+type AdjacentNote = {
+  slug: string;
+  title: string;
+} | null;
 
-const { post, prevPost, nextPost } = Astro.props;
+type Props =
+  | {
+      kind: "post";
+      post: CollectionEntry<"posts">;
+      prevPost: AdjacentPost;
+      nextPost: AdjacentPost;
+    }
+  | {
+      kind: "note";
+      note: Note;
+      prevNote: AdjacentNote;
+      nextNote: AdjacentNote;
+    };
+
+const props = Astro.props;
+const post = props.kind === "post" ? props.post : null;
+const note = props.kind === "note" ? props.note : null;
+const prevPost = props.kind === "post" ? props.prevPost : null;
+const nextPost = props.kind === "post" ? props.nextPost : null;
+const prevNote = props.kind === "note" ? props.prevNote : null;
+const nextNote = props.kind === "note" ? props.nextNote : null;
+
 const locale = Astro.currentLocale ?? config.site.lang;
 
-const {
-  title,
-  description,
-  ogImage: initOgImage,
-  canonicalURL,
-  pubDatetime,
-  modDatetime,
-  timezone,
-  tags,
-  hideEditPost,
-} = post.data;
+const title = post?.data.title ?? note?.title ?? "";
+const description = post?.data.description ?? note?.summary ?? "";
+const pubDatetime =
+  post?.data.pubDatetime ??
+  (note?.date ? new Date(`${note.date}T00:00:00Z`) : undefined);
+const modDatetime = post?.data.modDatetime ?? null;
+const canonicalURL = post?.data.canonicalURL;
+const tags = post?.data.tags ?? note?.tags ?? [];
 
-const { Content } = await render(post);
+const { Content } = post ? await render(post) : { Content: null };
+
+const noteProject = note ? projectOf(note) : null;
+const toc = note ? note.toc.filter(entry => entry.level <= 3) : [];
+const noteDateLabel = note?.date
+  ? new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(
+      new Date(`${note.date}T00:00:00Z`)
+    )
+  : null;
 
 let ogImageUrl: string | undefined;
 
-if (typeof initOgImage === "string") {
-  ogImageUrl = initOgImage;
-} else if (initOgImage?.src) {
-  ogImageUrl = initOgImage.src;
-}
+if (post) {
+  const initOgImage = post.data.ogImage;
+  if (typeof initOgImage === "string") {
+    ogImageUrl = initOgImage;
+  } else if (initOgImage?.src) {
+    ogImageUrl = initOgImage.src;
+  }
 
-if (!ogImageUrl && config.features.dynamicOgImage) {
-  const postUrl = getPostUrl(post.id, post.filePath, locale).replace(
-    /\/+$/,
-    ""
-  );
-  ogImageUrl = `${postUrl}/index.png`;
+  if (!ogImageUrl && config.features.dynamicOgImage) {
+    const postUrl = getPostUrl(post.id, post.filePath, locale).replace(
+      /\/+$/,
+      ""
+    );
+    ogImageUrl = `${postUrl}/index.png`;
+  }
 }
 
 const ogImage = ogImageUrl
@@ -111,43 +189,141 @@ const ogImage = ogImageUrl
   <main
     id="main-content"
     class:list={["app-layout", { "mt-8": !config.features.showBackButton }]}
-    data-pagefind-body
+    data-pagefind-body={post ? true : undefined}
   >
+    {
+      note && noteProject && (
+        <nav class="text-muted-foreground mb-6 flex flex-wrap items-center gap-2 text-sm">
+          <a
+            href={getRelativeLocaleUrl(locale, "posts")}
+            class="hover:text-accent"
+          >
+            文章
+          </a>
+          <span aria-hidden="true">/</span>
+          <a
+            href={`${getRelativeLocaleUrl(locale, "")}#${noteProject.id}`}
+            class="hover:text-accent"
+          >
+            {noteProject.title}
+          </a>
+        </nav>
+      )
+    }
+
     <h1
-      style={{ viewTransitionName: toTransitionName(post.id) }}
+      style={{
+        viewTransitionName: toTransitionName(
+          post?.id ?? note?.slug ?? "article"
+        ),
+      }}
       class="text-accent inline-block text-2xl font-bold sm:text-3xl"
     >
       {title}
     </h1>
 
-    <div class="my-2 flex items-center gap-2">
-      <Datetime {pubDatetime} {modDatetime} {timezone} size="lg" />
-      <span
-        aria-hidden="true"
-        class:list={[
-          "text-muted-foreground max-sm:hidden",
-          { hidden: !config.features.editPost?.enabled || hideEditPost },
-        ]}
-      >
-        |
-      </span>
-      <EditPost {hideEditPost} {post} class="max-sm:hidden" />
-    </div>
+    {
+      post ? (
+        <div class="my-2 flex items-center gap-2">
+          <Datetime
+            pubDatetime={post.data.pubDatetime}
+            modDatetime={post.data.modDatetime}
+            timezone={post.data.timezone}
+            size="lg"
+          />
+          <span
+            aria-hidden="true"
+            class:list={[
+              "text-muted-foreground max-sm:hidden",
+              {
+                hidden:
+                  !config.features.editPost?.enabled || post.data.hideEditPost,
+              },
+            ]}
+          >
+            |
+          </span>
+          <EditPost
+            hideEditPost={post.data.hideEditPost}
+            post={post}
+            class="max-sm:hidden"
+          />
+        </div>
+      ) : (
+        <div class="text-muted-foreground my-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs">
+          {noteDateLabel && <span>{noteDateLabel}</span>}
+          {note && (
+            <span title={note.source.declared}>{sourceLabel(note)}</span>
+          )}
+          {note && note.math > 0 && <span>{note.math} 个公式</span>}
+          {note?.pdf && (
+            <a
+              href={getAssetPath(note.pdf)}
+              class="hover:text-accent underline underline-offset-2"
+            >
+              PDF
+            </a>
+          )}
+        </div>
+      )
+    }
 
-    <article
-      id="article"
-      class:list={[
-        "mt-8 w-full",
-        "app-prose max-w-app",
-        "prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)",
-      ]}
-    >
-      <Content />
-    </article>
+    {
+      description && (
+        <p class="text-muted-foreground mt-3 leading-relaxed">{description}</p>
+      )
+    }
+
+    {
+      note && toc.length > 4 && (
+        <details
+          class="border-border bg-muted/40 my-8 rounded-md border px-4 py-3"
+          open
+        >
+          <summary class="cursor-pointer text-sm font-medium">目录</summary>
+          <ol class="mt-3 space-y-1 text-sm">
+            {toc.map(entry => (
+              <li style={`padding-left: ${(entry.level - 2) * 1}rem`}>
+                <a href={`#${entry.id}`} class="hover:text-accent">
+                  {entry.text}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </details>
+      )
+    }
+
+    {
+      post ? (
+        <article
+          id="article"
+          class:list={[
+            "mt-8 w-full",
+            "app-prose max-w-app",
+            "prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)",
+          ]}
+        >
+          {Content && <Content />}
+        </article>
+      ) : (
+        <article id="article" class="note-body" data-pagefind-body>
+          {note && <Fragment set:html={noteBody(note.slug)} />}
+        </article>
+      )
+    }
 
     <hr class="my-8 border-dashed" />
 
-    <EditPost class="sm:hidden" {hideEditPost} {post} />
+    {
+      post && (
+        <EditPost
+          class="sm:hidden"
+          hideEditPost={post.data.hideEditPost}
+          post={post}
+        />
+      )
+    }
 
     <BackToTopButton />
 
@@ -159,7 +335,32 @@ const ogImage = ogImageUrl
 
     <hr class="my-8 border-dashed" />
 
-    <AdjacentPostNav {prevPost} {nextPost} />
+    {
+      post ? (
+        <AdjacentPostNav prevPost={prevPost} nextPost={nextPost} />
+      ) : (
+        <nav class="flex flex-col gap-2 text-sm sm:flex-row sm:justify-between">
+          {prevNote ? (
+            <a
+              href={getRelativeLocaleUrl(locale, `posts/${prevNote.slug}`)}
+              class="hover:text-accent"
+            >
+              ← {prevNote.title}
+            </a>
+          ) : (
+            <span />
+          )}
+          {nextNote && (
+            <a
+              href={getRelativeLocaleUrl(locale, `posts/${nextNote.slug}`)}
+              class="hover:text-accent"
+            >
+              {nextNote.title} →
+            </a>
+          )}
+        </nav>
+      )
+    }
   </main>
   <Footer />
 </PostLayout>

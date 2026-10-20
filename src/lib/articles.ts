@@ -87,7 +87,7 @@ export async function getAllArticles(
     tags: note.tags,
     featured: false,
     project: projectOf(note),
-    href: getRelativeLocaleUrl(locale, `notes/${note.slug}`),
+    href: getRelativeLocaleUrl(locale, `posts/${note.slug}`),
     kind: "note",
   }));
 

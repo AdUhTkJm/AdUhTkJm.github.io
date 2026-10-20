@@ -19,16 +19,9 @@ import {
 import { transformerFileName } from "./src/utils/transformers/fileName";
 import config from "./astro-paper.config";
 
-// Notes and posts are now both articles. Keep old /notes links working.
-const base = config.site.base ?? "/";
-const basePath = base.endsWith("/") ? base : `${base}/`;
-
 export default defineConfig({
   site: config.site.url,
   base: config.site.base ?? "/",
-  redirects: {
-    "/notes": `${basePath}posts/`,
-  },
   integrations: [
     mdx(),
     sitemap({

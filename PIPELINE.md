@@ -1,6 +1,6 @@
 # 这个博客是怎么构建的
 
-这是「笔记优先」的静态站点：技术内容不会在这里被改写，`/notes/` 下的页面是从项目仓库中的 Typst 文档编成的快照编译出来的。
+这是「笔记优先」的静态站点：技术内容不会在这里被改写，`/posts/` 下的笔记页面是从项目仓库中的 Typst 文档编成的快照编译出来的。
 
 ## 提交的内容
 
@@ -16,7 +16,7 @@ scripts/compile.py                快照 -> HTML（MathML）+ PDF
 compile.sh                        唯一会运行的命令
 src/lib/notes.ts                  对生成清单的带类型访问器
 src/lib/articles.ts               统一文章模型（笔记 + Markdown 随笔）
-src/pages/notes/                  [...slug].astro 渲染器（/notes 重定向到 /posts）
+src/pages/posts/[...slug]/        文章渲染器（笔记 + 随笔，URL 统一为 /posts/）
 src/styles/note.css               与 PDF 镜像一致的屏幕排版
 ```
 
@@ -98,7 +98,7 @@ Typst 文档也可以为 JavaScript 留一个挂载点：
 
 ## 已知缺口
 
-`compile.py` 目前只处理 `.typ`；`.md` 文档（比如 llama.cpp 那篇）还没有直通内容集合的路径。站点依赖系统衬线字体显示中文，不打包约 8 MB 的 Noto CJK webfont（PDF 不受影响，CI 装了字体）。OG 图片（`dynamicOgImage`）关着，因为 satori 内置字体没有中文字形。Pagefind 给 `/notes/` 打了索引（`data-pagefind-body`），但中文没有 stemming。island 流水线已搭好（Astro），不过目前没人用。AstroPaper 的示例文章已删，`src/content/posts/hello.md` 是剩下的唯一一篇。
+`compile.py` 目前只处理 `.typ`；`.md` 文档（比如 llama.cpp 那篇）还没有直通内容集合的路径。站点依赖系统衬线字体显示中文，不打包约 8 MB 的 Noto CJK webfont（PDF 不受影响，CI 装了字体）。OG 图片（`dynamicOgImage`）关着，因为 satori 内置字体没有中文字形。Pagefind 给文章页打了索引（`data-pagefind-body`），但中文没有 stemming。island 流水线已搭好（Astro），不过目前没人用。AstroPaper 的示例文章已删，`src/content/posts/hello.md` 是剩下的唯一一篇。
 
 ## 升级 typst
 

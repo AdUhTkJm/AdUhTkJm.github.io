@@ -12,7 +12,7 @@ description: "这个博客的构建方式：Typst 源文件直接生成网页，
 
 ## 一篇笔记的旅程
 
-以 [地图路径剪枝](/notes/seedsearch/map-path-pruning) 为例，源文件是 `~/projects/seedsearch/docs/optimizations.typ`。运行一次 `./compile.sh` 之后：
+以 [地图路径剪枝](/posts/seedsearch/map-path-pruning) 为例，源文件是 `~/projects/seedsearch/docs/optimizations.typ`。运行一次 `./compile.sh` 之后：
 
 1. Typst 的 HTML 导出器把它变成语义化的 HTML，公式成为 MathML，表格成为 `<table>`，交叉引用成为锚点；
 2. 同一份源码再编译一次 A4 版式，得到可打印的 PDF；
