@@ -110,6 +110,18 @@ tags = ["LLM", "优化"]
 date = "2026-10-19"
 order = 1
 
+# Compiler
+
+[[note]]
+source = "~/blogs/src/content/docs/compiler/bv-decide.typ"
+slug = "compiler/bv-decide"
+project = "compiler"
+title = "bv_decide 的内部原理"
+summary = "Lean tactic"
+tags = ["编译器", "形式化验证", "Lean"]
+date = "2026-10-21"
+order = 1
+
 # Novels
 
 [[note]]

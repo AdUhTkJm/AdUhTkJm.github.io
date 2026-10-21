@@ -4,38 +4,43 @@
     "declared": "~/projects/aw/docs/algorithm.typ",
     "dirty": false
   },
+  "compiler/bv-decide": {
+    "commit": "1274b24",
+    "declared": "~/blogs/src/content/docs/compiler/bv-decide.typ",
+    "dirty": false
+  },
   "llm/llm-compression": {
-    "commit": "4a48f65",
+    "commit": "1274b24",
     "declared": "~/blogs/src/content/docs/llm/llm-compression.typ",
     "dirty": false
   },
   "minecraft/planner-algorithm": {
     "commit": "3aea21f",
     "declared": "~/projects/aw/docs/algorithm.typ",
-    "dirty": false
+    "dirty": true
   },
   "novels/conquer": {
-    "commit": "4a48f65",
+    "commit": "1274b24",
     "declared": "~/blogs/src/content/docs/novels/Conquer.typ",
     "dirty": false
   },
   "novels/danitz": {
-    "commit": "4a48f65",
+    "commit": "1274b24",
     "declared": "~/blogs/src/content/docs/novels/Danitz.typ",
     "dirty": false
   },
   "novels/feist": {
-    "commit": "4a48f65",
+    "commit": "1274b24",
     "declared": "~/blogs/src/content/docs/novels/Feist.typ",
     "dirty": false
   },
   "novels/kinich": {
-    "commit": "4a48f65",
+    "commit": "1274b24",
     "declared": "~/blogs/src/content/docs/novels/Kinich.typ",
     "dirty": false
   },
   "novels/uni": {
-    "commit": "4a48f65",
+    "commit": "1274b24",
     "declared": "~/blogs/src/content/docs/novels/Uni.typ",
     "dirty": false
   },
