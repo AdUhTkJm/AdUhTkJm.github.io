@@ -110,6 +110,16 @@ tags = ["LLM", "优化"]
 date = "2026-10-19"
 order = 1
 
+[[note]]
+source = "~/blogs/src/content/docs/llm/128k-ctx.typ"
+slug = "llm/128k-ctx"
+project = "llm"
+title = "在 8 GB 显卡上跑 27B 模型，同时开 128K 上下文"
+summary = "或许部署了我也不会用"
+tags = ["LLM", "优化"]
+date = "2026-10-22"
+order = 2
+
 # Compiler
 
 [[note]]
