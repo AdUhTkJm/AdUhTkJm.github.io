@@ -266,3 +266,58 @@
 .note-body section[role="doc-endnotes"] li {
   margin: 0.5em 0;
 }
+
+/* --------------------------------------------- serialized-fiction extras */
+
+/* Dice rolls from the NGA serialization. Typst's HTML exporter drops block
+   fills and text fills, so the source emits semantic classes instead. */
+.note-body .dice-block {
+  margin: 1.2em 0;
+  padding: 0.5em 0.95em;
+  border-left: 3px solid #a0522d;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--muted) 38%, transparent);
+  font-size: 0.95em;
+  line-height: 1.8;
+}
+
+/* Collapsible author notes (`[collapse]` in the original forum posts). */
+.note-body details.nga-collapse {
+  margin: 1.4em 0;
+  padding: 0.55em 0.9em;
+  border-left: 2px solid var(--border);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--muted) 26%, transparent);
+  font-size: 0.95em;
+}
+
+.note-body details.nga-collapse > summary {
+  cursor: pointer;
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+
+.note-body details.nga-collapse[open] > summary {
+  margin-bottom: 0.6em;
+}
+
+/* Original UBB colours; the dark variants keep contrast usable. */
+.note-body .c-sienna { color: #a0522d; }
+.note-body .c-orangered { color: #ff4500; }
+.note-body .c-green { color: #008000; }
+.note-body .c-red { color: #ff0000; }
+.note-body .c-blue { color: #0000ff; }
+.note-body .c-deeppink { color: #ff1493; }
+.note-body .c-crimson { color: #dc143c; }
+.note-body .c-limegreen { color: #32cd32; }
+.note-body .c-silver { color: #808080; }
+
+[data-theme="dark"] .note-body .c-sienna { color: #d9a066; }
+[data-theme="dark"] .note-body .c-orangered { color: #ff7a45; }
+[data-theme="dark"] .note-body .c-green { color: #7bd88f; }
+[data-theme="dark"] .note-body .c-red { color: #ff6b6b; }
+[data-theme="dark"] .note-body .c-blue { color: #8ab4ff; }
+[data-theme="dark"] .note-body .c-deeppink { color: #ff8ac2; }
+[data-theme="dark"] .note-body .c-crimson { color: #ff7096; }
+[data-theme="dark"] .note-body .c-limegreen { color: #8fe36b; }
+[data-theme="dark"] .note-body .c-silver { color: #a8b0bd; }
