@@ -1,18 +1,29 @@
 #!/usr/bin/env python3
 """Compile the curated notes in blog.toml into web pages.
 
-The only committed inputs are `blog.toml` and `sources/<slug>.typ` — a snapshot
-of each published document. Both the site build and CI compile **from the
-snapshot**, never from the live project checkout, so:
+The only committed inputs are `blog.toml` and the snapshots under `sources/`.
+Both the site build and CI compile **from the snapshot**, never from the live
+project checkout, so:
 
   - a fresh clone builds identically without the project repositories;
   - nothing generated is committed (no HTML, no PDFs in git);
-  - the build input is exactly the file you can read in `sources/`.
+  - the build input is exactly the files you can read in `sources/`.
+
+A note comes in one of two shapes:
+
+  single file   `source = "~/projects/x/docs/page.typ"` -> `sources/<slug>.typ`
+  directory     `source = "~/llvm/dissertation"`        -> `sources/<slug>/...`
+                with `entry = "web.typ"` naming the root .typ inside it
+
+The directory shape exists for documents that are split across files
+(`#include` / `#import` / `#image`). The whole tree is snapshotted, because a
+snapshot is only reproducible if nothing outside it is needed.
 
 For every [[note]] entry:
 
-    sources/<slug>.typ   ->  src/generated/notes/<slug>.html   semantic HTML + MathML
-                         ->  public/pdf/<slug>.pdf             paged A4, for printing
+    sources/<slug>.typ      ->  src/generated/notes/<slug>.html   HTML + MathML
+    sources/<slug>/<entry>  ->  public/images/<slug>/*.png        extracted figures
+                            ->  public/pdf/<slug>.pdf             paged A4
 
 `--check` verifies that the committed snapshots still match the live sources, so
 a stale snapshot cannot be pushed.
@@ -21,7 +32,11 @@ a stale snapshot cannot be pushed.
 from __future__ import annotations
 
 import argparse
+import base64
+import fnmatch
+import hashlib
 import json
+import mimetypes
 import os
 import platform
 import re
@@ -40,6 +55,7 @@ TOOLS = ROOT / ".tools"
 NOTES_DIR = ROOT / "src" / "generated" / "notes"
 NOTES_JSON = ROOT / "src" / "generated" / "notes.json"
 PDF_DIR = ROOT / "public" / "pdf"
+IMAGE_DIR = ROOT / "public" / "images"
 SNAPSHOT_DIR = ROOT / "sources"
 PROVENANCE = SNAPSHOT_DIR / "provenance.json"
 
@@ -49,9 +65,37 @@ HTML_FLAGS = ["--features", "html"]
 # Reproducible output: without this, every PDF embeds a creation date.
 REPRO_ENV = {**os.environ, "SOURCE_DATE_EPOCH": "0"}
 
-# `#import "x.typ"` / `#include "data.json"` would not be in sources/, so the
-# snapshot would not build on a machine without the project checkout.
-LOCAL_DEP_RE = re.compile(r'^\s*#(?:import|include)\s+"([^"@]+)"', re.M)
+# Where the diagram shim is written inside the throwaway build tree. Only ever
+# created under a temp dir, never inside sources/.
+SHIM_DIR = "_blog_shim"
+
+# Never part of a snapshot, no matter what the manifest says.
+ALWAYS_EXCLUDE = [".git"]
+
+# Package imports that draw pictures. The HTML exporter cannot turn a bare
+# `cetz.canvas` (or a fletcher `diagram`) into an SVG and silently emits
+# nothing, so those imports are redirected to a generated module that wraps the
+# drawing entry point in `html.frame`. Replacing the *import* instead of the
+# call sites keeps this independent of whatever name the document binds the
+# module to (`cetz.canvas`, `f.c`, `import ...: *`, ...).
+SHIM_PACKAGES = {"cetz": "canvas", "fletcher": "diagram"}
+SHIM_IMPORT_RE = re.compile(r'#import\s+"@preview/(cetz|fletcher):([^"]+)"')
+
+# `#scale(...)` around a canvas is a paged-only instruction: during HTML export
+# it drops the frame instead of scaling it. Markup-level `#scale` (the `#`
+# sigil distinguishes it from cetz's own `scale` used inside a canvas body) is
+# pointed at a wrapper that puts the frame outside. The trailing content block
+# is forwarded untouched, so no bracket matching is involved.
+SCALE_SHIM_IMPORT = f'#import "/{SHIM_DIR}/scale.typ": web-scale\n'
+
+# Data URIs the HTML exporter emits for `#image(...)`: an `<img>` at block level,
+# an `<image>` when the picture sits inside a serialized canvas/SVG.
+DATA_URI_RE = re.compile(
+    r'(<(?:img|image)\b[^>]*?[\s:](?:src|href)=")data:image/([a-z0-9.+-]+);base64,([A-Za-z0-9+/=\s]+)"'
+)
+IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif"}
+FIGURE_RE = re.compile(r"<figure[^>]*>.*?</figure>", re.S)
+FIGCAPTION_RE = re.compile(r"<figcaption[^>]*>(.*?)</figcaption>", re.S)
 
 
 def die(msg: str) -> "NoReturn":
@@ -69,16 +113,18 @@ def run(cmd: list[str], what: str, env: dict | None = None) -> subprocess.Comple
 
 
 def note_warnings(stderr: str) -> list[str]:
-    """Warnings worth surfacing; the two paged-only ones are expected."""
+    """Warnings worth surfacing; the paged-only ones are expected."""
+    expected = (
+        "under active development",
+        "page set rule was ignored",
+        "align was ignored",
+        "scale was ignored",
+    )
     interesting = []
     for line in stderr.splitlines():
         if not line.startswith("warning: "):
             continue
-        if "under active development" in line:
-            continue
-        if "page set rule was ignored" in line:
-            continue
-        if "align was ignored" in line:
+        if any(fragment in line for fragment in expected):
             continue
         interesting.append(line)
     return interesting
@@ -99,11 +145,73 @@ def git(dir: Path, *args: str) -> str | None:
         return None
 
 
-def read_source(live: Path, declared: str) -> dict:
-    """Provenance for a snapshot. Only meaningful where the live file exists."""
-    commit = git(live.parent, "rev-parse", "--short", "HEAD")
-    dirty = git(live.parent, "status", "--porcelain", "--", live.name)
-    return {"declared": declared, "commit": commit, "dirty": bool(dirty)}
+def digest(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()[:16]
+
+
+# --------------------------------------------------------------------------
+# directory snapshots
+# --------------------------------------------------------------------------
+
+
+def excluded(rel: str, patterns: list[str]) -> bool:
+    return any(fnmatch.fnmatch(rel, pat) or rel == pat for pat in patterns)
+
+
+def walk_tree(root: Path, patterns: list[str]) -> dict[str, Path]:
+    """Every regular file under `root`, keyed by POSIX relative path."""
+    found: dict[str, Path] = {}
+    if not root.is_dir():
+        return found
+    for dirpath, dirnames, filenames in os.walk(root):
+        here = Path(dirpath)
+        rel_dir = here.relative_to(root).as_posix()
+        keep = []
+        for name in sorted(dirnames):
+            rel = name if rel_dir == "." else f"{rel_dir}/{name}"
+            if name in ALWAYS_EXCLUDE or excluded(rel, patterns):
+                continue
+            keep.append(name)
+        dirnames[:] = keep
+        for name in sorted(filenames):
+            rel = name if rel_dir == "." else f"{rel_dir}/{name}"
+            if excluded(rel, patterns):
+                continue
+            found[rel] = here / name
+    return found
+
+
+def tree_hashes(root: Path, patterns: list[str]) -> dict[str, str]:
+    return {rel: digest(p.read_bytes()) for rel, p in walk_tree(root, patterns).items()}
+
+
+def refresh_tree(live: Path, snap: Path, patterns: list[str]) -> dict[str, str]:
+    """Mirror `live` into `snap` (only rewriting what changed). Returns hashes."""
+    wanted = walk_tree(live, patterns)
+    if snap.is_dir():
+        for rel in walk_tree(snap, []):
+            if rel not in wanted:
+                (snap / rel).unlink()
+    hashes: dict[str, str] = {}
+    for rel, src in wanted.items():
+        data = src.read_bytes()
+        dst = snap / rel
+        if not dst.is_file() or dst.read_bytes() != data:
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            dst.write_bytes(data)
+        hashes[rel] = digest(data)
+    return hashes
+
+
+def tree_diff(live: Path, snap: Path, patterns: list[str]) -> list[str]:
+    """Relative paths that differ (either direction) between live and snapshot."""
+    live_hashes = tree_hashes(live, patterns) if live.is_dir() else {}
+    snap_hashes = tree_hashes(snap, []) if snap.is_dir() else {}
+    return sorted(
+        rel
+        for rel in live_hashes.keys() | snap_hashes.keys()
+        if live_hashes.get(rel) != snap_hashes.get(rel)
+    )
 
 
 # --------------------------------------------------------------------------
@@ -154,6 +262,81 @@ def ensure_typst(version: str) -> tuple[Path, str]:
     if version not in found:
         die(f"wrong typst binary: {found}")
     return binary, found
+
+
+# --------------------------------------------------------------------------
+# the diagram shim (build tree only)
+# --------------------------------------------------------------------------
+
+
+def shim_path(package: str, version: str) -> str:
+    """Shim path relative to the shim dir.
+
+    The file stem has to be the package name: typst derives the implicit module
+    binding from it, so `#import "@preview/cetz:0.4.2"` only keeps working if
+    the replacement still binds `cetz`. The version lives in a directory so two
+    documents importing different cetz versions cannot collide.
+    """
+    return f"{version.replace('.', '-')}/{package}.typ"
+
+
+def shim_module(package: str, version: str) -> str:
+    """A module that re-exports `package`, drawing entry point wrapped."""
+    function = SHIM_PACKAGES[package]
+    return f"""// generated by scripts/compile.py — do not edit
+#import "@preview/{package}:{version}": *
+#let _unwrapped_{function} = {function}
+#let {function}(..args) = html.frame(_unwrapped_{function}(..args))
+"""
+
+
+def apply_shim(build: Path) -> int:
+    """Redirect drawing imports in `build` to html.frame wrappers.
+
+    Returns the number of rewritten imports. Everything here is textual on
+    purpose: the three rules are anchored on import statements (a package path
+    in quotes) and on the markup-level `#scale` sigil, so no parser or bracket
+    matching is needed, and aliasing cannot break the wrapper.
+    """
+    shim_dir = build / SHIM_DIR
+    shim_dir.mkdir()
+    modules: dict[tuple[str, str], str] = {}
+    rewrites = 0
+    scaled = False
+
+    for path in sorted(build.rglob("*.typ")):
+        if shim_dir in path.parents:
+            continue
+        source = path.read_text()
+
+        def redirect(match: re.Match) -> str:
+            nonlocal rewrites
+            package, version = match.group(1), match.group(2)
+            modules[(package, version)] = shim_module(package, version)
+            rewrites += 1
+            return f'#import "/{SHIM_DIR}/{shim_path(package, version)}"'
+
+        shimmed = SHIM_IMPORT_RE.sub(redirect, source)
+
+        if "#scale(" in shimmed:
+            shimmed, count = re.subn(r"#scale\(", "#web-scale(", shimmed)
+            if count:
+                scaled = True
+                shimmed = SCALE_SHIM_IMPORT + shimmed
+
+        if shimmed != source:
+            path.write_text(shimmed)
+
+    for (package, version), text in modules.items():
+        target = shim_dir / shim_path(package, version)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text)
+    if scaled:
+        (shim_dir / "scale.typ").write_text(
+            "// generated by scripts/compile.py — do not edit\n"
+            "#let web-scale(..args) = html.frame(scale(..args))\n"
+        )
+    return rewrites
 
 
 # --------------------------------------------------------------------------
@@ -230,9 +413,91 @@ def extract_body(full_html: str) -> tuple[str, list[dict]]:
     return body.strip(), toc
 
 
+def check_figures(slug: str, body: str, shimmed: bool) -> int:
+    """Every <figure> must carry graphics, or the exporter dropped them."""
+    figures = FIGURE_RE.findall(body)
+    for figure in figures:
+        if "<svg" in figure or "<img" in figure:
+            continue
+        caption = FIGCAPTION_RE.search(figure)
+        label = visible(caption.group(1)) if caption else visible(figure)[:80]
+        hint = (
+            'the diagram shim is on, so this is a new drawing construct it does '
+            'not cover: add it to scripts/compile.py'
+            if shimmed
+            else 'set shim = ["diagram"] in blog.toml to wrap cetz/fletcher drawings'
+        )
+        die(f"[{slug}] figure has no graphics ({label!r}); {hint}")
+    return len(figures)
+
+
+def extract_images(
+    slug: str, body: str, tree: dict[str, Path], base: str
+) -> tuple[str, int]:
+    """Move base64 figures out of the page into public/images/<slug>/.
+
+    The exporter inlines `#image(...)` as a data URI, which makes a page with a
+    dozen plots weigh megabytes and gives the browser nothing to cache. Names
+    are recovered by matching the payload against the files in the snapshot, so
+    a plot stays `miss-mine-to-perf-log.png` instead of becoming a hash.
+    """
+    by_payload: dict[str, str] = {}
+    for rel, path in tree.items():
+        if path.suffix.lower() not in IMAGE_EXTS:
+            continue
+        try:
+            by_payload[base64.b64encode(path.read_bytes()).decode()] = Path(rel).name
+        except OSError:
+            continue
+
+    prefix = "" if base in ("", "/") else "/" + base.strip("/")
+    out_dir = IMAGE_DIR / slug
+    written: dict[str, bytes] = {}
+    used_names: set[str] = set()
+
+    def replace(match: re.Match) -> str:
+        attribute, subtype, payload = match.group(1), match.group(2), match.group(3)
+        payload = re.sub(r"\s+", "", payload)
+        try:
+            data = base64.b64decode(payload)
+        except Exception:  # noqa: BLE001 - malformed base64 is a typst bug
+            die(f"[{slug}] could not decode an inlined image")
+        name = by_payload.get(payload)
+        if name is None:
+            ext = mimetypes.guess_extension(f"image/{subtype}") or ".bin"
+            name = f"figure-{digest(data)}{ext}"
+        stem, suffix = os.path.splitext(name)
+        candidate, index = name, 1
+        while candidate in used_names and written.get(candidate) != data:
+            candidate = f"{stem}-{index}{suffix}"
+            index += 1
+        used_names.add(candidate)
+        written[candidate] = data
+        loading = ' loading="lazy" decoding="async"' if attribute.startswith("<img") else ""
+        return f'{attribute}{prefix}/images/{slug}/{candidate}"{loading}'
+
+    body = DATA_URI_RE.sub(replace, body)
+    remaining = body.count("data:image/")
+    if remaining:
+        # The exporter changed its spelling of data URIs; still correct, but the
+        # page is now multi-megabyte, so it is worth a nudge.
+        print(f"    warning: {remaining} inlined image(s) left in the page", file=sys.stderr)
+
+    shutil.rmtree(out_dir, ignore_errors=True)
+    if written:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        for name, data in written.items():
+            (out_dir / name).write_bytes(data)
+    return body, len(written)
+
+
 # --------------------------------------------------------------------------
 # main
 # --------------------------------------------------------------------------
+
+
+def is_tree(note: dict) -> bool:
+    return "entry" in note
 
 
 def load_manifest() -> tuple[dict, dict, list[dict]]:
@@ -247,8 +512,19 @@ def load_manifest() -> tuple[dict, dict, list[dict]]:
         slug = note["slug"].strip("/")
         if note["project"] not in projects:
             die(f"[{slug}] unknown project id: {note['project']}")
-        if resolve(note["source"]).suffix != ".typ":
-            die(f"[{slug}] only .typ sources are supported for now")
+        if is_tree(note):
+            if note["source"].endswith(".typ"):
+                die(f"[{slug}] entry is set but source is a file: {note['source']}")
+            if not note["entry"].endswith(".typ"):
+                die(f"[{slug}] entry must be a .typ file: {note['entry']}")
+            unknown = set(note.get("shim", [])) - {"diagram"}
+            if unknown:
+                die(f"[{slug}] unknown shim(s): {sorted(unknown)}")
+        elif resolve(note["source"]).suffix != ".typ":
+            die(
+                f"[{slug}] source is not a .typ file: {note['source']} "
+                '(for a directory of files, also set entry = "web.typ")'
+            )
     return manifest["site"], projects, notes
 
 
@@ -256,12 +532,32 @@ def snapshot_path(slug: str) -> Path:
     return SNAPSHOT_DIR / f"{slug}.typ"
 
 
+def snapshot_tree(slug: str) -> Path:
+    return SNAPSHOT_DIR / slug
+
+
 def check(notes: list[dict]) -> None:
     """Fail if a committed snapshot no longer matches its live source."""
-    stale, missing_live = [], []
+    stale, missing_live, gone = [], [], []
     for note in notes:
         slug = note["slug"].strip("/")
         live = resolve(note["source"])
+
+        if is_tree(note):
+            snap = snapshot_tree(slug)
+            if not live.is_dir():
+                missing_live.append(slug)
+                if not snap.is_dir():
+                    die(f"[{slug}] no live source and no committed snapshot")
+                continue
+            if not snap.is_dir():
+                gone.append(slug)
+                continue
+            changed = tree_diff(live, snap, ALWAYS_EXCLUDE + note.get("exclude", []))
+            if changed:
+                stale.append(f"{slug} ({len(changed)} file(s), e.g. {changed[0]})")
+            continue
+
         snap = snapshot_path(slug)
         if not live.is_file():
             missing_live.append(slug)
@@ -273,7 +569,9 @@ def check(notes: list[dict]) -> None:
 
     for slug in missing_live:
         print(f"  note: {slug} — live source absent, using committed snapshot")
-    if stale:
+    if stale or gone:
+        for slug in gone:
+            print(f"  no snapshot: {slug}", file=sys.stderr)
         for slug in stale:
             print(f"  stale: {slug}", file=sys.stderr)
         die("snapshots are stale; run ./compile.sh and commit sources/")
@@ -316,69 +614,133 @@ def main() -> None:
     )
     provenance: dict[str, dict] = dict(saved_provenance)
     warnings: list[str] = []
+    base = site.get("base", "/")
 
     for note in notes:
         slug = note["slug"].strip("/")
         declared = note["source"]
         live = resolve(declared)
-        snap = snapshot_path(slug)
+        entry_name = note.get("entry", "")
+        shims = note.get("shim", [])
         print(f"  {slug}")
 
         # 1. refresh the snapshot from the live document when we have it
-        if live.is_file():
-            content = live.read_bytes()
-            if not snap.is_file() or snap.read_bytes() != content:
-                snap.parent.mkdir(parents=True, exist_ok=True)
-                snap.write_bytes(content)
-                print(f"    snapshot updated from {declared}")
-            provenance[slug] = read_source(live, declared)
-        elif snap.is_file():
-            print(f"    live source absent, using committed snapshot")
-            provenance[slug] = saved_provenance.get(
-                slug, {"declared": declared, "commit": None, "dirty": False}
-            )
+        if is_tree(note):
+            snap = snapshot_tree(slug)
+            excludes = ALWAYS_EXCLUDE + note.get("exclude", [])
+            if live.is_dir():
+                hashes = refresh_tree(live, snap, excludes)
+                if entry_name not in hashes:
+                    die(f"[{slug}] entry {entry_name!r} not found under {declared}")
+                print(f"    snapshot updated from {declared} ({len(hashes)} file(s))")
+                provenance[slug] = {
+                    "declared": declared,
+                    "entry": entry_name,
+                    "commit": git(live, "rev-parse", "--short", "HEAD"),
+                    "dirty": bool(git(live, "status", "--porcelain")),
+                    "files": hashes,
+                }
+            elif snap.is_dir():
+                print("    live source absent, using committed snapshot")
+                provenance[slug] = saved_provenance.get(
+                    slug,
+                    {"declared": declared, "entry": entry_name, "commit": None, "dirty": False},
+                )
+            else:
+                die(f"[{slug}] neither the live document nor a snapshot exists: {live}")
+            if not (snap / entry_name).is_file():
+                die(f"[{slug}] snapshot has no {entry_name}")
+            tree = walk_tree(snap, [])
         else:
-            die(f"[{slug}] neither the live document nor a snapshot exists: {live}")
+            snap = snapshot_path(slug)
+            if live.is_file():
+                content = live.read_bytes()
+                if not snap.is_file() or snap.read_bytes() != content:
+                    snap.parent.mkdir(parents=True, exist_ok=True)
+                    snap.write_bytes(content)
+                    print(f"    snapshot updated from {declared}")
+                provenance[slug] = {
+                    "declared": declared,
+                    "commit": git(live.parent, "rev-parse", "--short", "HEAD"),
+                    "dirty": bool(git(live.parent, "status", "--porcelain", "--", live.name)),
+                }
+            elif snap.is_file():
+                print("    live source absent, using committed snapshot")
+                provenance[slug] = saved_provenance.get(
+                    slug, {"declared": declared, "commit": None, "dirty": False}
+                )
+            else:
+                die(f"[{slug}] neither the live document nor a snapshot exists: {live}")
+            entry_name = snap.name
+            tree = {entry_name: snap}
 
-        # A snapshot is only reproducible if the document is self-contained.
-        local_deps = LOCAL_DEP_RE.findall(snap.read_text(errors="replace"))
-        if local_deps:
-            die(
-                f"[{slug}] imports local files {local_deps}, which are not in "
-                "sources/; inline them or extend the pipeline to snapshot them"
-            )
-
-        # 2. build from the snapshot, never from the live file
-        root = snap.parent
+        # 2. build the HTML from a throwaway copy of the snapshot, so that the
+        #    diagram shim never touches what is committed
+        n_math = 0
         with tempfile.TemporaryDirectory() as tmp:
+            build = Path(tmp) / "build"
+            if is_tree(note):
+                shutil.copytree(
+                    snap, build, ignore=shutil.ignore_patterns(*ALWAYS_EXCLUDE)
+                )
+            else:
+                build.mkdir()
+                shutil.copy2(snap, build / entry_name)
+
+            rewrites = 0
+            if "diagram" in shims:
+                rewrites = apply_shim(build)
             page = Path(tmp) / "page.html"
             proc = run(
-                [str(typst), "compile", *HTML_FLAGS, "--root", str(root), str(snap), str(page)],
+                [
+                    str(typst),
+                    "compile",
+                    *HTML_FLAGS,
+                    "--root",
+                    str(build),
+                    str(build / entry_name),
+                    str(page),
+                ],
                 f"typst html for {slug}",
                 REPRO_ENV,
             )
             warnings.extend(f"[{slug}] {w}" for w in note_warnings(proc.stderr))
             full = page.read_text()
+            body, toc = extract_body(full)
 
-        body, toc = extract_body(full)
+            if "diagram" in shims:
+                print(f"    shim    {rewrites} import(s) redirected")
 
-        has_math_src = "$" in snap.read_text(errors="replace")
-        n_math = body.count("<math")
-        if has_math_src and n_math == 0:
-            die(
-                f"[{slug}] source has math but the page has no <math>; "
-                "typst dropped the equations (needs >= 0.15)"
+            has_math_src = any(
+                "$" in p.read_text(errors="replace")
+                for p in tree.values()
+                if p.suffix == ".typ" and p.is_file()
             )
+            n_math = body.count("<math")
+            if has_math_src and n_math == 0:
+                die(
+                    f"[{slug}] source has math but the page has no <math>; "
+                    "typst dropped the equations (needs >= 0.15)"
+                )
 
+        n_figures = check_figures(slug, body, "diagram" in shims)
+        body, n_images = extract_images(slug, body, tree, base)
         page_path = NOTES_DIR / f"{slug}.html"
         page_path.parent.mkdir(parents=True, exist_ok=True)
         page_path.write_text(body)
 
-        # 3. PDF, from the same snapshot
+        # 3. PDF, from the pristine snapshot (the shim is HTML-only)
         pdf_name = slug.replace("/", "-") + ".pdf"
         pdf_path = PDF_DIR / pdf_name
         run(
-            [str(typst), "compile", "--root", str(root), str(snap), str(pdf_path)],
+            [
+                str(typst),
+                "compile",
+                "--root",
+                str(snap if is_tree(note) else snap.parent),
+                str(snap / entry_name if is_tree(note) else snap),
+                str(pdf_path),
+            ],
             f"typst pdf for {slug}",
             REPRO_ENV,
         )
@@ -397,12 +759,21 @@ def main() -> None:
                 "source": provenance.get(
                     slug, {"declared": declared, "commit": None, "dirty": False}
                 ),
-                "snapshot": f"sources/{slug}.typ",
+                "snapshot": (
+                    f"sources/{slug}/{entry_name}"
+                    if is_tree(note)
+                    else f"sources/{slug}.typ"
+                ),
                 "math": n_math,
+                "figures": n_figures,
+                "images": n_images,
                 "toc": toc,
             }
         )
-        print(f"    html    {len(body) // 1024} KB, {n_math} equations, {len(toc)} headings")
+        print(
+            f"    html    {len(body) // 1024} KB, {n_math} equations, "
+            f"{n_figures} figures, {len(toc)} headings"
+        )
         print(f"    pdf     {pdf_path.stat().st_size // 1024} KB")
 
     if provenance:
@@ -423,7 +794,7 @@ def main() -> None:
     for w in warnings:
         print(f"warning: {w}", file=sys.stderr)
 
-    print(f"done: {len(out_notes)} note(s) -> src/generated/, public/pdf/")
+    print(f"done: {len(out_notes)} note(s) -> src/generated/, public/pdf/, public/images/")
 
 
 if __name__ == "__main__":

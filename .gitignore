@@ -35,9 +35,13 @@ compose.override.yaml
 # pinned toolchain (downloaded by compile.sh)
 .tools/
 
+# python bytecode from scripts/
+__pycache__/
+
 # pipeline output — rebuilt from sources/ by ./compile.sh, never committed
 src/generated/
 public/pdf/
+public/images/
 
 AGENTS.md
 

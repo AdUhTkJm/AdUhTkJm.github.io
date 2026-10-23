@@ -70,7 +70,12 @@ order = 60000
 # ---------------------------------------------------------------------------
 # Notes. Only these get published.
 #
-#   source   path to the .typ file (absolute, or relative to $HOME)
+#   source   path to the .typ file, or to a directory of them (absolute, or
+#            relative to $HOME)
+#   entry    only for a directory source: the root .typ to compile
+#   exclude  only for a directory source: globs never copied into sources/
+#   shim     only for a directory source: build-time fixes for the HTML
+#            exporter; "diagram" wraps cetz/fletcher drawings in html.frame
 #   slug     URL: /posts/<slug>/  (nested slugs give nicer grouping)
 #   project  must match a [[project]] id above
 #   title    shown as <h1> and in listings (the Typst title block is ignored)
@@ -131,6 +136,19 @@ summary = "Lean tactic"
 tags = ["编译器", "形式化验证", "Lean"]
 date = "2026-10-21"
 order = 1
+
+[[note]]
+source = "~/llvm/dissertation"
+entry = "web.typ"
+exclude = [".vscode", ".codex", "presentation", "raw-data", "scripts", "build/*.pdf", "*.sh", "*.md"]
+shim = ["diagram"]
+slug = "compiler/cache-miss-analysis"
+project = "compiler"
+title = "用多面体模型静态预测缓存缺失次数"
+summary = "我的本科毕业论文"
+tags = ["编译器", "多面体", "MLIR"]
+date = "2026-04-28"
+order = 2
 
 # Novels
 

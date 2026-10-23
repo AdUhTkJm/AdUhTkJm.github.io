@@ -5,17 +5,86 @@
     "dirty": false
   },
   "compiler/bv-decide": {
-    "commit": "332cd79",
+    "commit": "d37ae8e",
     "declared": "~/blogs/src/content/docs/compiler/bv-decide.typ",
     "dirty": false
   },
+  "compiler/cache-miss-analysis": {
+    "commit": "e1a14b8",
+    "declared": "~/llvm/dissertation",
+    "dirty": true,
+    "entry": "web.typ",
+    "files": {
+      ".gitignore": "683d521b5d7c5487",
+      "build/repo.typ": "657dfef6518e7101",
+      "chapters/common.typ": "b403f4ffe1d6930a",
+      "chapters/conclusion.typ": "488d0e7023f1c686",
+      "chapters/evaluation.typ": "5a510a18bf3bb6f9",
+      "chapters/evaluation_zh.typ": "15b776294a510d25",
+      "chapters/implementation.typ": "f04f6819c592560f",
+      "chapters/implementation_zh.typ": "748b1006acb712a2",
+      "chapters/introduction.typ": "0e73a869b436c92c",
+      "chapters/preparation.typ": "1559c42a00fce01c",
+      "chapters/preparation_zh.typ": "390194775aec148f",
+      "diagrams/barvinok-cache-opt.typ": "27e9b81794ca9975",
+      "diagrams/barvinok-overview.typ": "2f7fdc8e7ea48426",
+      "diagrams/barvinok-region.typ": "b8fbaa0d0552c89f",
+      "diagrams/barvinok-time-breakdown.typ": "d31f12698930d3b8",
+      "diagrams/cir-for-op.typ": "f546e0542725e9cc",
+      "diagrams/cone-example.typ": "764add65f91f3fb5",
+      "diagrams/dep-example.typ": "99a50b223735ae6f",
+      "diagrams/dependency-graph.typ": "c98fba098dad5011",
+      "diagrams/dist-example.typ": "1a612eb9cfab59e4",
+      "diagrams/fpl-cone-failure.typ": "38a710a85b0648e0",
+      "diagrams/fpl-tangent-cone.typ": "fbfaae8f94a70a7a",
+      "diagrams/halfspace.typ": "973a1f4c7fcba0e4",
+      "diagrams/hnf-example.typ": "86eff2706dd02208",
+      "diagrams/int-basis.typ": "5d82989988e37bb0",
+      "diagrams/miss-cmp.typ": "6a09cd874744af77",
+      "diagrams/offset-example.typ": "7319b570e8bd999c",
+      "diagrams/piece-count.typ": "c5053f9b9c920e7e",
+      "diagrams/relerror-cdf.typ": "76e3e485ae25e5f6",
+      "diagrams/repo-overview.typ": "2eb6063ffb61d882",
+      "diagrams/revert-licm-example.typ": "aa94bc5f1d78f826",
+      "diagrams/snf-example.typ": "074b849cbb5ae599",
+      "diagrams/time-breakdown.typ": "c54026f6bd597580",
+      "diagrams/time-cmp-parallel.typ": "66aebdf45d8920a4",
+      "diagrams/time-cmp.typ": "5e5403dfacc1f57b",
+      "diagrams/triangulate-example.typ": "35b6f393e4bb6ad2",
+      "diagrams/unimod-mat-example.typ": "3b194025d513d1f1",
+      "diagrams/utils.typ": "3bd2bba88070cea3",
+      "diagrams/workflow.typ": "70b9e33b91941165",
+      "dissertation.typ": "e4130108a90da0ba",
+      "images/barvinok-breakdown-no-bitvec.png": "e6456a8465ea17e3",
+      "images/barvinok-breakdown-percent-no-bitvec.png": "69c5718d5caef53f",
+      "images/barvinok-breakdown-percent.png": "e8c23fb95947183e",
+      "images/barvinok-breakdown.png": "6ad66fdbee8cf1ff",
+      "images/barvinok-region-count.png": "e9ed04a09810136c",
+      "images/barvinok-summation-speedup.png": "c53f4e980dfa09aa",
+      "images/logscale.png": "86b73864ad11e540",
+      "images/miss-mine-to-perf-linear.png": "0d8adc553b67d966",
+      "images/miss-mine-to-perf-log.png": "004a2a40c8c6a928",
+      "images/miss-mine-to-perf.png": "c6aefc3d8ce7d1a1",
+      "images/perf-percentage.png": "5e7f3f3b0813c02a",
+      "images/pieces.png": "22bbc8a4a77fc072",
+      "images/plot.png": "91e223eb5925903f",
+      "images/relative-error-bar.png": "12041184595f729d",
+      "images/relative-error-cdf.png": "1804ecd2c61e5b96",
+      "images/relative-error.png": "b9df75a231d24797",
+      "images/time-mine-to-falcon.png": "7a0158ff496cec6b",
+      "images/time-mine-to-non-par.png": "1e0601bc33c84bf1",
+      "images/time-mine-to-perf.png": "f6da08e550c1088b",
+      "ref.bib": "179d82a15df57aeb",
+      "web.typ": "1572c25f82f13632"
+    }
+  },
   "llm/128k-ctx": {
-    "commit": "332cd79",
+    "commit": "d37ae8e",
     "declared": "~/blogs/src/content/docs/llm/128k-ctx.typ",
     "dirty": false
   },
   "llm/llm-compression": {
-    "commit": "332cd79",
+    "commit": "d37ae8e",
     "declared": "~/blogs/src/content/docs/llm/llm-compression.typ",
     "dirty": false
   },
@@ -25,27 +94,27 @@
     "dirty": false
   },
   "novels/conquer": {
-    "commit": "332cd79",
+    "commit": "d37ae8e",
     "declared": "~/blogs/src/content/docs/novels/Conquer.typ",
     "dirty": false
   },
   "novels/danitz": {
-    "commit": "332cd79",
+    "commit": "d37ae8e",
     "declared": "~/blogs/src/content/docs/novels/Danitz.typ",
     "dirty": false
   },
   "novels/feist": {
-    "commit": "332cd79",
+    "commit": "d37ae8e",
     "declared": "~/blogs/src/content/docs/novels/Feist.typ",
     "dirty": false
   },
   "novels/kinich": {
-    "commit": "332cd79",
+    "commit": "d37ae8e",
     "declared": "~/blogs/src/content/docs/novels/Kinich.typ",
     "dirty": false
   },
   "novels/uni": {
-    "commit": "332cd79",
+    "commit": "d37ae8e",
     "declared": "~/blogs/src/content/docs/novels/Uni.typ",
     "dirty": false
   },

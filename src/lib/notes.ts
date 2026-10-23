@@ -3,7 +3,11 @@
  *
  * `src/generated/notes.json` is the manifest (metadata + table of contents) and
  * `src/generated/notes/<slug>.html` holds the page body produced by Typst.
- * Both are committed; run `./compile.sh` after editing blog.toml.
+ * Neither is committed; run `./compile.sh` after editing blog.toml.
+ *
+ * Figures drawn in Typst arrive as inline `<svg>`; raster `#image(...)`s are
+ * pulled out to `public/images/<slug>/` by the same script and referenced by
+ * URL from inside the body.
  */
 import manifest from "@/generated/notes.json";
 import { htmlWordCount } from "@/utils/wordCount";
@@ -29,6 +33,8 @@ export interface Note {
   snapshot: string;
   bytes: number;
   math: number;
+  figures: number;
+  images: number;
   toc: TocEntry[];
 }
 
