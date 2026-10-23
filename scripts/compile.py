@@ -19,14 +19,15 @@ The directory shape exists for documents that are split across files
 (`#include` / `#import` / `#image`). The whole tree is snapshotted, because a
 snapshot is only reproducible if nothing outside it is needed.
 
-For every [[note]] entry:
+For every [[note]] entry (skipped when the previous build's inputs are
+unchanged — see the build-cache section below):
 
     sources/<slug>.typ      ->  src/generated/notes/<slug>.html   HTML + MathML
     sources/<slug>/<entry>  ->  public/images/<slug>/*.png        extracted figures
                             ->  public/pdf/<slug>.pdf             paged A4
 
 `--check` verifies that the committed snapshots still match the live sources, so
-a stale snapshot cannot be pushed.
+a stale snapshot cannot be pushed. `--no-cache` ignores cached artifacts.
 """
 
 from __future__ import annotations
@@ -52,6 +53,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = ROOT / "blog.toml"
 TOOLS = ROOT / ".tools"
+CACHE_DIR = ROOT / ".cache" / "notes"
 NOTES_DIR = ROOT / "src" / "generated" / "notes"
 NOTES_JSON = ROOT / "src" / "generated" / "notes.json"
 PDF_DIR = ROOT / "public" / "pdf"
@@ -147,6 +149,127 @@ def git(dir: Path, *args: str) -> str | None:
 
 def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()[:16]
+
+
+# --------------------------------------------------------------------------
+# build cache
+#
+# typst is the slow part, so a note whose build inputs are unchanged is
+# restored from the previous run instead of being compiled again. The cache
+# lives in .cache/ (never committed) and is keyed on content only.
+#
+# A note's inputs are exactly its snapshot tree, plus the pipeline settings that
+# can change the output (typst version, HTML flags, site base, enabled shims).
+# Multi-file documents are covered because the *whole* tree is in the key: a
+# chapter that `#include`s a diagram gets a new key when the diagram changes.
+# Cross-note references cannot exist by construction — a single-file note is
+# compiled from a temp dir that contains only itself, so `#include "other.typ"`
+# would not even compile there.
+#
+# scripts/compile.py itself is in the key, so editing the post-processing (even
+# a comment) invalidates every page. That is the conservative direction: a
+# stale page can never be explained away by a forgotten version bump.
+# --------------------------------------------------------------------------
+
+CACHE_VERSION = 1
+
+
+def pipeline_revision() -> str:
+    return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()[:16]
+
+
+def cache_key(
+    slug: str, entry_name: str, hashes: dict[str, str], options: dict
+) -> str:
+    material = json.dumps(
+        {
+            "version": CACHE_VERSION,
+            "pipeline": pipeline_revision(),
+            "slug": slug,
+            "entry": entry_name,
+            "options": options,
+            "files": dict(sorted(hashes.items())),
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+    return hashlib.sha256(material.encode()).hexdigest()[:32]
+
+
+def cache_read(slug: str, key: str, pdf_name: str) -> dict | None:
+    """Restore the artifacts of a matching previous build, or return None."""
+    entry = CACHE_DIR / slug
+    meta_file = entry / "meta.json"
+    if not (
+        meta_file.is_file()
+        and (entry / "page.html").is_file()
+        and (entry / "document.pdf").is_file()
+    ):
+        return None
+    try:
+        meta = json.loads(meta_file.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    if meta.get("version") != CACHE_VERSION or meta.get("key") != key:
+        return None
+    if meta.get("pdfName") != pdf_name:
+        return None
+
+    page = NOTES_DIR / f"{slug}.html"
+    page.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(entry / "page.html", page)
+    shutil.copy2(entry / "document.pdf", PDF_DIR / pdf_name)
+    images = IMAGE_DIR / slug
+    shutil.rmtree(images, ignore_errors=True)
+    if (entry / "images").is_dir():
+        shutil.copytree(entry / "images", images)
+    return meta
+
+
+def cache_write(
+    slug: str, key: str, meta: dict, page: Path, pdf: Path, images: Path | None
+) -> None:
+    """Publish a build into the cache atomically (meta.json is written last)."""
+    entry = CACHE_DIR / slug
+    entry.parent.mkdir(parents=True, exist_ok=True)
+    tmp = Path(tempfile.mkdtemp(dir=entry.parent, prefix=f".{entry.name}."))
+    try:
+        shutil.copy2(page, tmp / "page.html")
+        shutil.copy2(pdf, tmp / "document.pdf")
+        if images is not None and images.is_dir():
+            shutil.copytree(images, tmp / "images")
+        # No sort_keys: the toc entries are re-emitted into notes.json verbatim,
+        # so their key order has to survive the round trip.
+        (tmp / "meta.json").write_text(
+            json.dumps(
+                {**meta, "version": CACHE_VERSION, "key": key},
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n"
+        )
+        shutil.rmtree(entry, ignore_errors=True)
+        tmp.rename(entry)
+    except BaseException:
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise
+
+
+def cache_prune(keep: set[str]) -> None:
+    """Drop entries for notes that are no longer in blog.toml."""
+    if not CACHE_DIR.is_dir():
+        return
+    stale = [
+        meta.parent
+        for meta in CACHE_DIR.rglob("meta.json")
+        if meta.parent.relative_to(CACHE_DIR).as_posix() not in keep
+    ]
+    for entry in stale:
+        shutil.rmtree(entry, ignore_errors=True)
+    # ... and the group directories left empty behind them.
+    for group in sorted(CACHE_DIR.iterdir()):
+        if group.is_dir() and not any(group.iterdir()):
+            group.rmdir()
 
 
 # --------------------------------------------------------------------------
@@ -585,6 +708,11 @@ def main() -> None:
         action="store_true",
         help="only verify that sources/ matches the live documents (no typst needed)",
     )
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="ignore cached artifacts and recompile every note (still fills the cache)",
+    )
     args = parser.parse_args()
 
     site, projects, notes = load_manifest()
@@ -615,6 +743,7 @@ def main() -> None:
     provenance: dict[str, dict] = dict(saved_provenance)
     warnings: list[str] = []
     base = site.get("base", "/")
+    n_cached = 0
 
     for note in notes:
         slug = note["slug"].strip("/")
@@ -674,76 +803,119 @@ def main() -> None:
             entry_name = snap.name
             tree = {entry_name: snap}
 
-        # 2. build the HTML from a throwaway copy of the snapshot, so that the
-        #    diagram shim never touches what is committed
-        n_math = 0
-        with tempfile.TemporaryDirectory() as tmp:
-            build = Path(tmp) / "build"
-            if is_tree(note):
-                shutil.copytree(
-                    snap, build, ignore=shutil.ignore_patterns(*ALWAYS_EXCLUDE)
-                )
-            else:
-                build.mkdir()
-                shutil.copy2(snap, build / entry_name)
+        # 2. cache: content-addressed. Same snapshot tree + same pipeline
+        #    settings => the previous artifacts are still correct.
+        pdf_name = slug.replace("/", "-") + ".pdf"
+        pdf_path = PDF_DIR / pdf_name
+        hashes = {rel: digest(p.read_bytes()) for rel, p in tree.items()}
+        key = cache_key(
+            slug,
+            entry_name,
+            hashes,
+            {
+                "typst": tver,
+                "html_flags": HTML_FLAGS,
+                "base": base,
+                "shims": sorted(shims),
+            },
+        )
+        cached = None if args.no_cache else cache_read(slug, key, pdf_name)
 
-            rewrites = 0
-            if "diagram" in shims:
-                rewrites = apply_shim(build)
-            page = Path(tmp) / "page.html"
-            proc = run(
+        if cached:
+            n_math = cached["math"]
+            n_figures = cached["figures"]
+            n_images = cached["images"]
+            toc = cached["toc"]
+            html_bytes = cached["htmlBytes"]
+            pdf_bytes = cached["pdfBytes"]
+            n_cached += 1
+        else:
+            # 3. build the HTML from a throwaway copy of the snapshot, so that
+            #    the diagram shim never touches what is committed
+            with tempfile.TemporaryDirectory() as tmp:
+                build = Path(tmp) / "build"
+                if is_tree(note):
+                    shutil.copytree(
+                        snap, build, ignore=shutil.ignore_patterns(*ALWAYS_EXCLUDE)
+                    )
+                else:
+                    build.mkdir()
+                    shutil.copy2(snap, build / entry_name)
+
+                rewrites = 0
+                if "diagram" in shims:
+                    rewrites = apply_shim(build)
+                page = Path(tmp) / "page.html"
+                proc = run(
+                    [
+                        str(typst),
+                        "compile",
+                        *HTML_FLAGS,
+                        "--root",
+                        str(build),
+                        str(build / entry_name),
+                        str(page),
+                    ],
+                    f"typst html for {slug}",
+                    REPRO_ENV,
+                )
+                warnings.extend(f"[{slug}] {w}" for w in note_warnings(proc.stderr))
+                full = page.read_text()
+                body, toc = extract_body(full)
+
+                if "diagram" in shims:
+                    print(f"    shim    {rewrites} import(s) redirected")
+
+                has_math_src = any(
+                    "$" in p.read_text(errors="replace")
+                    for p in tree.values()
+                    if p.suffix == ".typ" and p.is_file()
+                )
+                n_math = body.count("<math")
+                if has_math_src and n_math == 0:
+                    die(
+                        f"[{slug}] source has math but the page has no <math>; "
+                        "typst dropped the equations (needs >= 0.15)"
+                    )
+
+            n_figures = check_figures(slug, body, "diagram" in shims)
+            body, n_images = extract_images(slug, body, tree, base)
+            page_path = NOTES_DIR / f"{slug}.html"
+            page_path.parent.mkdir(parents=True, exist_ok=True)
+            page_path.write_text(body)
+
+            # 4. PDF, from the pristine snapshot (the shim is HTML-only)
+            run(
                 [
                     str(typst),
                     "compile",
-                    *HTML_FLAGS,
                     "--root",
-                    str(build),
-                    str(build / entry_name),
-                    str(page),
+                    str(snap if is_tree(note) else snap.parent),
+                    str(snap / entry_name if is_tree(note) else snap),
+                    str(pdf_path),
                 ],
-                f"typst html for {slug}",
+                f"typst pdf for {slug}",
                 REPRO_ENV,
             )
-            warnings.extend(f"[{slug}] {w}" for w in note_warnings(proc.stderr))
-            full = page.read_text()
-            body, toc = extract_body(full)
 
-            if "diagram" in shims:
-                print(f"    shim    {rewrites} import(s) redirected")
-
-            has_math_src = any(
-                "$" in p.read_text(errors="replace")
-                for p in tree.values()
-                if p.suffix == ".typ" and p.is_file()
+            html_bytes = len(body)
+            pdf_bytes = pdf_path.stat().st_size
+            cache_write(
+                slug,
+                key,
+                {
+                    "pdfName": pdf_name,
+                    "math": n_math,
+                    "figures": n_figures,
+                    "images": n_images,
+                    "toc": toc,
+                    "htmlBytes": html_bytes,
+                    "pdfBytes": pdf_bytes,
+                },
+                page_path,
+                pdf_path,
+                IMAGE_DIR / slug,
             )
-            n_math = body.count("<math")
-            if has_math_src and n_math == 0:
-                die(
-                    f"[{slug}] source has math but the page has no <math>; "
-                    "typst dropped the equations (needs >= 0.15)"
-                )
-
-        n_figures = check_figures(slug, body, "diagram" in shims)
-        body, n_images = extract_images(slug, body, tree, base)
-        page_path = NOTES_DIR / f"{slug}.html"
-        page_path.parent.mkdir(parents=True, exist_ok=True)
-        page_path.write_text(body)
-
-        # 3. PDF, from the pristine snapshot (the shim is HTML-only)
-        pdf_name = slug.replace("/", "-") + ".pdf"
-        pdf_path = PDF_DIR / pdf_name
-        run(
-            [
-                str(typst),
-                "compile",
-                "--root",
-                str(snap if is_tree(note) else snap.parent),
-                str(snap / entry_name if is_tree(note) else snap),
-                str(pdf_path),
-            ],
-            f"typst pdf for {slug}",
-            REPRO_ENV,
-        )
 
         out_notes.append(
             {
@@ -770,16 +942,24 @@ def main() -> None:
                 "toc": toc,
             }
         )
-        print(
-            f"    html    {len(body) // 1024} KB, {n_math} equations, "
-            f"{n_figures} figures, {len(toc)} headings"
-        )
-        print(f"    pdf     {pdf_path.stat().st_size // 1024} KB")
+        if cached:
+            print(
+                f"    cached  {html_bytes // 1024} KB html, {pdf_bytes // 1024} KB pdf, "
+                f"{n_math} equations, {n_figures} figures, {len(toc)} headings"
+            )
+        else:
+            print(
+                f"    html    {html_bytes // 1024} KB, {n_math} equations, "
+                f"{n_figures} figures, {len(toc)} headings"
+            )
+            print(f"    pdf     {pdf_bytes // 1024} KB")
 
     if provenance:
         PROVENANCE.write_text(
             json.dumps(provenance, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
         )
+
+    cache_prune({note["slug"].strip("/") for note in notes})
 
     out_notes.sort(key=lambda n: (projects[n["project"]].get("order", 999), n["order"]))
     payload = {
@@ -794,7 +974,11 @@ def main() -> None:
     for w in warnings:
         print(f"warning: {w}", file=sys.stderr)
 
-    print(f"done: {len(out_notes)} note(s) -> src/generated/, public/pdf/, public/images/")
+    print(
+        f"done: {len(out_notes)} note(s) "
+        f"({len(out_notes) - n_cached} compiled, {n_cached} cached) "
+        "-> src/generated/, public/pdf/, public/images/"
+    )
 
 
 if __name__ == "__main__":

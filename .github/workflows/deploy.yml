@@ -34,12 +34,23 @@ jobs:
           path: .tools
           key: typst-${{ hashFiles('blog.toml') }}
 
+      # Per-note compile cache (.cache/notes). A restored cache can never
+      # produce a stale page: every note is keyed on the hash of its snapshot
+      # tree, so an entry only hits when its inputs are byte-identical. The key
+      # below is just what makes a hit likely; restore-keys grabs the newest
+      # previous cache so unchanged notes are skipped even when another one
+      # changed in the same push.
+      - uses: actions/cache@v4
+        with:
+          path: .cache/notes
+          key: notes-${{ hashFiles('sources/**', 'blog.toml', 'scripts/compile.py') }}
+          restore-keys: notes-
+
       # The HTML pages are font-independent (equations are MathML, not glyphs),
       # but the PDFs are not: without a CJK font, typst falls back to a Latin
       # face and Chinese comes out as tofu. Libertinus Serif ships inside typst.
       - name: Install CJK font for PDF export
         run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
-
       - name: Install
         run: pnpm install --frozen-lockfile
 

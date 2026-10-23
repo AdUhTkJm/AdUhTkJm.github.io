@@ -41,6 +41,15 @@ jobs:
           path: .tools
           key: typst-${{ hashFiles('blog.toml') }}
 
+      # Per-note compile cache (.cache/notes); see deploy.yml for why a restored
+      # cache cannot yield a stale page.
+      - name: "🐢 Cache compiled notes"
+        uses: actions/cache@v4
+        with:
+          path: .cache/notes
+          key: notes-${{ hashFiles('sources/**', 'blog.toml', 'scripts/compile.py') }}
+          restore-keys: notes-
+
       # PDF export needs a CJK font; HTML export does not.
       - name: "🔤 Install CJK font"
         run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk

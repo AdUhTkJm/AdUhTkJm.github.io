@@ -15,6 +15,7 @@ sources/<slug>/                   多文件笔记的整棵目录快照（构建�
 sources/provenance.json           每个快照来自哪个上游 commit + 文件哈希
 scripts/compile.py                快照 -> HTML（MathML）+ PDF + 抽出的图
 compile.sh                        唯一会运行的命令
+.cache/notes/<slug>/              上次编译的产物（机器本地，不进 git）
 src/lib/notes.ts                  对生成清单的带类型访问器
 src/lib/articles.ts               统一文章模型（笔记 + Markdown 随笔）
 src/pages/posts/[...slug]/        文章渲染器（笔记 + 随笔，URL 统一为 /posts/）
@@ -26,10 +27,11 @@ src/styles/note.css               与 PDF 镜像一致的屏幕排版
 ```
 ./compile.sh
 ./compile.sh --dev
+./compile.sh --no-cache
 ./compile.sh --check
 ```
 
-第一个刷新快照、编译并构建；`--dev` 之后还会启动 `astro dev`；`--check` 只检查快照与线上文档是否还同步（目录快照逐文件比哈希）。
+第一个刷新快照、编译**变化了的部分**并构建；`--dev` 之后还会启动 `astro dev`；`--no-cache` 无视缓存全部重编；`--check` 只检查快照与线上文档是否还同步（目录快照逐文件比哈希）。
 
 `compile.sh` 是 `pnpm build` 的薄封装，而 `pnpm build` 会先运行 `scripts/compile.py`，所以无法直接调用 pnpm 绕过流水线。首次运行会把固定版本的 `typst` 下载到 `.tools/`；你系统上的 `typst` 不会被使用，所以它的版本无关紧要。
 
@@ -40,6 +42,28 @@ git config --local core.hooksPath .githooks
 ```
 
 之后 `git push` 会拒绝推送与源文件不一致的快照。
+
+## 编译缓存
+
+typst 是构建里最慢的一环（毕业论文那一篇要十几秒，全部 11 篇一共 17 秒），所以没变的笔记不再重编：产物缓存在 `.cache/notes/<slug>/`（`page.html`、`document.pdf`、`images/`），命中时直接拷进 `src/generated/`、`public/pdf/`、`public/images/`。缓存是机器本地的，不进 git，也不影响 CI 的可复现性。全量命中时整条流水线 0.1 秒。
+
+缓存键只由内容决定，不含时间戳：
+
+```
+snapshot 树的每个文件（相对路径 + sha256）
++ 入口文件名、slug
++ typst 版本、HTML 导出参数、站点 base、启用的 shim
++ scripts/compile.py 自身的哈希
+```
+
+几个刻意的选择：
+
+- **依赖就是快照树**。多文件文档改了某一张图或某一章，整棵树的哈希就变了，所以那一篇会重编；这不需要解析 `#include`。又因为单文件笔记的快照必须自包含（见下节），一篇笔记引用另一篇的文件根本编译不过，跨笔记依赖不存在。所以「哈希整个快照树」既充分又必要——它恰好等于真正的构建输入。
+- **`compile.py` 自身也在键里**。改了后处理（哪怕只是注释），所有页面全部失效。宁可多编一次，也不要让「忘了 bump 版本号」变成线上残留旧页面的解释。
+- **provenance 不进键**。它只是「这篇来自哪个 commit」的标签，不改变 HTML/PDF 的字节，所以上游提交前进了也不会触发重编。
+- **缓存只写不读失败态**。产物先写进临时目录、`meta.json` 最后落盘再整体改名，所以中断或报错的构建不会留下一条看起来有效的坏缓存。
+
+想强制全量重编（升级 typst、怀疑缓存、调过 shim 之后）用 `./compile.sh --no-cache`，它会无视旧条目但仍然写回新结果；或者直接 `rm -rf .cache`。CI 里也用 `actions/cache` 挂了这份缓存：键是 `sources/` + `blog.toml` + `scripts/compile.py` 的哈希，`restore-keys` 兜底拿最近的一份——即使命中旧缓存也不会出错，因为每个条目自己的键才是判定依据，旧条目只会被当成未命中。
 
 ## 加一篇笔记
 

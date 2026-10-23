@@ -6,3 +6,5 @@ node_modules/
 
 # Ignore build output
 dist/
+# Ignore the machine-local notes build cache
+.cache/
