@@ -31,7 +31,9 @@ src/styles/note.css               与 PDF 镜像一致的屏幕排版
 ./compile.sh --check
 ```
 
-第一个刷新快照、编译**变化了的部分**并构建；`--dev` 之后还会启动 `astro dev`；`--no-cache` 无视缓存全部重编；`--check` 只检查快照与线上文档是否还同步（目录快照逐文件比哈希）。
+第一个刷新快照、编译**变化了的部分**并构建；`--dev` 之后还会启动 `astro dev`；`--no-cache` 无视缓存全部重编；`--check` 只检查快照与线上文档是否还同步（目录快照逐文件比哈希），并且要求 `sources/` 下的每个文件都已进 git——快照是构建输入，只存在于本地的快照文件 CI 看不到。
+
+同理，`compile.py` 在编译每一篇之前会用 `git check-ignore` 检查这棵快照树：只要有文件被 git 忽略（`git add sources` 会静默跳过它），就直接报错并指明路径。这类文件在这台机器上能编出页面，在新克隆和 CI 上则编译失败。
 
 `compile.sh` 是 `pnpm build` 的薄封装，而 `pnpm build` 会先运行 `scripts/compile.py`，所以无法直接调用 pnpm 绕过流水线。首次运行会把固定版本的 `typst` 下载到 `.tools/`；你系统上的 `typst` 不会被使用，所以它的版本无关紧要。
 
@@ -86,7 +88,7 @@ shim = ["diagram"]
 slug = "compiler/cache-miss-analysis"
 ```
 
-整棵目录（减去 `.git` 和 `exclude`）都会复制进 `sources/<slug>/`，`--check` 逐文件比哈希，所以快照仍然可以审计。`entry` 必须是**一个**根文件，这不是偷懒：第 2 章引用了第 3、4 章的 label（`@barvinok-impl`、`@eval`），把它们拆成独立编译单元只会留下一堆悬空引用。网页上的「一章一页」需要先整体编译再切 HTML，目前没做；现在是一个长页 `/posts/compiler/cache-miss-analysis/`（1.5 MB HTML，gzip 后 226 KB，51,000 px 高）。
+整棵目录（减去 `.git`、`.gitignore` 和 `exclude`）都会复制进 `sources/<slug>/`，`--check` 逐文件比哈希，所以快照仍然可以审计。`.gitignore` 不进快照是刻意的：上游仓库的忽略规则一旦被复制进 `sources/`，就会同样作用于这个仓库的 `git add sources`（毕业论文的 `.gitignore` 写着 `build` 和 `*.png`，于是 `build/repo.typ` 和所有图都留在本地、没进 git，CI 里报 `file not found`）。快照要不要某个文件，由 `blog.toml` 的 `exclude` 决定，不由上游的 git 配置决定。`entry` 必须是**一个**根文件，这不是偷懒：第 2 章引用了第 3、4 章的 label（`@barvinok-impl`、`@eval`），把它们拆成独立编译单元只会留下一堆悬空引用。网页上的「一章一页」需要先整体编译再切 HTML，目前没做；现在是一个长页 `/posts/compiler/cache-miss-analysis/`（1.5 MB HTML，gzip 后 226 KB，51,000 px 高）。
 
 入口文件写在上游仓库里（`dissertation/web.typ`），因为它要表达的是内容决策：包含哪几章、编号从 2 开始（`#counter(heading).update(1)`）、`= Evaluation <eval>` 这个 label 挂在哪、`#bibliography("ref.bib")`。翻译版只要再写一个 `web_zh.typ`（`#include "chapters/preparation_zh.typ"`），然后在 `blog.toml` 里加一个 `entry = "web_zh.typ"` 的 `[[note]]` 即可，路径和章节数都不必与英文版一致。
 
@@ -137,6 +139,8 @@ Typst 文档也可以为 JavaScript 留一个挂载点：
 `base` 配错的症状很好认，因为 Astro **不会**把 `base` 写进构建产物路径：`dist/` 里仍然是 `index.html`、`posts/...`，而 HTML 里的资源指向 `/<base>/_astro/...`。上传的是 `dist/`、由 Pages 挂在域名根上，于是 CSS 全部 404（裸 HTML 的样子），文章链接也全 404（页面显示“不存在”），但 `pnpm preview` 一切正常——因为 preview 会真的在 `/<base>/` 下提供服务。
 
 ## 踩过的坑
+
+上游的 `.gitignore` 被复制进快照（`sources/compiler/cache-miss-analysis/.gitignore` 写着 `build`、`*.png`），于是 `git add sources` 静默跳过了 `build/repo.typ` 和 19 张图：本地编译正常（文件在磁盘上）、`--check` 正常（比的是线上文档而不是 git）、CI 报 `file not found`。修法有三层——`.gitignore` 列入 `ALWAYS_EXCLUDE`，从此不进快照；`compile.py` 用 `git check-ignore` 对每棵快照树硬断言；`--check` 要求 `sources/` 下没有未提交的文件。已经漏掉的文件只能 `git add -f` 补回来。
 
 永远不要给 `<math>` 设 `display`。UA 样式表给 `math[display=block]` 的值是 `block math`，正是 `math` 这半段让 MathML 排版子元素；用 `display: block` 覆盖会让 `mi`、`mo`、`mfrac` 变成普通块级盒子，公式就坍缩成一列垂直的符号。所以 `compile.py` 把显示式公式包进 `<div class="math-block">`——滚动需要一个块级盒子，但必须是外层容器，不能是 `math` 本身。
 

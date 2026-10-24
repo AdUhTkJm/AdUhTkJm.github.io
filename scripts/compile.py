@@ -72,7 +72,14 @@ REPRO_ENV = {**os.environ, "SOURCE_DATE_EPOCH": "0"}
 SHIM_DIR = "_blog_shim"
 
 # Never part of a snapshot, no matter what the manifest says.
-ALWAYS_EXCLUDE = [".git"]
+#
+# `.gitignore` is here because a snapshot is committed with `git add sources`, and
+# an ignore file copied out of the upstream repository applies to the snapshot
+# too: the dissertation's `.gitignore` says `build` and `*.png`, so its
+# `build/repo.typ` and every figure existed on the author's disk but never in git.
+# The build passed locally and failed in CI with "file not found", which is the
+# exact silent omission this pipeline is supposed to make impossible.
+ALWAYS_EXCLUDE = [".git", ".gitignore"]
 
 # Package imports that draw pictures. The HTML exporter cannot turn a bare
 # `cetz.canvas` (or a fletcher `diagram`) into an SVG and silently emits
@@ -149,6 +156,46 @@ def git(dir: Path, *args: str) -> str | None:
 
 def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()[:16]
+
+
+def git_ignored(paths: list[Path]) -> list[str]:
+    """The subset of `paths` that git ignores, i.e. that `git add` will skip.
+
+    Those files exist on this machine only: the next clone (and CI) cannot see
+    them, so the note would compile here and fail on the deployed build. Returns
+    [] when git is unavailable or this is not a checkout.
+    """
+    rel = sorted(p.relative_to(ROOT).as_posix() for p in paths if p.is_file())
+    if not rel:
+        return []
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(ROOT), "check-ignore", "--stdin"],
+            input="\n".join(rel) + "\n",
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        return []
+    if proc.returncode not in (0, 1):
+        return []
+    return proc.stdout.split()
+
+
+def git_untracked() -> list[str]:
+    """Files under sources/ that exist but are not in the index."""
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(ROOT), "ls-files", "--others", "--", str(SNAPSHOT_DIR)],
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        return []
+    if proc.returncode != 0:
+        return []
+    # `-C ROOT` makes these paths repo-relative already.
+    return sorted(proc.stdout.split())
 
 
 # --------------------------------------------------------------------------
@@ -692,6 +739,19 @@ def check(notes: list[dict]) -> None:
 
     for slug in missing_live:
         print(f"  note: {slug} — live source absent, using committed snapshot")
+
+    # A snapshot that is not entirely in git is not a snapshot: a fresh clone
+    # and CI would build something else (this is how build/repo.typ once went
+    # missing while every local build kept working).
+    untracked = git_untracked()
+    if untracked:
+        shown = ", ".join(untracked[:3]) + (" ..." if len(untracked) > 3 else "")
+        die(
+            f"{len(untracked)} snapshot file(s) are not committed: {shown}\n"
+            "  a snapshot is the build input, so CI only sees what is in git.\n"
+            "  fix: git add sources  (or `git add -f` if git ignores the path)"
+        )
+
     if stale or gone:
         for slug in gone:
             print(f"  no snapshot: {slug}", file=sys.stderr)
@@ -802,6 +862,19 @@ def main() -> None:
                 die(f"[{slug}] neither the live document nor a snapshot exists: {live}")
             entry_name = snap.name
             tree = {entry_name: snap}
+
+        # A file git ignores never reaches the repository, so this note would
+        # build on this machine only and fail in CI ("file not found"). The
+        # `.gitignore` that caused this is no longer snapshotted, but an ignore
+        # pattern from the root .gitignore or a future one would still bite.
+        ignored = git_ignored(list(tree.values()))
+        if ignored:
+            shown = ", ".join(ignored[:3]) + (" ..." if len(ignored) > 3 else "")
+            die(
+                f"[{slug}] {len(ignored)} snapshot file(s) are git-ignored: {shown}\n"
+                "  they exist here but would never be committed, so CI cannot see them.\n"
+                "  fix: git add -f them, or drop them via `exclude` in blog.toml"
+            )
 
         # 2. cache: content-addressed. Same snapshot tree + same pipeline
         #    settings => the previous artifacts are still correct.

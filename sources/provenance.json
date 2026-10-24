@@ -5,7 +5,7 @@
     "dirty": false
   },
   "compiler/bv-decide": {
-    "commit": "62e4d83",
+    "commit": "7d8d8f0",
     "declared": "~/blogs/src/content/docs/compiler/bv-decide.typ",
     "dirty": false
   },
@@ -15,7 +15,6 @@
     "dirty": true,
     "entry": "web.typ",
     "files": {
-      ".gitignore": "683d521b5d7c5487",
       "build/repo.typ": "657dfef6518e7101",
       "chapters/common.typ": "b403f4ffe1d6930a",
       "chapters/conclusion.typ": "488d0e7023f1c686",
@@ -79,12 +78,12 @@
     }
   },
   "llm/128k-ctx": {
-    "commit": "62e4d83",
+    "commit": "7d8d8f0",
     "declared": "~/blogs/src/content/docs/llm/128k-ctx.typ",
     "dirty": false
   },
   "llm/llm-compression": {
-    "commit": "62e4d83",
+    "commit": "7d8d8f0",
     "declared": "~/blogs/src/content/docs/llm/llm-compression.typ",
     "dirty": false
   },
@@ -94,7 +93,7 @@
     "dirty": false
   },
   "misc/fcitx5-rime-commitraw": {
-    "commit": "62e4d83",
+    "commit": "7d8d8f0",
     "declared": "~/blogs/src/content/docs/misc/fcitx5-rime-commitraw.typ",
     "dirty": false
   },
@@ -109,27 +108,27 @@
     "dirty": false
   },
   "novels/conquer": {
-    "commit": "62e4d83",
+    "commit": "7d8d8f0",
     "declared": "~/blogs/src/content/docs/novels/Conquer.typ",
     "dirty": false
   },
   "novels/danitz": {
-    "commit": "62e4d83",
+    "commit": "7d8d8f0",
     "declared": "~/blogs/src/content/docs/novels/Danitz.typ",
     "dirty": false
   },
   "novels/feist": {
-    "commit": "62e4d83",
+    "commit": "7d8d8f0",
     "declared": "~/blogs/src/content/docs/novels/Feist.typ",
     "dirty": false
   },
   "novels/kinich": {
-    "commit": "62e4d83",
+    "commit": "7d8d8f0",
     "declared": "~/blogs/src/content/docs/novels/Kinich.typ",
     "dirty": false
   },
   "novels/uni": {
-    "commit": "62e4d83",
+    "commit": "7d8d8f0",
     "declared": "~/blogs/src/content/docs/novels/Uni.typ",
     "dirty": false
   },
