@@ -62,9 +62,9 @@ description = "各种小说，主要是同人。"
 order = 50000
 
 [[project]]
-id = "seedsearch"
-title = "种子搜索"
-description = "《杀戮尖塔 2》的种子搜索"
+id = "misc"
+title = "杂项"
+description = "杂乱的小东西，没有单独的主题。"
 order = 60000
 
 # ---------------------------------------------------------------------------
@@ -82,18 +82,11 @@ order = 60000
 #   summary  one line, shown in listings and <meta name="description">
 #   tags     free-form
 #   date     YYYY-MM-DD, used for sorting and "updated" display
-#   order    within the project; lower first
+#   order    listing position; lower first. It is the primary sort key of every
+#            listing (home, /posts, tags, archives, RSS); the date only breaks
+#            ties. So to get newest-first, give the newest note the smallest
+#            order.
 # ---------------------------------------------------------------------------
-
-[[note]]
-source = "~/projects/seedsearch/docs/optimizations.typ"
-slug = "seedsearch/map-path-pruning"
-project = "seedsearch"
-title = "地图生成优化"
-summary = "我加速了 100 倍的地图生成"
-tags = ["种子搜索", "优化", "地图生成"]
-date = "2026-10-17"
-order = 1
 
 [[note]]
 source = "~/projects/aw/docs/algorithm.typ"
@@ -135,7 +128,7 @@ title = "bv_decide 的内部原理"
 summary = "Lean tactic"
 tags = ["编译器", "形式化验证", "Lean"]
 date = "2026-10-21"
-order = 1
+order = 2147483646
 
 [[note]]
 source = "~/llvm/dissertation"
@@ -148,7 +141,7 @@ title = "用多面体模型静态预测缓存缺失次数"
 summary = "我的本科毕业论文"
 tags = ["编译器", "多面体", "MLIR"]
 date = "2026-04-28"
-order = 2
+order = 2147483647
 
 # Novels
 
@@ -160,7 +153,7 @@ title = "费斯特想要在诡异学校里活下去"
 summary = "明日方舟/安科"
 tags = ["明日方舟", "小说"]
 date = "2024-05-26"
-order = 1
+order = 1073741823
 
 [[note]]
 source = "~/blogs/src/content/docs/novels/Conquer.typ"
@@ -170,7 +163,7 @@ title = "征服"
 summary = "诡秘之主，安德森x克莱恩"
 tags = ["诡秘之主", "小说"]
 date = "2024-04-07"
-order = 2
+order = 1073741824
 
 [[note]]
 source = "~/blogs/src/content/docs/novels/Danitz.typ"
@@ -180,7 +173,7 @@ title = "猎人走上海岸"
 summary = "诡秘之主，海上组（安德森、克莱恩、达尼兹）"
 tags = ["诡秘之主", "小说"]
 date = "2024-03-09"
-order = 3
+order = 1073741825
 
 [[note]]
 source = "~/blogs/src/content/docs/novels/Uni.typ"
@@ -190,7 +183,7 @@ title = "愚者进校园"
 summary = "诡秘之主，全员"
 tags = ["诡秘之主", "小说"]
 date = "2024-05-14"
-order = 4
+order = 1073741826
 
 [[note]]
 source = "~/blogs/src/content/docs/novels/Kinich.typ"
@@ -200,4 +193,27 @@ title = "无名之人，迎向深渊"
 summary = "原神（纳塔）"
 tags = ["原神", "小说"]
 date = "2024-10-19"
-order = 5
+order = 1073741827
+
+# Misc
+# 按时间倒序排列，因此 order 先写作 INT_MAX
+
+[[note]]
+source = "~/blogs/src/content/docs/misc/fcitx5-rime-commitraw.typ"
+slug = "misc/fcitx5-rime-commitraw"
+project = "misc"
+title = "Fcitx5 输入法配置"
+summary = "迁移到 Linux 不得不品的一环"
+tags = ["杂项"]
+date = "2026-10-24"
+order = 2147483646
+
+[[note]]
+source = "~/projects/seedsearch/docs/optimizations.typ"
+slug = "misc/map-path-pruning"
+project = "misc"
+title = "地图生成优化"
+summary = "我加速了 100 倍的地图生成"
+tags = ["种子搜索", "优化", "地图生成"]
+date = "2026-10-17"
+order = 2147483647

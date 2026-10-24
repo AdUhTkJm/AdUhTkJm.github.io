@@ -18,6 +18,9 @@ const posts = defineCollection({
       // Optional project id from blog.toml; lets a Markdown post join a
       // Typst-note project in listings.
       project: z.string().optional(),
+      // Position in every listing (lower first). Notes take theirs from
+      // blog.toml; posts without it sort after the ordered ones.
+      order: z.number().optional(),
       tags: z.array(z.string()).default(["others"]),
       ogImage: image().or(z.string()).optional(),
       description: z.string(),

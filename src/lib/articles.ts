@@ -21,6 +21,12 @@ export interface Article {
   date: Date | null;
   tags: string[];
   featured: boolean;
+  /**
+   * Position within its project, from `blog.toml`; lower comes first. This is
+   * the primary sort key of every listing — date only breaks ties. Articles
+   * without a declared order (Markdown posts) sort after all ordered ones.
+   */
+  order?: number;
   /** Present when the article belongs to a project (all notes do). */
   project?: Project;
   /** Fully localized, base-aware URL. */
@@ -41,6 +47,9 @@ export interface ArticleTag {
 
 const FALLBACK_PROJECT_ORDER = 999;
 
+/** Sort key for articles that declare no `order` (all Markdown posts). */
+const NO_ORDER = Number.MAX_SAFE_INTEGER;
+
 function projectById(id: string): Project {
   return (
     projects.find(project => project.id === id) ?? {
@@ -57,7 +66,12 @@ function noteDate(date: string | null): Date | null {
 }
 
 /**
- * Returns every published post plus every compiled note, newest first.
+ * Returns every published post plus every compiled note, ordered by `order`
+ * (lower first) and then newest first.
+ *
+ * `order` is deliberately the *primary* key rather than the date: the curated
+ * `blog.toml` listing is the source of truth for reading order, so a note with
+ * a small `order` stays on top even after its date is bumped.
  *
  * Notes have no draft/scheduled state in the manifest, so all of them are
  * included. Posts still respect `postFilter()`.
@@ -74,6 +88,7 @@ export async function getAllArticles(
     date: post.data.modDatetime ?? post.data.pubDatetime,
     tags: post.data.tags,
     featured: post.data.featured ?? false,
+    order: post.data.order,
     project: post.data.project ? projectById(post.data.project) : undefined,
     href: getPostUrl(post.id, post.filePath, locale),
     kind: "post",
@@ -86,15 +101,24 @@ export async function getAllArticles(
     date: noteDate(note.date),
     tags: note.tags,
     featured: false,
+    order: note.order,
     project: projectOf(note),
     href: getRelativeLocaleUrl(locale, `posts/${note.slug}`),
     kind: "note",
   }));
 
   return [...postArticles, ...noteArticles].sort((a, b) => {
+    // 1. curated order, ascending ("lower first")
+    const orderDelta = (a.order ?? NO_ORDER) - (b.order ?? NO_ORDER);
+    if (orderDelta !== 0) return orderDelta;
+
+    // 2. same order (or both unordered): newest first
     const aTime = a.date?.getTime() ?? Number.NEGATIVE_INFINITY;
     const bTime = b.date?.getTime() ?? Number.NEGATIVE_INFINITY;
-    return bTime - aTime;
+    if (aTime !== bTime) return bTime - aTime;
+
+    // 3. fully tied: keep the output deterministic
+    return a.id.localeCompare(b.id);
   });
 }
 
