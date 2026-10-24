@@ -1,73 +1,32 @@
 ---
-import { type CollectionEntry, getCollection, render } from "astro:content";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import PostLayout from "@/layouts/PostLayout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-import Datetime from "@/components/Datetime.astro";
 import Tag from "@/components/Tag.astro";
-import { getPostSlug, getPostUrl } from "@/utils/getPostPaths";
-import { getSortedPosts } from "@/utils/getSortedPosts";
 import { getAssetPath } from "@/utils/withBase";
 import { slugifyStr } from "@/utils/slugify";
 import { toTransitionName } from "@/utils/toTransitionName";
 import { noteBody, notes, noteWords, projectOf, type Note } from "@/lib/notes";
-import EditPost from "./_components/EditPost.astro";
 import ShareLinks from "./_components/ShareLinks.astro";
 import BackButton from "./_components/BackButton.astro";
 import BackToTopButton from "./_components/BackToTopButton.astro";
-import AdjacentPostNav from "./_components/AdjacentPostNav.astro";
 import config from "@/config";
 import "@/styles/note.css";
 
+/**
+ * One page per Typst note. There is no other article source: `blog.toml` is the
+ * only input, so neighbour links come from the note's own project and the slug
+ * in blog.toml is the URL.
+ */
 export async function getStaticPaths() {
-  const posts = await getCollection("posts");
-  const sortedPosts = getSortedPosts(posts);
-
-  const postPaths = sortedPosts.map((post, index) => ({
-    params: { slug: getPostSlug(post.id, post.filePath) },
-    props: {
-      kind: "post" as const,
-      post,
-      // sortedPosts is newest-first, so "older" (prev) is a higher index
-      // and "newer" (next) is a lower index.
-      prevPost:
-        index < sortedPosts.length - 1
-          ? {
-              id: sortedPosts[index + 1].id,
-              title: sortedPosts[index + 1].data.title,
-              filePath: sortedPosts[index + 1].filePath,
-            }
-          : null,
-      nextPost:
-        index > 0
-          ? {
-              id: sortedPosts[index - 1].id,
-              title: sortedPosts[index - 1].data.title,
-              filePath: sortedPosts[index - 1].filePath,
-            }
-          : null,
-    },
-  }));
-
-  const postSlugs = new Set(
-    postPaths.map(path => path.params.slug.replace(/^\/+/, ""))
-  );
-
-  const notePaths = notes.map(note => {
-    if (postSlugs.has(note.slug)) {
-      throw new Error(
-        `Duplicate article slug "${note.slug}": a post and a note would share /posts/${note.slug}/.`
-      );
-    }
-
+  return notes.map(note => {
     const siblings = notes.filter(sibling => sibling.project === note.project);
     const index = siblings.findIndex(sibling => sibling.slug === note.slug);
 
     return {
       params: { slug: note.slug },
       props: {
-        kind: "note" as const,
         note,
         prevNote:
           index > 0
@@ -86,95 +45,45 @@ export async function getStaticPaths() {
       },
     };
   });
-
-  return [...postPaths, ...notePaths];
 }
-
-type AdjacentPost = {
-  id: string;
-  title: string;
-  filePath: string | undefined;
-} | null;
 
 type AdjacentNote = {
   slug: string;
   title: string;
 } | null;
 
-type Props =
-  | {
-      kind: "post";
-      post: CollectionEntry<"posts">;
-      prevPost: AdjacentPost;
-      nextPost: AdjacentPost;
-    }
-  | {
-      kind: "note";
-      note: Note;
-      prevNote: AdjacentNote;
-      nextNote: AdjacentNote;
-    };
+type Props = {
+  note: Note;
+  prevNote: AdjacentNote;
+  nextNote: AdjacentNote;
+};
 
-const props = Astro.props;
-const post = props.kind === "post" ? props.post : null;
-const note = props.kind === "note" ? props.note : null;
-const prevPost = props.kind === "post" ? props.prevPost : null;
-const nextPost = props.kind === "post" ? props.nextPost : null;
-const prevNote = props.kind === "note" ? props.prevNote : null;
-const nextNote = props.kind === "note" ? props.nextNote : null;
+const { note, prevNote, nextNote } = Astro.props;
 
 const locale = Astro.currentLocale ?? config.site.lang;
 
-const title = post?.data.title ?? note?.title ?? "";
-const description = post?.data.description ?? note?.summary ?? "";
-const pubDatetime =
-  post?.data.pubDatetime ??
-  (note?.date ? new Date(`${note.date}T00:00:00Z`) : undefined);
-const modDatetime = post?.data.modDatetime ?? null;
-const canonicalURL = post?.data.canonicalURL;
-const tags = post?.data.tags ?? note?.tags ?? [];
+const title = note.title;
+const description = note.summary;
+const pubDatetime = note.date ? new Date(`${note.date}T00:00:00Z`) : undefined;
+const tags = note.tags;
 
-const { Content } = post ? await render(post) : { Content: null };
-
-const noteProject = note ? projectOf(note) : null;
-const toc = note ? note.toc.filter(entry => entry.level <= 3) : [];
-const noteDateLabel = note?.date
+const noteProject = projectOf(note);
+const toc = note.toc.filter(entry => entry.level <= 3);
+const noteDateLabel = note.date
   ? new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(
       new Date(`${note.date}T00:00:00Z`)
     )
   : null;
 
-let ogImageUrl: string | undefined;
-
-if (post) {
-  const initOgImage = post.data.ogImage;
-  if (typeof initOgImage === "string") {
-    ogImageUrl = initOgImage;
-  } else if (initOgImage?.src) {
-    ogImageUrl = initOgImage.src;
-  }
-
-  if (!ogImageUrl && config.features.dynamicOgImage) {
-    const postUrl = getPostUrl(post.id, post.filePath, locale).replace(
-      /\/+$/,
-      ""
-    );
-    ogImageUrl = `${postUrl}/index.png`;
-  }
-}
-
-const ogImage = ogImageUrl
-  ? new URL(ogImageUrl, Astro.url.origin).href
-  : undefined;
+// Notes have no per-article OG image; `Layout` falls back to the site default.
+const ogImage = undefined;
 ---
 
 <PostLayout
   title={`${title} | ${config.site.title}`}
   description={description}
   ogImage={ogImage}
-  canonicalURL={canonicalURL}
   pubDatetime={pubDatetime}
-  modDatetime={modDatetime}
 >
   <Header />
 
@@ -183,81 +92,45 @@ const ogImage = ogImageUrl
   <main
     id="main-content"
     class:list={["app-layout", { "mt-8": !config.features.showBackButton }]}
-    data-pagefind-body={post ? true : undefined}
   >
-    {
-      note && noteProject && (
-        <nav class="text-muted-foreground mb-6 flex flex-wrap items-center gap-2 text-sm">
-          <a
-            href={getRelativeLocaleUrl(locale, "posts")}
-            class="hover:text-accent"
-          >
-            文章
-          </a>
-          <span aria-hidden="true">/</span>
-          <a
-            href={`${getRelativeLocaleUrl(locale, "")}#${noteProject.id}`}
-            class="hover:text-accent"
-          >
-            {noteProject.title}
-          </a>
-        </nav>
-      )
-    }
+    <nav
+      class="text-muted-foreground mb-6 flex flex-wrap items-center gap-2 text-sm"
+    >
+      <a href={getRelativeLocaleUrl(locale, "posts")} class="hover:text-accent">
+        文章
+      </a>
+      <span aria-hidden="true">/</span>
+      <a
+        href={`${getRelativeLocaleUrl(locale, "")}#${noteProject.id}`}
+        class="hover:text-accent"
+      >
+        {noteProject.title}
+      </a>
+    </nav>
 
     <h1
-      style={{
-        viewTransitionName: toTransitionName(
-          post?.id ?? note?.slug ?? "article"
-        ),
-      }}
+      style={{ viewTransitionName: toTransitionName(note.slug) }}
       class="text-accent inline-block text-2xl font-bold sm:text-3xl"
     >
       {title}
     </h1>
 
-    {
-      post ? (
-        <div class="my-2 flex items-center gap-2">
-          <Datetime
-            pubDatetime={post.data.pubDatetime}
-            modDatetime={post.data.modDatetime}
-            timezone={post.data.timezone}
-            size="lg"
-          />
-          <span
-            aria-hidden="true"
-            class:list={[
-              "text-muted-foreground max-sm:hidden",
-              {
-                hidden:
-                  !config.features.editPost?.enabled || post.data.hideEditPost,
-              },
-            ]}
+    <div
+      class="text-muted-foreground my-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs"
+    >
+      {noteDateLabel && <span>{noteDateLabel}</span>}
+      <span>{noteWords(note).toLocaleString(locale)} 字</span>
+      {
+        note.pdf && (
+          <a
+            href={getAssetPath(note.pdf)}
+            class="hover:text-accent underline underline-offset-2"
           >
-            |
-          </span>
-          <EditPost
-            hideEditPost={post.data.hideEditPost}
-            post={post}
-            class="max-sm:hidden"
-          />
-        </div>
-      ) : (
-        <div class="text-muted-foreground my-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs">
-          {noteDateLabel && <span>{noteDateLabel}</span>}
-          {note && <span>{noteWords(note).toLocaleString(locale)} 字</span>}
-          {note?.pdf && (
-            <a
-              href={getAssetPath(note.pdf)}
-              class="hover:text-accent underline underline-offset-2"
-            >
-              PDF
-            </a>
-          )}
-        </div>
-      )
-    }
+            PDF
+          </a>
+        )
+      }
+    </div>
 
     {
       description && (
@@ -266,7 +139,7 @@ const ogImage = ogImageUrl
     }
 
     {
-      note && toc.length > 4 && (
+      toc.length > 4 && (
         <details class="border-border bg-muted/40 my-8 rounded-md border px-4 py-3">
           <summary class="cursor-pointer text-sm font-medium">
             目录
@@ -287,36 +160,11 @@ const ogImage = ogImageUrl
       )
     }
 
-    {
-      post ? (
-        <article
-          id="article"
-          class:list={[
-            "mt-8 w-full",
-            "app-prose max-w-app",
-            "prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)",
-          ]}
-        >
-          {Content && <Content />}
-        </article>
-      ) : (
-        <article id="article" class="note-body" data-pagefind-body>
-          {note && <Fragment set:html={noteBody(note.slug)} />}
-        </article>
-      )
-    }
+    <article id="article" class="note-body" data-pagefind-body>
+      <Fragment set:html={noteBody(note.slug)} />
+    </article>
 
     <hr class="my-8 border-dashed" />
-
-    {
-      post && (
-        <EditPost
-          class="sm:hidden"
-          hideEditPost={post.data.hideEditPost}
-          post={post}
-        />
-      )
-    }
 
     <BackToTopButton />
 
@@ -328,32 +176,30 @@ const ogImage = ogImageUrl
 
     <hr class="my-8 border-dashed" />
 
-    {
-      post ? (
-        <AdjacentPostNav prevPost={prevPost} nextPost={nextPost} />
-      ) : (
-        <nav class="flex flex-col gap-2 text-sm sm:flex-row sm:justify-between">
-          {prevNote ? (
-            <a
-              href={getRelativeLocaleUrl(locale, `posts/${prevNote.slug}`)}
-              class="hover:text-accent"
-            >
-              ← {prevNote.title}
-            </a>
-          ) : (
-            <span />
-          )}
-          {nextNote && (
-            <a
-              href={getRelativeLocaleUrl(locale, `posts/${nextNote.slug}`)}
-              class="hover:text-accent"
-            >
-              {nextNote.title} →
-            </a>
-          )}
-        </nav>
-      )
-    }
+    <nav class="flex flex-col gap-2 text-sm sm:flex-row sm:justify-between">
+      {
+        prevNote ? (
+          <a
+            href={getRelativeLocaleUrl(locale, `posts/${prevNote.slug}`)}
+            class="hover:text-accent"
+          >
+            ← {prevNote.title}
+          </a>
+        ) : (
+          <span />
+        )
+      }
+      {
+        nextNote && (
+          <a
+            href={getRelativeLocaleUrl(locale, `posts/${nextNote.slug}`)}
+            class="hover:text-accent"
+          >
+            {nextNote.title} →
+          </a>
+        )
+      }
+    </nav>
   </main>
   <Footer />
 </PostLayout>

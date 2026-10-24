@@ -110,16 +110,6 @@ export function projectOf(note: Note): Project {
   );
 }
 
-/** Notes grouped by project, in manifest order. */
-export function groupedNotes(): { project: Project; notes: Note[] }[] {
-  return projects
-    .map(project => ({
-      project,
-      notes: notes.filter(n => n.project === project.id),
-    }))
-    .filter(group => group.notes.length > 0);
-}
-
 /** Short display form of a source commit, e.g. "aw@422b903". */
 export function sourceLabel(note: Note): string {
   const commit = note.source.commit;

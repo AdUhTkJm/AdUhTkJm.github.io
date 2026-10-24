@@ -8,17 +8,12 @@ export interface UIStrings {
     search: string;
   };
   post: {
-    publishedAt: string;
-    updatedAt: string;
     sharePostIntro: string;
     sharePostOn: string;
     sharePostViaEmail: string;
     tagLabel: string;
     backToTop: string;
     goBack: string;
-    editPage: string;
-    previousPost: string;
-    nextPost: string;
   };
   pagination: {
     prev: string;
@@ -27,10 +22,8 @@ export interface UIStrings {
   };
   home: {
     socialLinks: string;
-    featured: string;
     articles: string;
     allPosts: string;
-    other: string;
   };
   footer: {
     copyright: string;

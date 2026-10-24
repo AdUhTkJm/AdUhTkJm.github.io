@@ -10,17 +10,12 @@ export default {
     search: "搜索",
   },
   post: {
-    publishedAt: "发布于",
-    updatedAt: "更新于",
     sharePostIntro: "分享这篇文章：",
     sharePostOn: "分享到 {{platform}}",
     sharePostViaEmail: "通过邮件分享",
     tagLabel: "标签",
     backToTop: "回到顶部",
     goBack: "返回",
-    editPage: "编辑此页",
-    previousPost: "上一篇",
-    nextPost: "下一篇",
   },
   pagination: {
     prev: "上一页",
@@ -30,10 +25,8 @@ export default {
   },
   home: {
     socialLinks: "社交链接",
-    featured: "精选",
     articles: "文章",
     allPosts: "全部文章",
-    other: "其他",
   },
   footer: {
     copyright: "版权所有",

@@ -17,8 +17,8 @@ scripts/compile.py                快照 -> HTML（MathML）+ PDF + 抽出的图
 compile.sh                        唯一会运行的命令
 .cache/notes/<slug>/              上次编译的产物（机器本地，不进 git）
 src/lib/notes.ts                  对生成清单的带类型访问器
-src/lib/articles.ts               统一文章模型（笔记 + Markdown 随笔）
-src/pages/posts/[...slug]/        文章渲染器（笔记 + 随笔，URL 统一为 /posts/）
+src/lib/articles.ts               统一文章模型（排序、分组、标签）
+src/pages/posts/[...slug]/        笔记渲染器（URL 为 /posts/<slug>/）
 src/styles/note.css               与 PDF 镜像一致的屏幕排版
 ```
 
@@ -158,7 +158,7 @@ Typst 文档也可以为 JavaScript 留一个挂载点：
 
 ## 已知缺口
 
-`compile.py` 目前只处理 `.typ`；`.md` 文档（比如 llama.cpp 那篇）还没有直通内容集合的路径。diagram shim 只覆盖 cetz 的 `canvas` 和 fletcher 的 `diagram`：上游如果改用别的绘图包、或在 markup 层用 `#scale` 之外的分页指令包图，断言的报错会指到具体 caption，但修法要自己加一条规则。站点依赖系统衬线字体显示中文，不打包约 8 MB 的 Noto CJK webfont（PDF 不受影响，CI 装了字体）。OG 图片（`dynamicOgImage`）关着，因为 satori 内置字体没有中文字形。Pagefind 给文章页打了索引（`data-pagefind-body`），但中文没有 stemming。island 流水线已搭好（Astro），不过目前没人用。AstroPaper 的示例文章已删，`src/content/posts/hello.md` 是剩下的唯一一篇。
+`compile.py` 只处理 `.typ`，站点也只有这一条内容来源：Markdown 不再参与文章发布，`src/content/pages/`（如 `about.md`）只承载独立页面。diagram shim 只覆盖 cetz 的 `canvas` 和 fletcher 的 `diagram`：上游如果改用别的绘图包、或在 markup 层用 `#scale` 之外的分页指令包图，断言的报错会指到具体 caption，但修法要自己加一条规则。站点依赖系统衬线字体显示中文，不打包约 8 MB 的 Noto CJK webfont（PDF 不受影响，CI 装了字体）。OG 图片（`dynamicOgImage`）关着，因为 satori 内置字体没有中文字形。Pagefind 给文章页打了索引（`data-pagefind-body`），但中文没有 stemming。island 流水线已搭好（Astro），不过目前没人用。AstroPaper 的示例文章与 `src/content/posts/` 内容集合都已删除。
 
 ## 升级 typst
 

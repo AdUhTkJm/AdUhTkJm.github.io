@@ -18,12 +18,8 @@ const t = useTranslations(locale);
 
 const postsUrl = getRelativeLocaleUrl(locale, "posts");
 const homePath = getRelativeLocaleUrl(locale, "");
-const allArticles = await getAllArticles(locale);
-
-const featuredArticles = allArticles.filter(article => article.featured);
-const listedArticles = allArticles.filter(article => !article.featured);
-const groups = groupArticlesByProject(listedArticles);
-const ungroupedArticles = listedArticles.filter(article => !article.project);
+const articles = await getAllArticles(locale);
+const groups = groupArticlesByProject(articles);
 ---
 
 <Layout>
@@ -62,28 +58,7 @@ const ungroupedArticles = listedArticles.filter(article => !article.project);
     </section>
 
     {
-      featuredArticles.length > 0 && (
-        <section
-          id="featured"
-          class:list={[
-            "pt-12 pb-6",
-            { "border-border border-b": listedArticles.length > 0 },
-          ]}
-        >
-          <h2 class="text-2xl font-semibold tracking-wide">
-            {t.home.featured}
-          </h2>
-          <ul class="space-y-3">
-            {featuredArticles.map(article => (
-              <ArticleCard article={article} variant="h3" />
-            ))}
-          </ul>
-        </section>
-      )
-    }
-
-    {
-      listedArticles.length > 0 && (
+      articles.length > 0 && (
         <section id="articles" class="pt-12 pb-6">
           <div class="mb-6 flex flex-wrap items-baseline justify-between gap-2">
             <h2 class="text-2xl font-semibold tracking-wide">
@@ -93,11 +68,11 @@ const ungroupedArticles = listedArticles.filter(article => !article.project);
               class="hover:text-accent text-muted-foreground text-sm underline decoration-dashed underline-offset-4"
               href={postsUrl}
             >
-              {t.home.allPosts} ({allArticles.length}) →
+              {t.home.allPosts} ({articles.length}) →
             </LinkButton>
           </div>
 
-          {groups.map(({ project, articles }) => (
+          {groups.map(({ project, articles: groupArticles }) => (
             <section id={project.id} class="mb-10 scroll-mt-20">
               <div class="mb-4">
                 <h3 class="text-xl font-bold">{project.title}</h3>
@@ -108,7 +83,7 @@ const ungroupedArticles = listedArticles.filter(article => !article.project);
                 )}
               </div>
               <ul class="space-y-3">
-                {articles.map(article => (
+                {groupArticles.map(article => (
                   <ArticleCard
                     article={article}
                     variant="h4"
@@ -118,17 +93,6 @@ const ungroupedArticles = listedArticles.filter(article => !article.project);
               </ul>
             </section>
           ))}
-
-          {ungroupedArticles.length > 0 && (
-            <section id="other" class="mb-10 scroll-mt-20">
-              <h3 class="text-xl font-bold">{t.home.other}</h3>
-              <ul class="mt-4 space-y-3">
-                {ungroupedArticles.map(article => (
-                  <ArticleCard article={article} variant="h4" />
-                ))}
-              </ul>
-            </section>
-          )}
         </section>
       )
     }

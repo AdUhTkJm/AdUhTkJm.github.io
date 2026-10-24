@@ -27,15 +27,10 @@ interface SiteConfig {
 }
 
 interface PostsConfig {
-  /** Posts per page on paginated listing pages */
+  /** Articles per page on paginated listing pages */
   perPage?: number;
-  /** Posts shown on the index/home page */
+  /** Articles shown on the index/home page */
   perIndex?: number;
-  /**
-   * Scheduled posts within this window (ms) of their pubDatetime
-   * are shown as published. Defaults to 15 minutes.
-   */
-  scheduledPostMargin?: number;
 }
 
 interface FeaturesConfig {
@@ -49,16 +44,8 @@ interface FeaturesConfig {
   dynamicOgImage?: boolean;
   /** Show the /archives page and link it in nav. Defaults to true. */
   showArchives?: boolean;
-  /** Show back button on post detail pages. Defaults to true. */
+  /** Show back button on article detail pages. Defaults to true. */
   showBackButton?: boolean;
-  /** "Edit page" link shown on post detail pages. */
-  editPost?:
-    | {
-        enabled: true;
-        /** Base URL for the edit link, e.g. GitHub edit URL */
-        url: string;
-      }
-    | { enabled: false };
   /**
    * Search provider. "pagefind" ships in the base template.
    * Set to false to disable search entirely.

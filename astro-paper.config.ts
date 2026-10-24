@@ -19,19 +19,14 @@ export default defineAstroPaperConfig({
   posts: {
     perPage: 10,
     perIndex: 5,
-    scheduledPostMargin: 15 * 60 * 1000,
   },
   features: {
     lightAndDarkMode: true,
-    // Satori has no CJK glyphs in the bundled font, so per-post OG images would
-    // render tofu. Keep this off until a CJK font is wired into satori.
+    // Satori has no CJK glyphs in the bundled font, so a generated OG image
+    // would render tofu. Keep this off until a CJK font is wired into satori.
     dynamicOgImage: false,
     showArchives: true,
     showBackButton: true,
-    editPost: {
-      enabled: true,
-      url: "https://github.com/AdUhTkJm/AdUhTkJm.github.io/edit/main/",
-    },
     search: "pagefind",
   },
   socials: [
