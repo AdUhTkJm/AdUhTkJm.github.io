@@ -196,15 +196,26 @@ date = "2024-10-19"
 order = 1073741827
 
 # Misc
-# 按时间倒序排列，因此 order 先写作 INT_MAX
+# 这部分按时间倒序排列，因此 order 先写作 INT_MAX
+
+[[note]]
+source = "~/blogs/src/content/docs/misc/fcitx5-ru"
+entry = "fcitx5-ru.typ"
+slug = "misc/fcitx5-ru"
+project = "misc"
+title = "Fcitx5：手搓一个俄语输入法"
+summary = "前缀码？不存在的"
+tags = ["杂项", "输入法"]
+date = "2026-10-25"
+order = 2147483645
 
 [[note]]
 source = "~/blogs/src/content/docs/misc/fcitx5-rime-commitraw.typ"
 slug = "misc/fcitx5-rime-commitraw"
 project = "misc"
-title = "Fcitx5 输入法配置"
+title = "Fcitx5：配置切换输入法时上屏原始文字"
 summary = "迁移到 Linux 不得不品的一环"
-tags = ["杂项"]
+tags = ["杂项", "输入法"]
 date = "2026-10-24"
 order = 2147483646
 

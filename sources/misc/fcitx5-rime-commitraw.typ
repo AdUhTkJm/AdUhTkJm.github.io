@@ -1,4 +1,4 @@
-#set document(title: "bv_decide 的位爆破")
+#set document(title: "Fcitx5 切换输入法时上屏原始文字")
 #set page(paper: "a4", margin: 2.3cm)
 #set text(size: 10.5pt, font: ("Libertinus Serif", "Noto Serif CJK SC"))
 #set heading(numbering: "1.1")

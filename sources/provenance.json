@@ -5,7 +5,7 @@
     "dirty": false
   },
   "compiler/bv-decide": {
-    "commit": "7d8d8f0",
+    "commit": "1f1bd83",
     "declared": "~/blogs/src/content/docs/compiler/bv-decide.typ",
     "dirty": false
   },
@@ -78,12 +78,12 @@
     }
   },
   "llm/128k-ctx": {
-    "commit": "7d8d8f0",
+    "commit": "1f1bd83",
     "declared": "~/blogs/src/content/docs/llm/128k-ctx.typ",
     "dirty": false
   },
   "llm/llm-compression": {
-    "commit": "7d8d8f0",
+    "commit": "1f1bd83",
     "declared": "~/blogs/src/content/docs/llm/llm-compression.typ",
     "dirty": false
   },
@@ -93,9 +93,19 @@
     "dirty": false
   },
   "misc/fcitx5-rime-commitraw": {
-    "commit": "7d8d8f0",
+    "commit": "1f1bd83",
     "declared": "~/blogs/src/content/docs/misc/fcitx5-rime-commitraw.typ",
     "dirty": false
+  },
+  "misc/fcitx5-ru": {
+    "commit": "1f1bd83",
+    "declared": "~/blogs/src/content/docs/misc/fcitx5-ru",
+    "dirty": true,
+    "entry": "fcitx5-ru.typ",
+    "files": {
+      "fcitx5-ru-1.png": "cf41727622797e95",
+      "fcitx5-ru.typ": "1384a1ad5fa3bf7e"
+    }
   },
   "misc/map-path-pruning": {
     "commit": "d933dd4",
@@ -108,27 +118,27 @@
     "dirty": false
   },
   "novels/conquer": {
-    "commit": "7d8d8f0",
+    "commit": "1f1bd83",
     "declared": "~/blogs/src/content/docs/novels/Conquer.typ",
     "dirty": false
   },
   "novels/danitz": {
-    "commit": "7d8d8f0",
+    "commit": "1f1bd83",
     "declared": "~/blogs/src/content/docs/novels/Danitz.typ",
     "dirty": false
   },
   "novels/feist": {
-    "commit": "7d8d8f0",
+    "commit": "1f1bd83",
     "declared": "~/blogs/src/content/docs/novels/Feist.typ",
     "dirty": false
   },
   "novels/kinich": {
-    "commit": "7d8d8f0",
+    "commit": "1f1bd83",
     "declared": "~/blogs/src/content/docs/novels/Kinich.typ",
     "dirty": false
   },
   "novels/uni": {
-    "commit": "7d8d8f0",
+    "commit": "1f1bd83",
     "declared": "~/blogs/src/content/docs/novels/Uni.typ",
     "dirty": false
   },
