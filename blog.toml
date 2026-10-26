@@ -121,6 +121,16 @@ order = 2
 # Compiler
 
 [[note]]
+source = "~/blogs/src/content/docs/compiler/cpp26-argparse.typ"
+slug = "compiler/cpp26-argparse"
+project = "compiler"
+title = "C++26 静态反射，和由此而来的全新命令行解析方式"
+summary = "终于不用手写 DSL 然后生成代码了"
+tags = ["编译器", "C++"]
+date = "2026-10-26"
+order = 2147483645
+
+[[note]]
 source = "~/blogs/src/content/docs/compiler/bv-decide.typ"
 slug = "compiler/bv-decide"
 project = "compiler"

@@ -5,7 +5,7 @@
     "dirty": false
   },
   "compiler/bv-decide": {
-    "commit": "1f1bd83",
+    "commit": "5da16b4",
     "declared": "~/blogs/src/content/docs/compiler/bv-decide.typ",
     "dirty": false
   },
@@ -77,13 +77,18 @@
       "web.typ": "1572c25f82f13632"
     }
   },
+  "compiler/cpp26-argparse": {
+    "commit": "5da16b4",
+    "declared": "~/blogs/src/content/docs/compiler/cpp26-argparse.typ",
+    "dirty": false
+  },
   "llm/128k-ctx": {
-    "commit": "1f1bd83",
+    "commit": "5da16b4",
     "declared": "~/blogs/src/content/docs/llm/128k-ctx.typ",
     "dirty": false
   },
   "llm/llm-compression": {
-    "commit": "1f1bd83",
+    "commit": "5da16b4",
     "declared": "~/blogs/src/content/docs/llm/llm-compression.typ",
     "dirty": false
   },
@@ -93,12 +98,12 @@
     "dirty": false
   },
   "misc/fcitx5-rime-commitraw": {
-    "commit": "1f1bd83",
+    "commit": "5da16b4",
     "declared": "~/blogs/src/content/docs/misc/fcitx5-rime-commitraw.typ",
     "dirty": false
   },
   "misc/fcitx5-ru": {
-    "commit": "1f1bd83",
+    "commit": "5da16b4",
     "declared": "~/blogs/src/content/docs/misc/fcitx5-ru",
     "dirty": true,
     "entry": "fcitx5-ru.typ",
@@ -118,27 +123,27 @@
     "dirty": false
   },
   "novels/conquer": {
-    "commit": "1f1bd83",
+    "commit": "5da16b4",
     "declared": "~/blogs/src/content/docs/novels/Conquer.typ",
     "dirty": false
   },
   "novels/danitz": {
-    "commit": "1f1bd83",
+    "commit": "5da16b4",
     "declared": "~/blogs/src/content/docs/novels/Danitz.typ",
     "dirty": false
   },
   "novels/feist": {
-    "commit": "1f1bd83",
+    "commit": "5da16b4",
     "declared": "~/blogs/src/content/docs/novels/Feist.typ",
     "dirty": false
   },
   "novels/kinich": {
-    "commit": "1f1bd83",
+    "commit": "5da16b4",
     "declared": "~/blogs/src/content/docs/novels/Kinich.typ",
     "dirty": false
   },
   "novels/uni": {
-    "commit": "1f1bd83",
+    "commit": "5da16b4",
     "declared": "~/blogs/src/content/docs/novels/Uni.typ",
     "dirty": false
   },
