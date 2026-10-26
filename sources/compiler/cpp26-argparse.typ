@@ -187,7 +187,7 @@ consteval std::meta::info defineOptions(std::span<const Argument> args,
 ```
 
 在使用的时候，只需要
-```
+```cpp
 template <String Spec>
 struct OptionsDefinition {
   struct Type;
