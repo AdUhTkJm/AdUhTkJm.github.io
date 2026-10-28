@@ -5,7 +5,7 @@
     "dirty": false
   },
   "compiler/bv-decide": {
-    "commit": "a5ea275",
+    "commit": "e21c327",
     "declared": "~/blogs/src/content/docs/compiler/bv-decide.typ",
     "dirty": false
   },
@@ -78,14 +78,19 @@
     }
   },
   "compiler/cpp26-argparse": {
-    "commit": "a5ea275",
+    "commit": "e21c327",
     "declared": "~/blogs/src/content/docs/compiler/cpp26-argparse.typ",
     "dirty": false
   },
   "game/map-path-pruning": {
-    "commit": "d933dd4",
+    "commit": "3c0d960",
     "declared": "~/projects/seedsearch/docs/optimizations.typ",
     "dirty": false
+  },
+  "game/perfected-strike": {
+    "commit": "3c0d960",
+    "declared": "~/projects/seedsearch/docs/perfected-strike.typ",
+    "dirty": true
   },
   "game/planner-algorithm": {
     "commit": "ed6d4ed",
@@ -93,12 +98,12 @@
     "dirty": false
   },
   "llm/128k-ctx": {
-    "commit": "a5ea275",
+    "commit": "e21c327",
     "declared": "~/blogs/src/content/docs/llm/128k-ctx.typ",
     "dirty": false
   },
   "llm/llm-compression": {
-    "commit": "a5ea275",
+    "commit": "e21c327",
     "declared": "~/blogs/src/content/docs/llm/llm-compression.typ",
     "dirty": false
   },
@@ -108,12 +113,12 @@
     "dirty": false
   },
   "misc/fcitx5-rime-commitraw": {
-    "commit": "a5ea275",
+    "commit": "e21c327",
     "declared": "~/blogs/src/content/docs/misc/fcitx5-rime-commitraw.typ",
     "dirty": false
   },
   "misc/fcitx5-ru": {
-    "commit": "a5ea275",
+    "commit": "e21c327",
     "declared": "~/blogs/src/content/docs/misc/fcitx5-ru",
     "dirty": true,
     "entry": "fcitx5-ru.typ",
@@ -128,7 +133,7 @@
     "dirty": false
   },
   "misc/quantum-computing-1": {
-    "commit": "a5ea275",
+    "commit": "e21c327",
     "declared": "~/blogs/src/content/docs/misc/quantum-computing-1.typ",
     "dirty": false
   },
@@ -138,27 +143,27 @@
     "dirty": false
   },
   "novels/conquer": {
-    "commit": "a5ea275",
+    "commit": "e21c327",
     "declared": "~/blogs/src/content/docs/novels/Conquer.typ",
     "dirty": false
   },
   "novels/danitz": {
-    "commit": "a5ea275",
+    "commit": "e21c327",
     "declared": "~/blogs/src/content/docs/novels/Danitz.typ",
     "dirty": false
   },
   "novels/feist": {
-    "commit": "a5ea275",
+    "commit": "e21c327",
     "declared": "~/blogs/src/content/docs/novels/Feist.typ",
     "dirty": false
   },
   "novels/kinich": {
-    "commit": "a5ea275",
+    "commit": "e21c327",
     "declared": "~/blogs/src/content/docs/novels/Kinich.typ",
     "dirty": false
   },
   "novels/uni": {
-    "commit": "a5ea275",
+    "commit": "e21c327",
     "declared": "~/blogs/src/content/docs/novels/Uni.typ",
     "dirty": false
   },

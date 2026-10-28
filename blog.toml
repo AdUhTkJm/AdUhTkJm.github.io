@@ -85,14 +85,15 @@ order = 50000
 
 # Game
 
+
 [[note]]
-source = "~/projects/aw/docs/algorithm.typ"
-slug = "game/planner-algorithm"
+source = "~/projects/seedsearch/docs/perfected-strike.typ"
+slug = "game/perfected-strike"
 project = "game"
-title = "Minecraft 合成规划算法"
-summary = "并没有看上去那么简单"
-tags = ["算法", "CP-SAT", "图论", "优化"]
-date = "2026-10-10"
+title = "塔 2 最完美的种子"
+summary = "什么叫五十万张完美打击"
+tags = ["种子搜索", "优化", "杀戮尖塔"]
+date = "2026-10-28"
 order = 0
 
 [[note]]
@@ -101,9 +102,19 @@ slug = "game/map-path-pruning"
 project = "game"
 title = "塔 2 的地图生成"
 summary = "我加速了 100 倍的地图生成"
-tags = ["种子搜索", "优化", "地图生成"]
+tags = ["种子搜索", "优化", "杀戮尖塔"]
 date = "2026-10-17"
 order = 1
+
+[[note]]
+source = "~/projects/aw/docs/algorithm.typ"
+slug = "game/planner-algorithm"
+project = "game"
+title = "Minecraft 合成规划算法"
+summary = "并没有看上去那么简单"
+tags = ["算法", "CP-SAT", "图论", "优化"]
+date = "2026-10-10"
+order = 2
 
 # LLM
 
