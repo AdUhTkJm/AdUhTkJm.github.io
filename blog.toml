@@ -229,6 +229,16 @@ order = 5
 # 这部分按时间倒序排列，所以是负的
 
 [[note]]
+source = "~/projects/dict/docs/mdx.typ"
+slug = "misc/mdx"
+project = "misc"
+title = "词典格式解析：.mdx"
+summary = "得自己搞一个查词 CLI 工具才行"
+tags = ["杂项"]
+date = "2026-10-29"
+order = -3
+
+[[note]]
 source = "~/blogs/src/content/docs/misc/quantum-computing-1.typ"
 slug = "misc/quantum-computing-1"
 project = "misc"

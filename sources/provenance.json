@@ -5,7 +5,7 @@
     "dirty": false
   },
   "compiler/bv-decide": {
-    "commit": "e21c327",
+    "commit": "a3dc155",
     "declared": "~/blogs/src/content/docs/compiler/bv-decide.typ",
     "dirty": false
   },
@@ -78,7 +78,7 @@
     }
   },
   "compiler/cpp26-argparse": {
-    "commit": "e21c327",
+    "commit": "a3dc155",
     "declared": "~/blogs/src/content/docs/compiler/cpp26-argparse.typ",
     "dirty": false
   },
@@ -98,12 +98,12 @@
     "dirty": false
   },
   "llm/128k-ctx": {
-    "commit": "e21c327",
+    "commit": "a3dc155",
     "declared": "~/blogs/src/content/docs/llm/128k-ctx.typ",
     "dirty": false
   },
   "llm/llm-compression": {
-    "commit": "e21c327",
+    "commit": "a3dc155",
     "declared": "~/blogs/src/content/docs/llm/llm-compression.typ",
     "dirty": false
   },
@@ -113,12 +113,12 @@
     "dirty": false
   },
   "misc/fcitx5-rime-commitraw": {
-    "commit": "e21c327",
+    "commit": "a3dc155",
     "declared": "~/blogs/src/content/docs/misc/fcitx5-rime-commitraw.typ",
     "dirty": false
   },
   "misc/fcitx5-ru": {
-    "commit": "e21c327",
+    "commit": "a3dc155",
     "declared": "~/blogs/src/content/docs/misc/fcitx5-ru",
     "dirty": true,
     "entry": "fcitx5-ru.typ",
@@ -132,8 +132,13 @@
     "declared": "~/projects/seedsearch/docs/optimizations.typ",
     "dirty": false
   },
+  "misc/mdx": {
+    "commit": "cd63474",
+    "declared": "~/projects/dict/docs/mdx.typ",
+    "dirty": false
+  },
   "misc/quantum-computing-1": {
-    "commit": "e21c327",
+    "commit": "a3dc155",
     "declared": "~/blogs/src/content/docs/misc/quantum-computing-1.typ",
     "dirty": false
   },
@@ -143,27 +148,27 @@
     "dirty": false
   },
   "novels/conquer": {
-    "commit": "e21c327",
+    "commit": "a3dc155",
     "declared": "~/blogs/src/content/docs/novels/Conquer.typ",
     "dirty": false
   },
   "novels/danitz": {
-    "commit": "e21c327",
+    "commit": "a3dc155",
     "declared": "~/blogs/src/content/docs/novels/Danitz.typ",
     "dirty": false
   },
   "novels/feist": {
-    "commit": "e21c327",
+    "commit": "a3dc155",
     "declared": "~/blogs/src/content/docs/novels/Feist.typ",
     "dirty": false
   },
   "novels/kinich": {
-    "commit": "e21c327",
+    "commit": "a3dc155",
     "declared": "~/blogs/src/content/docs/novels/Kinich.typ",
     "dirty": false
   },
   "novels/uni": {
-    "commit": "e21c327",
+    "commit": "a3dc155",
     "declared": "~/blogs/src/content/docs/novels/Uni.typ",
     "dirty": false
   },
