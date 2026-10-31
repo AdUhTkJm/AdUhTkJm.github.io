@@ -172,7 +172,7 @@ struct RecordMeta {
 `Encrypted` 可能是数字，也可能是 `No`/`Yes`。常见解释：
 
 #table(
-  columns: (auto, auto, 1fr),
+  columns: (auto, 1fr),
   table.header([*值*], [*含义*]),
   [`0`, `No`, 空], [不加密],
   [`1`, `Yes`], [需要密钥],

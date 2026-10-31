@@ -229,6 +229,16 @@ order = 5
 # 这部分按时间倒序排列，所以是负的
 
 [[note]]
+source = "~/blogs/src/content/docs/misc/quantum-computing-2.typ"
+slug = "misc/quantum-computing-2"
+project = "misc"
+title = "量子计算笔记 (2)"
+summary = "做题好麻烦，一点都不想做（而且还没做完）"
+tags = ["杂项", "量子计算"]
+date = "2026-10-31"
+order = -4
+
+[[note]]
 source = "~/projects/dict/docs/mdx.typ"
 slug = "misc/mdx"
 project = "misc"
