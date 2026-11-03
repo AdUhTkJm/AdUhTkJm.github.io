@@ -38,6 +38,12 @@ description = "什么游戏都有"
 order = 10000
 
 [[project]]
+id = "lang"
+title = "语言"
+description = "拉丁语、德语，各种死语言的语法笔记。"
+order = 15000
+
+[[project]]
 id = "compiler"
 title = "编译器"
 description = "LLVM 和 MLIR"
@@ -115,6 +121,18 @@ summary = "并没有看上去那么简单"
 tags = ["算法", "CP-SAT", "图论", "优化"]
 date = "2026-10-10"
 order = 2
+
+# 语言
+
+[[note]]
+source = "~/blogs/src/content/docs/lang/dies-irae.typ"
+slug = "lang/dies-irae"
+project = "lang"
+title = "Dies Irae:《末日经》"
+summary = "解析中二游戏 Dies Irae 里引用的拉丁语文本"
+tags = ["拉丁语", "Dies irae", "语法"]
+date = "2026-11-01"
+order = 1
 
 # LLM
 

@@ -267,6 +267,156 @@
   margin: 0.5em 0;
 }
 
+/* ------------------------------------------- verse stanzas + grammar notes */
+/*
+ * Emitted by `#stanza` in src/content/docs/lang/dies-irae.typ as bare markup:
+ *
+ *   <div class="stanza">
+ *     <div class="latin">line<br>line<br>line</div>
+ *     <div class="annot"><ol class="notes">
+ *       <li id="glossary-favilla" data-term="favilla">
+ *         <span class="n">3</span>…
+ *       </li>
+ *     </ol></div>
+ *   </div>
+ *
+ * The two columns are pure CSS; on narrow screens the annotation drops below
+ * the verse. Every number is written by Typst (not a CSS counter): one global
+ * sequence shared by the <sup> markers in the verse and the annotations, so
+ * `favilla³` in stanza 1 and again in stanza 18 both point at note 3.
+ */
+
+.note-body .stanza {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  column-gap: 2rem;
+  align-items: start;
+  padding: 1.5em 0;
+}
+
+/* The rule between stanzas is what makes the 3-line grouping visible. */
+.note-body .stanza + .stanza {
+  border-top: 1px solid var(--border);
+}
+
+/* A stanza with no notes stays a single column. */
+.note-body .stanza:not(:has(.annot)) {
+  grid-template-columns: 1fr;
+}
+
+.note-body .latin {
+  line-height: 1.85;
+}
+
+.note-body .annot {
+  font-size: 0.86em;
+  line-height: 1.7;
+  color: var(--muted-foreground);
+}
+
+.note-body .notes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.note-body .notes > li {
+  position: relative;
+  padding-left: 1.9em;
+  margin: 0 0 0.55em;
+}
+
+/* Number column: bold, fixed width, tabular so `9.` and `10.` line up. */
+.note-body .notes > li > .n {
+  position: absolute;
+  left: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+}
+
+.note-body .notes > li > .n::after {
+  content: ".";
+}
+
+@media (max-width: 40rem) {
+  .note-body .stanza,
+  .note-body .stanza:not(:has(.annot)) {
+    grid-template-columns: 1fr;
+    row-gap: 0.6em;
+  }
+
+  .note-body .stanza + .stanza {
+    border-top-color: transparent;
+  }
+
+  .note-body .annot {
+    padding-left: 0.9em;
+    border-left: 2px solid var(--border);
+  }
+}
+
+/* ------------------------------------------------- term links + glossary */
+/*
+ * `#term` emits <a class="term" data-term="favilla" href="#glossary-favilla">
+ * and `#vnote` / `#gnote` emit the annotation it points at:
+ * <li id="glossary-favilla" data-term="favilla">. Clicking a term toggles
+ * `.is-active` on every element carrying that data-term (src/scripts/terms.ts);
+ * the `:target` rule is the no-JS fallback after a plain anchor jump. The
+ * bottom `<dl class="glossary">` is a reference list with no ids, so it stays
+ * out of the interaction (it is off-screen anyway).
+ */
+
+.note-body .term {
+  color: inherit;
+  text-decoration: underline dotted;
+  text-decoration-color: var(--muted-foreground);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* The superscript number that ties a word to its annotation. */
+.note-body .term > .tn {
+  font-size: 0.68em;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  margin-left: 0.05em;
+}
+
+.note-body .term:hover,
+.note-body .term:focus-visible {
+  color: var(--accent);
+}
+
+.note-body .term.is-active,
+.note-body .term.is-active > .tn,
+.note-body .notes > li.is-active,
+.note-body .notes > li.is-active .n,
+.note-body .notes > li:target {
+  color: var(--accent);
+}
+
+.note-body .glossary {
+  display: grid;
+  gap: 0.9em;
+  margin: 1.5em 0;
+}
+
+.note-body .gloss {
+  padding-left: 0.9em;
+  border-left: 2px solid var(--border);
+}
+
+.note-body .gloss dt {
+  font-weight: 600;
+}
+
+.note-body .gloss dd {
+  margin: 0.2em 0 0;
+  font-size: 0.92em;
+  color: var(--muted-foreground);
+}
+
 /* --------------------------------------------- serialized-fiction extras */
 
 /* Dice rolls from the NGA serialization. Typst's HTML exporter drops block
@@ -302,22 +452,58 @@
 }
 
 /* Original UBB colours; the dark variants keep contrast usable. */
-.note-body .c-sienna { color: #a0522d; }
-.note-body .c-orangered { color: #ff4500; }
-.note-body .c-green { color: #008000; }
-.note-body .c-red { color: #ff0000; }
-.note-body .c-blue { color: #0000ff; }
-.note-body .c-deeppink { color: #ff1493; }
-.note-body .c-crimson { color: #dc143c; }
-.note-body .c-limegreen { color: #32cd32; }
-.note-body .c-silver { color: #808080; }
+.note-body .c-sienna {
+  color: #a0522d;
+}
+.note-body .c-orangered {
+  color: #ff4500;
+}
+.note-body .c-green {
+  color: #008000;
+}
+.note-body .c-red {
+  color: #ff0000;
+}
+.note-body .c-blue {
+  color: #0000ff;
+}
+.note-body .c-deeppink {
+  color: #ff1493;
+}
+.note-body .c-crimson {
+  color: #dc143c;
+}
+.note-body .c-limegreen {
+  color: #32cd32;
+}
+.note-body .c-silver {
+  color: #808080;
+}
 
-[data-theme="dark"] .note-body .c-sienna { color: #d9a066; }
-[data-theme="dark"] .note-body .c-orangered { color: #ff7a45; }
-[data-theme="dark"] .note-body .c-green { color: #7bd88f; }
-[data-theme="dark"] .note-body .c-red { color: #ff6b6b; }
-[data-theme="dark"] .note-body .c-blue { color: #8ab4ff; }
-[data-theme="dark"] .note-body .c-deeppink { color: #ff8ac2; }
-[data-theme="dark"] .note-body .c-crimson { color: #ff7096; }
-[data-theme="dark"] .note-body .c-limegreen { color: #8fe36b; }
-[data-theme="dark"] .note-body .c-silver { color: #a8b0bd; }
+[data-theme="dark"] .note-body .c-sienna {
+  color: #d9a066;
+}
+[data-theme="dark"] .note-body .c-orangered {
+  color: #ff7a45;
+}
+[data-theme="dark"] .note-body .c-green {
+  color: #7bd88f;
+}
+[data-theme="dark"] .note-body .c-red {
+  color: #ff6b6b;
+}
+[data-theme="dark"] .note-body .c-blue {
+  color: #8ab4ff;
+}
+[data-theme="dark"] .note-body .c-deeppink {
+  color: #ff8ac2;
+}
+[data-theme="dark"] .note-body .c-crimson {
+  color: #ff7096;
+}
+[data-theme="dark"] .note-body .c-limegreen {
+  color: #8fe36b;
+}
+[data-theme="dark"] .note-body .c-silver {
+  color: #a8b0bd;
+}
