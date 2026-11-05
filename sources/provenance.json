@@ -5,7 +5,7 @@
     "dirty": false
   },
   "compiler/bv-decide": {
-    "commit": "00f8e66",
+    "commit": "ea9ce98",
     "declared": "~/blogs/src/content/docs/compiler/bv-decide.typ",
     "dirty": false
   },
@@ -78,7 +78,7 @@
     }
   },
   "compiler/cpp26-argparse": {
-    "commit": "00f8e66",
+    "commit": "ea9ce98",
     "declared": "~/blogs/src/content/docs/compiler/cpp26-argparse.typ",
     "dirty": false
   },
@@ -98,17 +98,22 @@
     "dirty": false
   },
   "lang/dies-irae": {
-    "commit": "00f8e66",
+    "commit": "ea9ce98",
     "declared": "~/blogs/src/content/docs/lang/dies-irae.typ",
     "dirty": false
   },
+  "lang/emerald-tablet": {
+    "commit": "ea9ce98",
+    "declared": "~/blogs/src/content/docs/lang/emerald-tablet.typ",
+    "dirty": false
+  },
   "llm/128k-ctx": {
-    "commit": "00f8e66",
+    "commit": "ea9ce98",
     "declared": "~/blogs/src/content/docs/llm/128k-ctx.typ",
     "dirty": false
   },
   "llm/llm-compression": {
-    "commit": "00f8e66",
+    "commit": "ea9ce98",
     "declared": "~/blogs/src/content/docs/llm/llm-compression.typ",
     "dirty": false
   },
@@ -118,12 +123,12 @@
     "dirty": false
   },
   "misc/fcitx5-rime-commitraw": {
-    "commit": "00f8e66",
+    "commit": "ea9ce98",
     "declared": "~/blogs/src/content/docs/misc/fcitx5-rime-commitraw.typ",
     "dirty": false
   },
   "misc/fcitx5-ru": {
-    "commit": "00f8e66",
+    "commit": "ea9ce98",
     "declared": "~/blogs/src/content/docs/misc/fcitx5-ru",
     "dirty": true,
     "entry": "fcitx5-ru.typ",
@@ -143,12 +148,12 @@
     "dirty": false
   },
   "misc/quantum-computing-1": {
-    "commit": "00f8e66",
+    "commit": "ea9ce98",
     "declared": "~/blogs/src/content/docs/misc/quantum-computing-1.typ",
     "dirty": false
   },
   "misc/quantum-computing-2": {
-    "commit": "00f8e66",
+    "commit": "ea9ce98",
     "declared": "~/blogs/src/content/docs/misc/quantum-computing-2.typ",
     "dirty": false
   },
@@ -158,27 +163,27 @@
     "dirty": false
   },
   "novels/conquer": {
-    "commit": "00f8e66",
+    "commit": "ea9ce98",
     "declared": "~/blogs/src/content/docs/novels/Conquer.typ",
     "dirty": false
   },
   "novels/danitz": {
-    "commit": "00f8e66",
+    "commit": "ea9ce98",
     "declared": "~/blogs/src/content/docs/novels/Danitz.typ",
     "dirty": false
   },
   "novels/feist": {
-    "commit": "00f8e66",
+    "commit": "ea9ce98",
     "declared": "~/blogs/src/content/docs/novels/Feist.typ",
     "dirty": false
   },
   "novels/kinich": {
-    "commit": "00f8e66",
+    "commit": "ea9ce98",
     "declared": "~/blogs/src/content/docs/novels/Kinich.typ",
     "dirty": false
   },
   "novels/uni": {
-    "commit": "00f8e66",
+    "commit": "ea9ce98",
     "declared": "~/blogs/src/content/docs/novels/Uni.typ",
     "dirty": false
   },

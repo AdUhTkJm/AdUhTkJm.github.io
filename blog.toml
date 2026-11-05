@@ -125,12 +125,22 @@ order = 2
 # 语言
 
 [[note]]
+source = "~/blogs/src/content/docs/lang/emerald-tablet.typ"
+slug = "lang/emerald-tablet"
+project = "lang"
+title = "翠玉录"
+summary = "依然是游戏引用的文本"
+tags = ["拉丁语"]
+date = "2026-11-05"
+order = 1
+
+[[note]]
 source = "~/blogs/src/content/docs/lang/dies-irae.typ"
 slug = "lang/dies-irae"
 project = "lang"
-title = "Dies Irae:《末日经》"
-summary = "解析中二游戏 Dies Irae 里引用的拉丁语文本"
-tags = ["拉丁语", "Dies irae", "语法"]
+title = "Dies Irae"
+summary = "同名视觉小说 Dies Irae 里引用的拉丁语文本"
+tags = ["拉丁语"]
 date = "2026-11-01"
 order = 1
 
