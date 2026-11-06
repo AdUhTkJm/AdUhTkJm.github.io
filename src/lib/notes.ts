@@ -18,6 +18,26 @@ export interface TocEntry {
   id: string;
 }
 
+/** One part of a series, as listed in its index. */
+export interface SeriesPart {
+  slug: string;
+  title: string;
+}
+
+/**
+ * A 「连载」 (series): several notes published out of one directory.
+ *
+ * `parts` is in reading order and comes from `blog.toml`, not from the page, so
+ * the index is identical on every part. `index` is the 1-based position of the
+ * note this manifest entry describes.
+ */
+export interface NoteSeries {
+  id: string;
+  title: string;
+  index: number;
+  parts: SeriesPart[];
+}
+
 export interface Note {
   slug: string;
   title: string;
@@ -31,6 +51,7 @@ export interface Note {
   pdf: string;
   source: { declared: string; commit: string | null; dirty: boolean };
   snapshot: string;
+  series: NoteSeries | null;
   bytes: number;
   math: number;
   figures: number;

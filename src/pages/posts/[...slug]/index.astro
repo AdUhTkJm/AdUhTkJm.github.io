@@ -11,6 +11,8 @@ import { noteBody, notes, noteWords, projectOf, type Note } from "@/lib/notes";
 import ShareLinks from "./_components/ShareLinks.astro";
 import BackButton from "./_components/BackButton.astro";
 import BackToTopButton from "./_components/BackToTopButton.astro";
+import SeriesNav from "./_components/SeriesNav.astro";
+import SeriesNavNext from "./_components/SeriesNavNext.astro";
 import config from "@/config";
 import "@/styles/note.css";
 
@@ -139,6 +141,12 @@ const ogImage = undefined;
     }
 
     {
+      note.series && note.series.parts.length > 1 && (
+        <SeriesNav series={note.series} />
+      )
+    }
+
+    {
       toc.length > 4 && (
         <details class="border-border bg-muted/40 my-8 rounded-md border px-4 py-3">
           <summary class="cursor-pointer text-sm font-medium">
@@ -163,6 +171,12 @@ const ogImage = undefined;
     <article id="article" class="note-body" data-pagefind-body>
       <Fragment set:html={noteBody(note.slug)} />
     </article>
+
+    {
+      note.series && note.series.parts.length > 1 && (
+        <SeriesNavNext series={note.series} />
+      )
+    }
 
     <hr class="my-8 border-dashed" />
 

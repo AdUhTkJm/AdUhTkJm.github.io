@@ -86,6 +86,25 @@ order = 50000
 #            listing (home, /posts, tags, archives, RSS); the date only breaks
 #            ties. So to get newest-first, give the newest note the smallest
 #            order.
+#
+# Series
+#
+# A `[[series]]` block owns a *directory* and publishes several notes out of it.
+# The directory is described once; each part only names its own file:
+#
+#   [[series]]
+#   id = "hebrew"
+#   source = "~/blogs/src/content/docs/lang/hebrew"   # a directory, not a .typ
+#   project = "lang"
+#   title = "希伯来语学习笔记"            # the heading of the series index
+#   exclude = ["heb-test.typ"]           # optional, same meaning as for a note
+#
+#   [[note]]
+#   series = "hebrew"
+#   entry = "hebrew-1.typ"
+#   slug = "lang/hebrew-1"
+#   title = "定冠词"
+#   # no source / exclude / project / shim: those belong to the series
 # ---------------------------------------------------------------------------
 
 

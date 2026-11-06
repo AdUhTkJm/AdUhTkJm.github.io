@@ -678,8 +678,51 @@ def load_manifest() -> tuple[dict, dict, list[dict]]:
     notes = manifest.get("note", [])
     if not notes:
         die("blog.toml has no [[note]] entries")
+
+    # A `[[series]]` owns a directory; each member note only names the file
+    # inside it. The directory is snapshotted **once** for the whole series
+    # instead of once per note, so N parts cost one copy under sources/
+    # instead of N — a directory-shaped note is a snapshot of *its own* inputs,
+    # and two notes in one directory share every one of them.
+    series_defs: dict[str, dict] = {}
+    for s in manifest.get("series", []):
+        sid = str(s.get("id", "")).strip()
+        if not sid:
+            die("a [[series]] block has no id")
+        if sid in series_defs:
+            die(f"duplicate [[series]] id: {sid}")
+        if "source" not in s:
+            die(f"[series {sid}] missing source (the directory the parts live in)")
+        if str(s["source"]).endswith(".typ"):
+            die(f"[series {sid}] source must be a directory: {s['source']}")
+        if s.get("project") not in projects:
+            die(f"[series {sid}] unknown project id: {s.get('project')}")
+        if not str(s.get("title", "")).strip():
+            die(f"[series {sid}] missing title")
+        unknown = set(s.get("shim", [])) - {"diagram"}
+        if unknown:
+            die(f"[series {sid}] unknown shim(s): {sorted(unknown)}")
+        series_defs[sid] = s
+
     for note in notes:
         slug = note["slug"].strip("/")
+        sid = note.get("series")
+        if sid is not None:
+            sid = str(sid)
+            if sid not in series_defs:
+                die(f"[{slug}] unknown series id: {sid} (no [[series]] block declares it)")
+            # Everything directory-shaped belongs to the series, not to the
+            # part: two parts cannot be allowed to disagree about what the
+            # snapshot is, or `--check` and the cache would both be lying.
+            for field in ("source", "exclude", "project", "shim"):
+                if field in note:
+                    die(f"[{slug}] drop `{field}`: it comes from [[series]] {sid}")
+            note["project"] = series_defs[sid]["project"]
+            note["source"] = series_defs[sid]["source"]
+            note["exclude"] = series_defs[sid].get("exclude", [])
+            note["shim"] = series_defs[sid].get("shim", [])
+            if not str(note.get("entry", "")).endswith(".typ"):
+                die(f'[{slug}] a part of a series must name its file: entry = "<file>.typ"')
         if note["project"] not in projects:
             die(f"[{slug}] unknown project id: {note['project']}")
         if is_tree(note):
@@ -695,6 +738,19 @@ def load_manifest() -> tuple[dict, dict, list[dict]]:
                 f"[{slug}] source is not a .typ file: {note['source']} "
                 '(for a directory of files, also set entry = "web.typ")'
             )
+
+    # Reading order inside a series: `part` if given, else `order` (the listing
+    # key, so consecutive parts usually need nothing), then the slug to break
+    # ties. The resulting list is what the page renders as its series index.
+    for sid, s in series_defs.items():
+        members = [n for n in notes if str(n.get("series", "")) == sid]
+        if not members:
+            continue  # declared but unused: nothing to snapshot, nothing to list
+        members.sort(key=lambda n: (n.get("part", n.get("order", 999)), n["slug"]))
+        parts = [{"slug": n["slug"].strip("/"), "title": n["title"]} for n in members]
+        for index, n in enumerate(members, 1):
+            n["_series"] = {"id": sid, "title": s["title"], "index": index, "parts": parts}
+
     return manifest["site"], projects, notes
 
 
@@ -706,12 +762,44 @@ def snapshot_tree(slug: str) -> Path:
     return SNAPSHOT_DIR / slug
 
 
+def series_snapshot(sid: str) -> Path:
+    """One snapshot per series, shared by every part.
+
+    The leading underscore keeps it out of the per-slug namespace (`sources/`
+    otherwise only ever holds `<slug>.typ` and `<slug>/`), so a series id can
+    never collide with a slug.
+    """
+    return SNAPSHOT_DIR / "_series" / sid
+
+
 def check(notes: list[dict]) -> None:
     """Fail if a committed snapshot no longer matches its live source."""
     stale, missing_live, gone = [], [], []
+    checked_series: set[str] = set()  # a series directory is one input, not N
     for note in notes:
         slug = note["slug"].strip("/")
         live = resolve(note["source"])
+
+        series = note.get("_series")
+        if series:
+            sid = series["id"]
+            if sid in checked_series:
+                continue
+            checked_series.add(sid)
+            label = f"series {sid}"
+            snap = series_snapshot(sid)
+            if not live.is_dir():
+                missing_live.append(label)
+                if not snap.is_dir():
+                    die(f"[{label}] no live source and no committed snapshot")
+                continue
+            if not snap.is_dir():
+                gone.append(label)
+                continue
+            changed = tree_diff(live, snap, ALWAYS_EXCLUDE + note.get("exclude", []))
+            if changed:
+                stale.append(f"{label} ({len(changed)} file(s), e.g. {changed[0]})")
+            continue
 
         if is_tree(note):
             snap = snapshot_tree(slug)
@@ -804,6 +892,7 @@ def main() -> None:
     warnings: list[str] = []
     base = site.get("base", "/")
     n_cached = 0
+    prepared_series: set[str] = set()
 
     for note in notes:
         slug = note["slug"].strip("/")
@@ -811,10 +900,52 @@ def main() -> None:
         live = resolve(declared)
         entry_name = note.get("entry", "")
         shims = note.get("shim", [])
+        series = note.get("_series")
+        # Provenance belongs to the snapshot, and a series has one snapshot for
+        # all its parts — so all parts read the same record.
+        prov_key = f"_series/{series['id']}" if series else slug
         print(f"  {slug}")
 
         # 1. refresh the snapshot from the live document when we have it
-        if is_tree(note):
+        if series:
+            sid = series["id"]
+            snap = series_snapshot(sid)
+            if sid not in prepared_series:
+                prepared_series.add(sid)
+                excludes = ALWAYS_EXCLUDE + note.get("exclude", [])
+                if live.is_dir():
+                    hashes = refresh_tree(live, snap, excludes)
+                    print(
+                        f"    series {sid}: snapshot updated from {declared} "
+                        f"({len(hashes)} file(s), {len(series['parts'])} part(s))"
+                    )
+                    provenance[prov_key] = {
+                        "declared": declared,
+                        "entries": [p["slug"] for p in series["parts"]],
+                        "commit": git(live, "rev-parse", "--short", "HEAD"),
+                        "dirty": bool(git(live, "status", "--porcelain")),
+                        "files": hashes,
+                    }
+                elif snap.is_dir():
+                    print("    live source absent, using committed snapshot")
+                    provenance[prov_key] = saved_provenance.get(
+                        prov_key,
+                        {
+                            "declared": declared,
+                            "entries": [p["slug"] for p in series["parts"]],
+                            "commit": None,
+                            "dirty": False,
+                        },
+                    )
+                else:
+                    die(
+                        f"[series {sid}] neither the live document nor a snapshot "
+                        f"exists: {live}"
+                    )
+            if not (snap / entry_name).is_file():
+                die(f"[series {sid}] snapshot has no {entry_name}")
+            tree = walk_tree(snap, [])
+        elif is_tree(note):
             snap = snapshot_tree(slug)
             excludes = ALWAYS_EXCLUDE + note.get("exclude", [])
             if live.is_dir():
@@ -890,6 +1021,10 @@ def main() -> None:
                 "html_flags": HTML_FLAGS,
                 "base": base,
                 "shims": sorted(shims),
+                # The series index is rendered from blog.toml, not from the
+                # page, so adding/renaming a part must invalidate the cached
+                # pages even though their sources did not change.
+                "series": series,
             },
         )
         cached = None if args.no_cache else cache_read(slug, key, pdf_name)
@@ -1002,13 +1137,16 @@ def main() -> None:
                 "kind": "typst",
                 "pdf": f"pdf/{pdf_name}",
                 "source": provenance.get(
-                    slug, {"declared": declared, "commit": None, "dirty": False}
+                    prov_key, {"declared": declared, "commit": None, "dirty": False}
                 ),
                 "snapshot": (
-                    f"sources/{slug}/{entry_name}"
+                    f"sources/_series/{series['id']}/{entry_name}"
+                    if series
+                    else f"sources/{slug}/{entry_name}"
                     if is_tree(note)
                     else f"sources/{slug}.typ"
                 ),
+                "series": series or None,
                 "math": n_math,
                 "figures": n_figures,
                 "images": n_images,

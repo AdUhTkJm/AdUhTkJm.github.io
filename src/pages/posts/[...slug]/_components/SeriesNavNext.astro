@@ -1,0 +1,50 @@
+---
+import { getRelativeLocaleUrl } from "astro:i18n";
+import config from "@/config";
+import { useTranslations } from "@/i18n";
+import type { NoteSeries } from "@/lib/notes";
+
+/**
+ * 「上一篇 / 下一篇」 at the end of a part.
+ *
+ * Not the same thing as the project-level prev/next at the bottom of the page
+ * (that one walks *all* notes of the project in listing order); this one walks
+ * the series, so an unrelated note published in between cannot slip in.
+ */
+type Props = { series: NoteSeries };
+
+const { series } = Astro.props;
+
+const locale = Astro.currentLocale ?? config.site.lang;
+const t = useTranslations(locale);
+
+// `index` is 1-based, so it doubles as the array offset of the *next* part.
+const next =
+  series.index < series.parts.length ? series.parts[series.index] : null;
+const prev = series.index >= 2 ? series.parts[series.index - 2] : null;
+---
+
+{
+  (prev || next) && (
+    <nav class="border-border mt-8 flex flex-col gap-2 border-t border-dashed pt-4 text-sm sm:flex-row sm:justify-between">
+      {prev ? (
+        <a
+          href={getRelativeLocaleUrl(locale, `posts/${prev.slug}`)}
+          class="hover:text-accent"
+        >
+          ← {t.post.seriesPrev}：{prev.title}
+        </a>
+      ) : (
+        <span />
+      )}
+      {next && (
+        <a
+          href={getRelativeLocaleUrl(locale, `posts/${next.slug}`)}
+          class="hover:text-accent"
+        >
+          {t.post.seriesNext}：{next.title} →
+        </a>
+      )}
+    </nav>
+  )
+}

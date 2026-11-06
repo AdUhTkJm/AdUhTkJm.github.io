@@ -16,6 +16,10 @@ export default {
     tagLabel: "Tags",
     backToTop: "Back to top",
     goBack: "Go back",
+    seriesLabel: "{{title}}: series index",
+    seriesPart: "Part {{index}} of {{total}}",
+    seriesPrev: "Previous part",
+    seriesNext: "Next part",
   },
   pagination: {
     prev: "Prev",

@@ -14,6 +14,12 @@ export interface UIStrings {
     tagLabel: string;
     backToTop: string;
     goBack: string;
+    /** `aria-label` of the series index box; `{{title}}` is the series title. */
+    seriesLabel: string;
+    /** "Part 2 of 5" next to the series title. */
+    seriesPart: string;
+    seriesPrev: string;
+    seriesNext: string;
   };
   pagination: {
     prev: string;

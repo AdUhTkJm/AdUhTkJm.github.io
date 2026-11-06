@@ -94,6 +94,29 @@ slug = "compiler/cache-miss-analysis"
 
 `exclude` 是显式列表而不是自动推断：`build/repo.typ`（`make.sh` 生成的行数统计）必须留在快照里，`build/*.pdf` 必须排除，两者在同一个目录下，只有人知道区别。
 
+## 连载（series）
+
+把同一目录里的若干篇笔记分页发布时，不要写多个指向同一目录的 `entry` note：目录快照记的是「这篇笔记的全部输入」，两个 note 各快照一次就是两份完整副本，N 篇就是 N 份（40 篇的目录 = 40 倍 git 体积）。用一个 `[[series]]` 描述那个目录，每篇只认领自己的文件：
+
+```toml
+[[series]]
+id = "hebrew"
+source = "~/blogs/src/content/docs/lang/hebrew"   # 目录，不是 .typ
+exclude = ["heb-test.typ"]
+project = "lang"
+title = "希伯来语学习笔记"
+
+[[note]]
+series = "hebrew"
+entry = "hebrew-1.typ"
+slug = "lang/hebrew-1"
+title = "定冠词"
+```
+
+整条连载只快照一次，落在 `sources/_series/<id>/`（前导下划线让它永远不可能和某个 slug 撞名），`--check` 也按连载比一次，`notes.json` 里每篇的 `snapshot` 字段指向同一棵树。`[[series]]` 负责 `source`/`exclude`/`project`/`shim`，note 里再写这几个字段会直接报错——两篇笔记对「快照是什么」有分歧时，缓存和 `--check` 都会失去意义。
+
+连载的目录索引（页面顶部）和「上一篇/下一篇」（正文末尾）由站点渲染，不由 Typst 渲染：索引来自 `blog.toml`，所以每篇上的都一模一样，也不进 Pagefind 的索引；`parts` 的顺序是 `part`（可选）→ `order` → slug。反过来说，改 `blog.toml` 里的篇名或插一篇会让整条连载的缓存失效——`series` 被放进了缓存键，因为页面的输入没变，索引变了。
+
 ## 为什么 Typst 直接导出 HTML
 
 Typst 0.15 把公式导出为 MathML、表格导出为 `<table>`、交叉引用导出为锚点、脚注导出为 `role="doc-endnotes"`。这样一来就没有 Typst → Markdown → LaTeX 这条转换链要维护了，页面上也没有 KaTeX 的包。

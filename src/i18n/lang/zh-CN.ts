@@ -16,6 +16,10 @@ export default {
     tagLabel: "标签",
     backToTop: "回到顶部",
     goBack: "返回",
+    seriesLabel: "{{title}}：连载目录",
+    seriesPart: "第 {{index}} / {{total}} 篇",
+    seriesPrev: "上一篇",
+    seriesNext: "下一篇",
   },
   pagination: {
     prev: "上一页",
