@@ -13,7 +13,7 @@ if ! ./compile.sh --check; then
 
 pre-push: the committed snapshots are stale.
 
-    ./compile.sh --no-build     # refresh sources/ + provenance from the live docs
+    ./compile.sh --no-build     # refresh sources/ from the live docs
     git add sources
     git commit -m "notes: sync sources"
 

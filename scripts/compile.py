@@ -59,7 +59,6 @@ NOTES_JSON = ROOT / "src" / "generated" / "notes.json"
 PDF_DIR = ROOT / "public" / "pdf"
 IMAGE_DIR = ROOT / "public" / "images"
 SNAPSHOT_DIR = ROOT / "sources"
-PROVENANCE = SNAPSHOT_DIR / "provenance.json"
 
 # typst CLI flags that turn on the experimental HTML exporter.
 HTML_FLAGS = ["--features", "html"]
@@ -142,16 +141,6 @@ def note_warnings(stderr: str) -> list[str]:
 def resolve(path: str) -> Path:
     p = Path(os.path.expanduser(path))
     return p if p.is_absolute() else (ROOT / p)
-
-
-def git(dir: Path, *args: str) -> str | None:
-    try:
-        proc = subprocess.run(
-            ["git", "-C", str(dir), *args], capture_output=True, text=True
-        )
-        return proc.stdout.strip() if proc.returncode == 0 else None
-    except OSError:
-        return None
 
 
 def digest(data: bytes) -> str:
@@ -882,13 +871,6 @@ def main() -> None:
     SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
 
     out_notes: list[dict] = []
-    # Provenance is a property of the snapshot, so it is committed next to it:
-    # a machine without the project checkout must still label each page with the
-    # commit it came from.
-    saved_provenance: dict[str, dict] = (
-        json.loads(PROVENANCE.read_text()) if PROVENANCE.is_file() else {}
-    )
-    provenance: dict[str, dict] = dict(saved_provenance)
     warnings: list[str] = []
     base = site.get("base", "/")
     n_cached = 0
@@ -901,9 +883,6 @@ def main() -> None:
         entry_name = note.get("entry", "")
         shims = note.get("shim", [])
         series = note.get("_series")
-        # Provenance belongs to the snapshot, and a series has one snapshot for
-        # all its parts — so all parts read the same record.
-        prov_key = f"_series/{series['id']}" if series else slug
         print(f"  {slug}")
 
         # 1. refresh the snapshot from the live document when we have it
@@ -919,24 +898,8 @@ def main() -> None:
                         f"    series {sid}: snapshot updated from {declared} "
                         f"({len(hashes)} file(s), {len(series['parts'])} part(s))"
                     )
-                    provenance[prov_key] = {
-                        "declared": declared,
-                        "entries": [p["slug"] for p in series["parts"]],
-                        "commit": git(live, "rev-parse", "--short", "HEAD"),
-                        "dirty": bool(git(live, "status", "--porcelain")),
-                        "files": hashes,
-                    }
                 elif snap.is_dir():
                     print("    live source absent, using committed snapshot")
-                    provenance[prov_key] = saved_provenance.get(
-                        prov_key,
-                        {
-                            "declared": declared,
-                            "entries": [p["slug"] for p in series["parts"]],
-                            "commit": None,
-                            "dirty": False,
-                        },
-                    )
                 else:
                     die(
                         f"[series {sid}] neither the live document nor a snapshot "
@@ -953,19 +916,8 @@ def main() -> None:
                 if entry_name not in hashes:
                     die(f"[{slug}] entry {entry_name!r} not found under {declared}")
                 print(f"    snapshot updated from {declared} ({len(hashes)} file(s))")
-                provenance[slug] = {
-                    "declared": declared,
-                    "entry": entry_name,
-                    "commit": git(live, "rev-parse", "--short", "HEAD"),
-                    "dirty": bool(git(live, "status", "--porcelain")),
-                    "files": hashes,
-                }
             elif snap.is_dir():
                 print("    live source absent, using committed snapshot")
-                provenance[slug] = saved_provenance.get(
-                    slug,
-                    {"declared": declared, "entry": entry_name, "commit": None, "dirty": False},
-                )
             else:
                 die(f"[{slug}] neither the live document nor a snapshot exists: {live}")
             if not (snap / entry_name).is_file():
@@ -979,16 +931,8 @@ def main() -> None:
                     snap.parent.mkdir(parents=True, exist_ok=True)
                     snap.write_bytes(content)
                     print(f"    snapshot updated from {declared}")
-                provenance[slug] = {
-                    "declared": declared,
-                    "commit": git(live.parent, "rev-parse", "--short", "HEAD"),
-                    "dirty": bool(git(live.parent, "status", "--porcelain", "--", live.name)),
-                }
             elif snap.is_file():
                 print("    live source absent, using committed snapshot")
-                provenance[slug] = saved_provenance.get(
-                    slug, {"declared": declared, "commit": None, "dirty": False}
-                )
             else:
                 die(f"[{slug}] neither the live document nor a snapshot exists: {live}")
             entry_name = snap.name
@@ -1136,9 +1080,6 @@ def main() -> None:
                 "project": note["project"],
                 "kind": "typst",
                 "pdf": f"pdf/{pdf_name}",
-                "source": provenance.get(
-                    prov_key, {"declared": declared, "commit": None, "dirty": False}
-                ),
                 "snapshot": (
                     f"sources/_series/{series['id']}/{entry_name}"
                     if series
@@ -1164,11 +1105,6 @@ def main() -> None:
                 f"{n_figures} figures, {len(toc)} headings"
             )
             print(f"    pdf     {pdf_bytes // 1024} KB")
-
-    if provenance:
-        PROVENANCE.write_text(
-            json.dumps(provenance, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
-        )
 
     cache_prune({note["slug"].strip("/") for note in notes})
 

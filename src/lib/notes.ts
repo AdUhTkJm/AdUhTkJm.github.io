@@ -49,7 +49,6 @@ export interface Note {
   kind: string;
   html: string;
   pdf: string;
-  source: { declared: string; commit: string | null; dirty: boolean };
   snapshot: string;
   series: NoteSeries | null;
   bytes: number;
@@ -129,11 +128,4 @@ export function projectOf(note: Note): Project {
       order: 999,
     }
   );
-}
-
-/** Short display form of a source commit, e.g. "aw@422b903". */
-export function sourceLabel(note: Note): string {
-  const commit = note.source.commit;
-  if (!commit) return note.source.declared;
-  return `${note.project}@${commit}${note.source.dirty ? " (modified)" : ""}`;
 }

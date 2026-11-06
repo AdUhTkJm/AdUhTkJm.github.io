@@ -45,7 +45,6 @@
 ```
 blog.toml                         精选的发布白名单：哪些文档会公开
 sources/<slug>.typ                每篇已发布文档的快照（构建输入）
-sources/provenance.json           每个快照来自哪个上游 commit
 ```
 
 虽然看起来是代码块，但也是表格。

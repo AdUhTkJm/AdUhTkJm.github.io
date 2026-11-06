@@ -4,7 +4,7 @@
 
 ## 提交的内容
 
-只有源文件进 git：`blog.toml`（发布白名单）、每篇笔记的快照（单文件是 `sources/<slug>.typ`，多文件文档是目录 `sources/<slug>/`），以及记录每个快照来自哪个上游 commit 的 `sources/provenance.json`。编译出来的 `src/generated/`（HTML）、`public/pdf/`（PDF）、`public/images/`（从页面里抽出来的图）和 `.tools/`（typst 可执行文件）都不提交。
+只有源文件进 git：`blog.toml`（发布白名单），以及每篇笔记的快照（单文件是 `sources/<slug>.typ`，多文件文档是目录 `sources/<slug>/`）。编译出来的 `src/generated/`（HTML）、`public/pdf/`（PDF）、`public/images/`（从页面里抽出来的图）和 `.tools/`（typst 可执行文件）都不提交。
 
 快照是唯一的构建输入。`scripts/compile.py` 始终编译快照（`sources/<slug>.typ` 或 `sources/<slug>/<entry>`），从不碰项目仓库里的原始文档，这带来三点：没有任何生成物进入版本控制——历史上不会有 700 KB 的 PDF，也不存在与固定版本编译器、自包含源文件相重复的 HTML；新克隆在没有任何项目的环境上也能得到完全一致的构建（已逐字节验证过：`$HOME` 指向不含 `~/projects` 的目录的克隆，HTML 和 PDF 都一样）；CI 不需要访问项目仓库，也不需要任何密钥。代价是构建现在需要 typst（约 40 MB 的下载，有缓存），而不再只需要 Node。
 
@@ -12,7 +12,6 @@
 blog.toml                         精选的发布白名单：哪些文档会公开
 sources/<slug>.typ                单文件笔记的快照（构建输入）
 sources/<slug>/                   多文件笔记的整棵目录快照（构建输入）
-sources/provenance.json           每个快照来自哪个上游 commit + 文件哈希
 scripts/compile.py                快照 -> HTML（MathML）+ PDF + 抽出的图
 compile.sh                        唯一会运行的命令
 .cache/notes/<slug>/              上次编译的产物（机器本地，不进 git）
@@ -62,14 +61,14 @@ snapshot 树的每个文件（相对路径 + sha256）
 
 - **依赖就是快照树**。多文件文档改了某一张图或某一章，整棵树的哈希就变了，所以那一篇会重编；这不需要解析 `#include`。又因为单文件笔记的快照必须自包含（见下节），一篇笔记引用另一篇的文件根本编译不过，跨笔记依赖不存在。所以「哈希整个快照树」既充分又必要——它恰好等于真正的构建输入。
 - **`compile.py` 自身也在键里**。改了后处理（哪怕只是注释），所有页面全部失效。宁可多编一次，也不要让「忘了 bump 版本号」变成线上残留旧页面的解释。
-- **provenance 不进键**。它只是「这篇来自哪个 commit」的标签，不改变 HTML/PDF 的字节，所以上游提交前进了也不会触发重编。
+- **缓存只看内容**。快照树之外的任何东西（上游仓库的 commit、文件时间戳）都不进键，所以上游提交前进了也不会触发重编。
 - **缓存只写不读失败态**。产物先写进临时目录、`meta.json` 最后落盘再整体改名，所以中断或报错的构建不会留下一条看起来有效的坏缓存。
 
 想强制全量重编（升级 typst、怀疑缓存、调过 shim 之后）用 `./compile.sh --no-cache`，它会无视旧条目但仍然写回新结果；或者直接 `rm -rf .cache`。CI 里也用 `actions/cache` 挂了这份缓存：键是 `sources/` + `blog.toml` + `scripts/compile.py` 的哈希，`restore-keys` 兜底拿最近的一份——即使命中旧缓存也不会出错，因为每个条目自己的键才是判定依据，旧条目只会被当成未命中。
 
 ## 加一篇笔记
 
-首先在文档所在的项目仓库中撰写或编辑文档（例如 `~/projects/seedsearch/docs/optimizations.typ`）；然后在 `blog.toml` 中添加 `[[note]]` 块；接着运行 `./compile.sh`，它会把文档复制到 `sources/`、把 commit 记录进 `sources/provenance.json` 并构建；最后提交 `blog.toml` 和 `sources/`。
+首先在文档所在的项目仓库中撰写或编辑文档（例如 `~/projects/seedsearch/docs/optimizations.typ`）；然后在 `blog.toml` 中添加 `[[note]]` 块；接着运行 `./compile.sh`，它会把文档复制到 `sources/` 并构建；最后提交 `blog.toml` 和 `sources/`。
 
 文档自身的标题块与页面设置会被 HTML 导出器忽略；`title`、`summary`、`date`、`tags` 都取自 `blog.toml`。
 
