@@ -79,21 +79,27 @@
 
 形容词一般放在名词之后。
 
-#heb("k.iS.E' gAdwOl") [大王座]
+#heb("k.iS.E' g.AdwOl") [大王座]
 
-#heb("s,adeh qAtON") [小田野]
+#heb("s,adeh qATON") [小田野]
 
 而修饰形容词的副词则也放在形容词之后。
 
-#heb("k.iS.E' gAdwOl m:'Od") [非常大的王座]
+#heb("k.iS.E' g.AdwOl m:'Od") [非常大的王座]
 
 = 例文
 
 #heb("ham.eleK: v:haS.w.S")
 
-#heb("vay:hiy har gAdwOl b.:'ereC k.:na'aN v:sAM `iyr vay:hiy hEykAl 'Ecel hA`iyr vay:hiy hahEykAl gAdwOl m:'Od:: vay:hiy '.iys b.:twOK: hahEykAl vay:hiy hA'iys meleK: b:ham.eleK: yOsEV `al-k.iSE.':: vay:hiy hak.iS.E' gAdwOl mE'Od:: vay:hiy s,Adeh 'Ecel hahEykAl vay:hiy has,.Adeh qATON mE'Od:: vay:hiy Sw.S b:twOK: has,.Adeh:: vay.O'mer haS.v.S hin.Eh hame.leK: yOsEV `al-ki.SE.' gAdwOl b.:twOK: hEykAl gAdwOl va'a:niy yOsEV b.:twOK: s,Adeh qATON 'ay.Eh hac.edeq::")
+#heb("vay:hiy har g.AdwOl b.:'ereC k.:na'aN v:sAM `iyr vay:hiy hEykAl 'Ecel hA`iyr vay:hiy hahEykAl g.AdwOl m:'Od:: vay:hiy '.iys b.:twOK: hahEykAl vay:hiy hA'iys meleK: b:ham.eleK: yOsEV `al-k.iSE.':: vay:hiy hak.iS.E' g.AdwOl m:'Od:: vay:hiy s,Adeh 'Ecel hahEykAl vay:hiy has,.Adeh qATON m:'Od:: vay:hiy Sw.S b:twOK: has,.Adeh:: vay.O'mer haS.v.S hin.Eh hame.leK: yOsEV `al-ki.SE.' g.AdwOl b.:twOK: hEykAl g.AdwOl va'a:niy yOsEV b.:twOK: s,Adeh qATON 'ay.Eh hac.edeq::")
 
 可以看到，这里经常用 #heb("vay:hiy") 表示“存在”。这和俄语有一定的类似之处，可以通过这个词来引入一个新的东西，例如 #heb("vay:hiy heykAl 'Ecel HA`iyr") 这句话可以大致看作是 Есть дворец рядом с городом，明确写出 `Есть` 表示存在。当然，不写也是可以的。
+
+接下来是一些翻译小练习。英语原文如下：
+
+The king is in the middle of the palace. The palace is big. The king is sitting on a throne. The throne is very big. The queen is next to the palace. The queen is in the middle of the garden. The garden is very big. The horse is in the middle of the field. The field is very small. Where is the justice?
+
+#heb("ham.eleK: b.:twOK: hahEykAl:: hahEykAl g.AdwOl:: ham.eleK: yOsEV `al-k.iSE.':: haki.SE. g.AdwOl m:'Od:: ham.al:k.Ah 'Ecel hahEykAl:: ham.al:k.Ah b.:twOK: hag.AN:: hagA.N g.AdwOl m:'Od:: haS.v.S b.:twOK: has,.adeh:: has,.adeh qATON m:'Od:: 'ay.Eh hac.edeq")
 
 = 技术细节：希伯来语 DSL
 
