@@ -105,6 +105,8 @@ IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif"}
 FIGURE_RE = re.compile(r"<figure[^>]*>.*?</figure>", re.S)
 FIGCAPTION_RE = re.compile(r"<figcaption[^>]*>(.*?)</figcaption>", re.S)
 
+FONT_DIR = ROOT / "public/fonts"
+
 
 def die(msg: str) -> "NoReturn":
     print(f"error: {msg}", file=sys.stderr)
@@ -225,6 +227,7 @@ def cache_key(
             "entry": entry_name,
             "options": options,
             "files": dict(sorted(hashes.items())),
+            "fonts": {p.name: digest(p.read_bytes()) for p in sorted(FONT_DIR.glob("*.ttf"))},
         },
         ensure_ascii=False,
         sort_keys=True,
@@ -1003,10 +1006,10 @@ def main() -> None:
                         str(typst),
                         "compile",
                         *HTML_FLAGS,
-                        "--root",
-                        str(build),
+                        "--root", str(build),
                         str(build / entry_name),
                         str(page),
+                        "--font-path", str(FONT_DIR),
                     ],
                     f"typst html for {slug}",
                     REPRO_ENV,
@@ -1039,12 +1042,11 @@ def main() -> None:
             # 4. PDF, from the pristine snapshot (the shim is HTML-only)
             run(
                 [
-                    str(typst),
-                    "compile",
-                    "--root",
-                    str(snap if is_tree(note) else snap.parent),
+                    str(typst), "compile",
+                    "--root", str(snap if is_tree(note) else snap.parent),
                     str(snap / entry_name if is_tree(note) else snap),
                     str(pdf_path),
+                    "--font-path", str(FONT_DIR),
                 ],
                 f"typst pdf for {slug}",
                 REPRO_ENV,

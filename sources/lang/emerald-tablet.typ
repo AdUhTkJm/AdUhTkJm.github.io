@@ -1,5 +1,5 @@
 #import "@preview/cuti:0.4.0"
-#set document(title: "Dies Irae")
+#set document(title: "翠玉录")
 #set page(paper: "a4", margin: 2.3cm)
 #set text(size: 10.5pt, font: ("Libertinus Serif", "Noto Serif CJK SC"))
 #set heading(numbering: "1.1")

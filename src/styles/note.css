@@ -12,6 +12,36 @@
  * and dark mode follow the rest of the site.
  */
 
+/* ------------------------------------------------------------------- fonts */
+
+/*
+ * Hebrew runs arrive as <span class="heb" dir="rtl" lang="he">, emitted by
+ * heb.typ — Typst's HTML exporter drops inline text(font:) styles, so the font
+ * has to be chosen here, not in the .typ file.
+ *
+ * Why SBL Hebrew and not the system serif: it positions the holam dot on vav
+ * the way the Unicode Standard prescribes. U+05D5 U+05B9 (holam male — vav is a
+ * mater lectionis) gets the dot above the right half of the vav; U+05D5 U+05BA
+ * (holam haser for vav — vav is consonantal) keeps it at the upper left. Fonts
+ * with a single holam anchor (Noto Serif Hebrew, DejaVu Sans) show the mater
+ * lectionis like the haser case, which is what made 'וֹ' look wrong.
+ *
+ * The file in public/fonts/ is the unmodified upstream TTF; the EULA ships next
+ * to it because clause 3 requires it (non-commercial use only).
+ */
+@font-face {
+  font-family: "SBL Hebrew";
+  src: url("/fonts/SBL_Hbrw.ttf") format("truetype");
+  font-display: swap;
+  /* Keep the font off Latin text: it has Latin glyphs we don't want here. */
+  unicode-range: U+0590-05FF, U+200E-200F, U+25CC, U+FB1D-FB4F;
+}
+
+.note-body .heb,
+.note-body [lang="he"] {
+  font-family: "SBL Hebrew", "Noto Serif Hebrew", "DejaVu Serif", serif;
+}
+
 .note-body {
   max-width: 42rem;
   font-family:
