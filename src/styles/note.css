@@ -109,6 +109,24 @@
   margin: 1.05em 0;
 }
 
+/*
+ * A paragraph that is nothing but one Hebrew run (the 例文 stanzas in
+ * lang/hebrew-1) is right-aligned in the PDF and left-aligned on the page.
+ * The paged target gets this for free: `text(dir: rtl, …)` in heb.typ makes the
+ * paragraph RTL, and Typst aligns such a paragraph to the right edge. The HTML
+ * exporter drops that style, leaving only <span class="heb" dir="rtl"> — and
+ * `dir="rtl"` on an inline element only reorders the text inside the line, it
+ * does not move the line's alignment or the block's base direction.
+ *
+ * compile.py therefore tags those paragraphs `class="heb-block" dir="rtl"`
+ * (see mark_rtl_paragraphs(): only the markup knows whether any non-Hebrew text
+ * is left in the paragraph). The `dir` attribute supplies the RTL base
+ * direction; the alignment is styling, so it lives here.
+ */
+.note-body .heb-block {
+  text-align: right;
+}
+
 .note-body a {
   color: inherit;
   text-decoration: underline;

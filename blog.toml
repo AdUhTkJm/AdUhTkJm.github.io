@@ -40,7 +40,7 @@ order = 10000
 [[project]]
 id = "lang"
 title = "语言"
-description = "拉丁语、德语，各种死语言的语法笔记。"
+description = "语言学习笔记"
 order = 15000
 
 [[project]]
@@ -58,13 +58,13 @@ order = 30000
 [[project]]
 id = "novels"
 title = "小说"
-description = "各种小说，主要是同人。"
+description = "各种小说，主要是同人"
 order = 40000
 
 [[project]]
 id = "misc"
 title = "杂项"
-description = "杂乱的小东西，没有单独的主题。"
+description = "杂乱的小东西，没有单独的主题"
 order = 50000
 
 # ---------------------------------------------------------------------------
@@ -87,24 +87,6 @@ order = 50000
 #            ties. So to get newest-first, give the newest note the smallest
 #            order.
 #
-# Series
-#
-# A `[[series]]` block owns a *directory* and publishes several notes out of it.
-# The directory is described once; each part only names its own file:
-#
-#   [[series]]
-#   id = "hebrew"
-#   source = "~/blogs/src/content/docs/lang/hebrew"   # a directory, not a .typ
-#   project = "lang"
-#   title = "希伯来语学习笔记"            # the heading of the series index
-#   exclude = ["heb-test.typ"]           # optional, same meaning as for a note
-#
-#   [[note]]
-#   series = "hebrew"
-#   entry = "hebrew-1.typ"
-#   slug = "lang/hebrew-1"
-#   title = "定冠词"
-#   # no source / exclude / project / shim: those belong to the series
 # ---------------------------------------------------------------------------
 
 
@@ -142,6 +124,20 @@ date = "2026-10-10"
 order = 2
 
 # 语言
+
+[[series]]
+id = "hebrew"
+source = "~/blogs/src/content/docs/lang/hebrew"
+project = "lang"
+title = "希伯来语学习笔记"
+exclude = ["heb-test.typ"]
+
+[[note]]
+series = "hebrew"
+entry = "hebrew-1.typ"
+slug = "lang/hebrew-1"
+title = "希伯来语学习笔记 (1)"
+summary = "定冠词与基础语序"
 
 [[note]]
 source = "~/blogs/src/content/docs/lang/emerald-tablet.typ"

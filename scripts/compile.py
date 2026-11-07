@@ -509,6 +509,10 @@ BODY_RE = re.compile(r"<body[^>]*>(.*)</body>", re.S)
 HEADING_RE = re.compile(r"<h([1-6])([^>]*)>(.*?)</h\1>", re.S)
 TAG_RE = re.compile(r"<[^>]+>")
 NUMBERING_RE = re.compile(r"^(\d+(?:\.\d+)*)\s*(.*)$", re.S)
+PARAGRAPH_RE = re.compile(r"<p>(.*?)</p>", re.S)
+# A paragraph body made of nothing but Hebrew runs (and whitespace). See
+# mark_rtl_paragraphs() for why this has to be done here and not in CSS.
+HEB_ONLY_RE = re.compile(r"\A(?:\s*<span class=\"heb\"[^>]*>[^<]*</span>\s*)+\Z")
 
 
 def visible(html: str) -> str:
@@ -520,6 +524,31 @@ def slugify(text: str) -> str:
     text = text.lower()
     text = re.sub(r"[^\w\u3400-\u9fff]+", "-", text)
     return re.sub(r"-{2,}", "-", text).strip("-")[:48]
+
+
+def mark_rtl_paragraphs(body: str) -> str:
+    """Mark paragraphs that consist of nothing but Hebrew runs.
+
+    heb.typ's `#heb(..)` emits `<span class="heb" dir="rtl">` for the web target
+    (the exporter drops inline `text(dir: rtl)`). An inline `dir` only reorders
+    the text inside the line; it does not move the line to the right edge. In the
+    PDF such a paragraph *is* an RTL paragraph (its whole content is one RTL run),
+    so Typst aligns it to the right margin, and the web page has to say so too.
+
+    Doing it here rather than in CSS is not laziness: `p:has(> .heb:only-child)`
+    looks right and is wrong, because text nodes are not elements — it also
+    matches `#heb("…") [王座]`, a mixed paragraph that the PDF keeps LTR. Only
+    the markup knows whether any non-Hebrew text is left in the paragraph, so the
+    class is decided at generation time and note.css only styles it.
+    """
+
+    def repl(match: re.Match) -> str:
+        inner = match.group(1)
+        if not HEB_ONLY_RE.match(inner):
+            return match.group(0)
+        return f'<p class="heb-block" dir="rtl">{inner}</p>'
+
+    return PARAGRAPH_RE.sub(repl, body)
 
 
 def extract_body(full_html: str) -> tuple[str, list[dict]]:
@@ -554,6 +583,7 @@ def extract_body(full_html: str) -> tuple[str, list[dict]]:
         return f"<h{level}{attrs}>{inner}</h{level}>"
 
     body = HEADING_RE.sub(repl, body)
+    body = mark_rtl_paragraphs(body)
 
     # Wide tables need their own scroll container on narrow screens.
     body = re.sub(
