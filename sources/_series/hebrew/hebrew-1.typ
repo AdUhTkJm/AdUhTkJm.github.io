@@ -91,7 +91,7 @@
 
 #heb("ham.eleK: v:haS.w.S")
 
-#heb("vay:hiy har g.AdwOl b.:'ereC k.:na'aN v:sAM `iyr vay:hiy hEykAl 'Ecel hA`iyr vay:hiy hahEykAl g.AdwOl m:'Od:: vay:hiy '.iys b.:twOK: hahEykAl vay:hiy hA'iys meleK: b:ham.eleK: yOsEV `al-k.iSE.':: vay:hiy hak.iS.E' g.AdwOl m:'Od:: vay:hiy s,Adeh 'Ecel hahEykAl vay:hiy has,.Adeh qATON m:'Od:: vay:hiy Sw.S b:twOK: has,.Adeh:: vay.O'mer haS.v.S hin.Eh hame.leK: yOsEV `al-ki.SE.' g.AdwOl b.:twOK: hEykAl g.AdwOl va'a:niy yOsEV b.:twOK: s,Adeh qATON 'ay.Eh hac.edeq::")
+#heb("vay:hiy har g.AdwOl b.:'ereC k.:na'aN v:sAM `iyr vay:hiy hEykAl 'Ecel hA`iyr vay:hiy hahEykAl g.AdwOl m:'Od:: vay:hiy '.iys b.:twOK: hahEykAl vay:hiy hA'iys meleK: v:ham.eleK: yOsEV `al-k.iSE.':: vay:hiy hak.iS.E' g.AdwOl m:'Od:: vay:hiy s,Adeh 'Ecel hahEykAl vay:hiy has,.Adeh qATON m:'Od:: vay:hiy Sw.S b:.twOK: has,.Adeh:: vay.O'mer haS.v.S hin.Eh hame.leK: yOsEV `al-ki.SE.' g.AdwOl b.:twOK: hEykAl g.AdwOl va'a:niy yOsEV b.:twOK: s,Adeh qATON 'ay.Eh hac.edeq::")
 
 可以看到，这里经常用 #heb("vay:hiy") 表示“存在”。这和俄语有一定的类似之处，可以通过这个词来引入一个新的东西，例如 #heb("vay:hiy heykAl 'Ecel HA`iyr") 这句话可以大致看作是 Есть дворец рядом с городом，明确写出 `Есть` 表示存在。当然，不写也是可以的。
 

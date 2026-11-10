@@ -140,6 +140,13 @@ title = "希伯来语学习笔记 (1)"
 summary = "定冠词与基础语序"
 
 [[note]]
+series = "hebrew"
+entry = "hebrew-2.typ"
+slug = "lang/hebrew-2"
+title = "希伯来语学习笔记 (2)"
+summary = "连词 waw 与介词"
+
+[[note]]
 source = "~/blogs/src/content/docs/lang/emerald-tablet.typ"
 slug = "lang/emerald-tablet"
 project = "lang"

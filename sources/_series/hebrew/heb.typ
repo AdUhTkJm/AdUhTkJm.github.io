@@ -59,6 +59,8 @@
   "j": "y",   // yod
   "v": "w",   // vav
   "V": "b",
+  "f": "p",
+  "F": "P",
 )
 
 // 附标。
@@ -548,3 +550,5 @@
   // 拼接而不是 stack/grid：HTML 导出会连内容一起丢掉 stack，table 则会保留。
   main + text(weight: "bold")[标点] + punct-table
 }
+
+#let large-arrow = [#set text(size: 18pt); #ltr-island[$<-$]]
