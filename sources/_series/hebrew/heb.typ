@@ -9,6 +9,12 @@
 // holam: `O` 是普通 holam，在 waw 作 mater lectionis 时使用；
 //        `;` 是 holam haser for vav，在 waw 本身是辅音的时候使用。
 // 词边界由空格确定，`-` = maqaf (U+05BE)。
+//
+// 空基座：`^` = U+25CC（虚线圆圈），和辅音一样能挂附标：`^Ah` → ◌ָה。
+// 附标前面没有基座时也不报错，附标按规范顺序原样输出（`A` → 孤零零的一个 ◌ָ，
+// 那个 ◌ 是渲染器补的，Typst 自己不补）。不过孤立附标紧跟在别的字符后面时
+// 会被吸到前一个字符上（`_-A` 的 qamats 就跑到连字符上了），想稳妥就用 `^`。
+// 
 // 标点：
 //   `-` = maqaf (U+05BE)。
 //   `::` = sof pasuq（׃, U+05C3）
@@ -50,6 +56,12 @@
   "r": 0x5E8, // ר resh
   "s": 0x5E9, // ש shin（自动带 shin dot；再加 "," 就变成 sin）
   "t": 0x5EA, // ת tav
+)
+
+// 空基座。U+25CC 是 Unicode 给「孤立附标」准备的那个虚线圆圈，不是希伯来
+// 辅音，但可以像辅音一样挂附标。不放进 _letters：速查表的字母列是给辅音用的。
+#let _bases = (
+  "^": 0x25CC, // 虚线圆圈（空基座）
 )
 
 // 别名。
@@ -96,6 +108,7 @@
   (0x5E1, "samekh"), (0x5E2, "ayin"), (0x5E3, "pe（词尾）"), (0x5E4, "pe / fe"),
   (0x5E5, "tsadi（词尾）"), (0x5E6, "tsadi"), (0x5E7, "qof"), (0x5E8, "resh"),
   (0x5E9, "shin / sin"), (0x5EA, "tav"),
+  (0x25CC, "虚线圆圈（空基座）"),
   (0x5B0, "shewa"), (0x5B1, "hataf segol"), (0x5B2, "hataf patah"),
   (0x5B3, "hataf qamats"), (0x5B4, "hiriq"), (0x5B5, "tsere"), (0x5B6, "segol"),
   (0x5B7, "patah"), (0x5B8, "qamats"), (0x5B9, "holam"),
@@ -136,6 +149,11 @@
 
 // 反表：码点（十进制字符串）→ 编码。encode() 和 heb-sheet() 用。
 #let _rev-letters = _letters.pairs().fold((:), (acc, p) => {
+  acc.insert(str(p.at(1)), p.at(0))
+  acc
+})
+
+#let _rev-bases = _bases.pairs().fold((:), (acc, p) => {
   acc.insert(str(p.at(1)), p.at(0))
   acc
 })
@@ -239,6 +257,7 @@
 }
 
 // 一个音节的收尾：补 shin dot、按规范排序，拼成字符串。
+// `letter` 为 none 就是「没有基座」：只剩附标，原样输出（渲染器一般会自己补个 ◌）。
 #let _syllable(letter, marks) = {
   let m = marks
   if letter == _shin {
@@ -247,7 +266,8 @@
     m.push(if sin { _sin-dot } else { _shin-dot })
   }
   m = m.sorted(key: x => _ccc.at(str(x), default: 0))
-  str.from-unicode(letter) + m.map(str.from-unicode).join()
+  let base = if letter == none { "" } else { str.from-unicode(letter) }
+  base + m.map(str.from-unicode).join()
 }
 
 // -------------------------------------------------------------- 解码/编码 ---
@@ -258,7 +278,6 @@
 
   let chars = src.codepoints()
   let n = chars.len()
-  // 输出序列：音节 (letter:, marks:)，或者已定型的字符串 (raw:)：空格、maqaf、标点。
   let syllables = ()
   let letter = none
   let marks = ()
@@ -267,131 +286,99 @@
   while i < n {
     let ch = chars.at(i)
 
-    // ---- `_` 转义：把下一个字符（或 `{十六进制码点}`）按普通字符插进来 ----
+    let next = i + 1
+    let base = none
+    let raw = none
+
     if ch == "_" {
-      let (cp, next) = _escape(chars, i, src)
+      let (cp, nxt) = _escape(chars, i, src)
+      next = nxt
       if _is-mark(cp) {
-        if letter == none {
+        marks.push(cp)
+      } else if 0x5D0 <= cp and cp <= 0x5EA {
+        base = cp
+      } else {
+        raw = str.from-unicode(cp)
+      }
+    } else if i + 1 < n and chars.at(i + 1) == ch and _doubles.at(ch, default: none) != none {
+      raw = str.from-unicode(_doubles.at(ch))
+      next = i + 2
+    } else {
+      let code = _aliases.at(ch, default: ch)
+
+      if code == " " or code == "-" {
+        raw = if code == " " { " " } else { str.from-unicode(_maqaf) }
+      } else if _letters.at(code, default: _bases.at(code, default: none)) != none {
+        base = _letters.at(code, default: _bases.at(code, default: none))
+      } else {
+        let cp = _points.at(code, default: none)
+        if cp == none {
           _fail(
-            src, i, ch,
-            "转义出来的附标（" + _names.at(str(cp), default: "U+" + _hex4(cp)) + "）前面没有字母",
+            src, i, code,
+            "未知编码（" + code + " 既不是字母、空基座也不是附标；要写 ASCII 标点请用 `_` 转义）",
           )
         }
-        // 逃逸的附标不过 DSL 的合法性检查（后门的意义就在于此），但参与规范排序
-        marks.push(cp)
-      } else {
-        if letter != none {
-          syllables.push((letter: letter, marks: marks))
-          letter = none
-          marks = ()
-        }
-        if 0x5D0 <= cp and cp <= 0x5EA {
-          // 是辅音就当一个新字母，后面写的附标还能挂上去
-          letter = cp
+
+        if cp in _vowel-set {
+          if marks.any(m => m in _vowel-set) {
+            _fail(src, i, code, "一个基座上只能有一个元音")
+          }
+          if cp == _holam-haser-vav and letter != _vav {
+            _fail(src, i, code, "holam haser for vav（\";\"）只能跟在 w 后面")
+          }
+          let pair = _hataf-of.find(p => p.at(0) == cp)
+          if pair != none and marks.contains(_shewa) {
+            marks = marks.filter(m => m != _shewa)
+            marks.push(pair.at(1))
+          } else {
+            marks.push(cp)
+          }
+        } else if cp == _shewa {
+          if marks.contains(_shewa) or marks.any(m => m in _hataf-set) {
+            _fail(src, i, code, "重复的 shewa")
+          }
+          let pair = if marks.len() > 0 {
+            _hataf-of.find(p => p.at(0) == marks.last())
+          } else {
+            none
+          }
+          if pair != none {
+            marks = marks.slice(0, marks.len() - 1)
+            marks.push(pair.at(1))
+          } else {
+            marks.push(cp)
+          }
+        } else if cp == _dagesh {
+          if marks.contains(_dagesh) {
+            _fail(src, i, code, "重复的 dagesh")
+          }
+          marks.push(cp)
+        } else if cp == _sin-dot {
+          if letter != _shin {
+            _fail(src, i, code, "sin dot 只能跟在 s（ש）后面")
+          }
+          marks.push(cp)
         } else {
-          syllables.push((raw: str.from-unicode(cp)))
+          marks.push(cp)
         }
       }
-      i = next
-      continue
     }
 
-    // ---- 双写：`::` / `..` / `,,` / `;;` 是同形状的独立标点 ----
-    // 放在附标之前：附标字符单写时只能附在字母上，所以这一串在原语法里必是错误，
-    // 双写不会抢走任何已有含义。
-    if i + 1 < n and chars.at(i + 1) == ch and _doubles.at(ch, default: none) != none {
-      if letter != none {
-        syllables.push((letter: letter, marks: marks))
-        letter = none
-        marks = ()
-      }
-      syllables.push((raw: str.from-unicode(_doubles.at(ch))))
-      i += 2
-      continue
-    }
-
-    let code = _aliases.at(ch, default: ch)
-
-    if code == " " or code == "-" {
-      if letter != none {
-        syllables.push((letter: letter, marks: marks))
-        letter = none
-        marks = ()
-      }
-      syllables.push((raw: if code == " " { " " } else { str.from-unicode(_maqaf) }))
-      i += 1
-      continue
-    }
-
-    if _letters.at(code, default: none) != none {
-      if letter != none {
+    if base != none or raw != none {
+      if letter != none or marks.len() > 0 {
         syllables.push((letter: letter, marks: marks))
       }
-      letter = _letters.at(code)
+      letter = base
       marks = ()
-      i += 1
-      continue
+      if raw != none {
+        syllables.push((raw: raw))
+      }
     }
 
-    let cp = _points.at(code, default: none)
-    if cp == none {
-      _fail(
-        src, i, code,
-        "未知编码（" + code + " 既不是字母也不是附标；要写 ASCII 标点请用 `_` 转义）",
-      )
-    }
-    if letter == none {
-      _fail(src, i, code, "附标前面没有字母")
-    }
-
-    if cp in _vowel-set {
-      if marks.any(m => m in _vowel-set) {
-        _fail(src, i, code, "一个字母上只能有一个元音")
-      }
-      if cp == _holam-haser-vav and letter != _vav {
-        _fail(src, i, code, "holam haser for vav（\";\"）只能跟在 w 后面")
-      }
-      // "a:" 和 ":a" 都算 hataf：shewa 和短元音挨在一起就合并
-      let pair = _hataf-of.find(p => p.at(0) == cp)
-      if pair != none and marks.contains(_shewa) {
-        marks = marks.filter(m => m != _shewa)
-        marks.push(pair.at(1))
-      } else {
-        marks.push(cp)
-      }
-    } else if cp == _shewa {
-      if marks.contains(_shewa) or marks.any(m => m in _hataf-set) {
-        _fail(src, i, code, "重复的 shewa")
-      }
-      let pair = if marks.len() > 0 {
-        _hataf-of.find(p => p.at(0) == marks.last())
-      } else {
-        none
-      }
-      if pair != none {
-        marks = marks.slice(0, marks.len() - 1)
-        marks.push(pair.at(1))
-      } else {
-        marks.push(cp)
-      }
-    } else if cp == _dagesh {
-      if marks.contains(_dagesh) {
-        _fail(src, i, code, "重复的 dagesh")
-      }
-      marks.push(cp)
-    } else if cp == _sin-dot {
-      if letter != _shin {
-        _fail(src, i, code, "sin dot 只能跟在 s（ש）后面")
-      }
-      marks.push(cp)
-    } else {
-      marks.push(cp)
-    }
-
-    i += 1
+    i = next
   }
 
-  if letter != none {
+  if letter != none or marks.len() > 0 {
     syllables.push((letter: letter, marks: marks))
   }
 
@@ -402,14 +389,14 @@
     .join()
 }
 
-/// 希伯来文本 → ASCII DSL。给迁移旧文本用；码表里没有的码点写成 `_{XXXX}`
-/// （所以 encode 的输出总能再 decode 回去）。
 #let encode(src) = {
   let out = ""
   for ch in src.codepoints() {
     let cp = ch.to-unicode()
     if cp == 0x20 {
       out += " "
+    } else if _rev-bases.at(str(cp), default: none) != none {
+      out += _rev-bases.at(str(cp))
     } else if cp == _shin-dot {
       // shin dot 是 "s" 自带的，省略
     } else if _hataf-set.contains(cp) {
@@ -552,3 +539,4 @@
 }
 
 #let large-arrow = [#set text(size: 18pt); #ltr-island[$<-$]]
+#let to(x, y) = [#heb(y) #large-arrow #heb(x)]

@@ -138,6 +138,7 @@ entry = "hebrew-1.typ"
 slug = "lang/hebrew-1"
 title = "希伯来语学习笔记 (1)"
 summary = "定冠词与基础语序"
+date = "2026-11-06"
 
 [[note]]
 series = "hebrew"
@@ -145,6 +146,15 @@ entry = "hebrew-2.typ"
 slug = "lang/hebrew-2"
 title = "希伯来语学习笔记 (2)"
 summary = "连词 waw 与介词"
+date = "2026-11-10"
+
+[[note]]
+series = "hebrew"
+entry = "hebrew-3.typ"
+slug = "lang/hebrew-3"
+title = "希伯来语学习笔记 (3)"
+summary = "名词的性与数"
+date = "2026-11-12"
 
 [[note]]
 source = "~/blogs/src/content/docs/lang/emerald-tablet.typ"
