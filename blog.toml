@@ -157,6 +157,14 @@ summary = "名词的性与数"
 date = "2026-11-12"
 
 [[note]]
+series = "hebrew"
+entry = "hebrew-4.typ"
+slug = "lang/hebrew-4"
+title = "希伯来语学习笔记 (4)"
+summary = "名词的性与数"
+date = "2026-11-13"
+
+[[note]]
 source = "~/blogs/src/content/docs/lang/emerald-tablet.typ"
 slug = "lang/emerald-tablet"
 project = "lang"

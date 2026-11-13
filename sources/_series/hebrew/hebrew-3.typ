@@ -1,7 +1,7 @@
 #import "@preview/cuti:0.4.0"
 #import "heb.typ": heb, heb-sheet, ltr-island, to
 
-#set document(title: "希伯来语学习笔记 (2)")
+#set document(title: "希伯来语学习笔记 (3)")
 #set page(paper: "a4", margin: 2.3cm)
 #set text(size: 10.5pt, font: ("Libertinus Serif", "Noto Serif CJK SC", "SBL Hebrew"))
 #set heading(numbering: "1.1")
@@ -140,7 +140,7 @@
 
 #heb("g.:mal.iyM va'a:twOnwOt")
 
-#heb("vay:hiy `wOd mis:t.eh VahEykAl:: vay.AVO'w. m:lAkiyM w.m:lakwOt `al-g.:mal.iyM v:`al-'a:twOnwOt 'el-ham.is:t.eh:: vay.Es:Vw. v:ham.:lAkiyM v:ham.:lAkwOt b.ahEykAl ywOmayiM vay.O'k:lw. maT:`am.iyM:: vay.Es:Vw. hag.:mal.iyM v:hA'a:twOnwOt b.as,A.deh ywOmayiM vay.O'k:lw. dese':: vay.O'mer haS.w.S 'wOy liy ham.:lAkiyM v:ham.:lAhwOt v:hag.:mal.iyM v:hA'a:twOnwOt s,:kE`iyM va'a:niy rA`EV")
+#heb("vay:hiy `wOd mis:t.eh VahEykAl:: vay.AVO'w. m:lAkiyM w.m:lakwOt `al-g.:mal.iyM v:`al-'a:twOnwOt 'el-ham.is:t.eh:: vay.Es:Vw. v:ham.:lAkiyM v:ham.:lAkwOt b.ahEykAl ywOmayiM vay.O'k:lw. maT:`am.iyM:: vay.Es:Vw. hag.:mal.iyM v:hA'a:twOnwOt b.as,A.deh ywOmayiM vay.O'k:lw. dese':: vay.O'mer haS.w.S 'wOy liy ham.:lAkiyM v:ham.:lAkwOt v:hag.:mal.iyM v:hA'a:twOnwOt s,:kE`iyM va'a:niy rA`EV")
 
 == 练习
 

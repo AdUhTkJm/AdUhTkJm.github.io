@@ -89,6 +89,8 @@
   "u": 0x5BB, // qubuts ֻ（短 u；长 u 是 shureq = "w."）
   ".": 0x5BC, // dagesh ּ（也包括 mapiq、shureq 里的那个点）
   ",": 0x5C2, // sin dot ׂ（只能跟在 s 后面）
+  "|": 0x5BD, // meteg (标注长 a)
+  "<": 0x5AB, // 重音符号
 )
 
 // 名称，用于打印。
