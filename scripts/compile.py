@@ -113,8 +113,10 @@ def die(msg: str) -> "NoReturn":
     sys.exit(1)
 
 
-def run(cmd: list[str], what: str, env: dict | None = None) -> subprocess.CompletedProcess:
-    proc = subprocess.run(cmd, capture_output=True, text=True, env=env)
+def run(
+    cmd: list[str], what: str, env: dict | None = None, cwd: Path | None = None
+) -> subprocess.CompletedProcess:
+    proc = subprocess.run(cmd, capture_output=True, text=True, env=env, cwd=cwd)
     if proc.returncode != 0:
         print(proc.stdout, file=sys.stderr)
         print(proc.stderr, file=sys.stderr)
@@ -196,10 +198,14 @@ def git_untracked() -> list[str]:
 # restored from the previous run instead of being compiled again. The cache
 # lives in .cache/ (never committed) and is keyed on content only.
 #
-# A note's inputs are exactly its snapshot tree, plus the pipeline settings that
-# can change the output (typst version, HTML flags, site base, enabled shims).
-# Multi-file documents are covered because the *whole* tree is in the key: a
-# chapter that `#include`s a diagram gets a new key when the diagram changes.
+# A note's inputs are the files its own build read (typst reports them via
+# `--deps`, and `key_hashes` hashes exactly those), plus the pipeline settings
+# that can change the output (typst version, HTML flags, site base, enabled
+# shims). Multi-file documents are covered because the whole closure is in the
+# key: a chapter that `#include`s a diagram gets a new key when the diagram
+# changes. Hashing the closure rather than the whole snapshot tree is what
+# keeps a `[[series]]` incremental — see key_hashes.
+#
 # Cross-note references cannot exist by construction — a single-file note is
 # compiled from a temp dir that contains only itself, so `#include "other.typ"`
 # would not even compile there.
@@ -309,6 +315,69 @@ def cache_prune(keep: set[str]) -> None:
     for group in sorted(CACHE_DIR.iterdir()):
         if group.is_dir() and not any(group.iterdir()):
             group.rmdir()
+
+
+def cache_meta(slug: str) -> dict:
+    """The previous build's metadata for `slug`, whatever its key was.
+
+    Read for its `deps` list only: deciding what to hash now does not need the
+    old key, and the entry is ignored unless the fresh key matches.
+    """
+    try:
+        meta = json.loads((CACHE_DIR / slug / "meta.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return meta if isinstance(meta, dict) else {}
+
+
+def typst_deps(deps_file: Path, root: Path) -> set[str]:
+    """Snapshot-relative paths typst reported reading, from a `--deps` file.
+
+    Paths in that file are relative to the process cwd (we always run typst
+    with cwd = ROOT), except for packages and fonts, which are absolute and
+    live outside the snapshot; those are dropped. A `@preview` package is
+    pinned by its version in the source (so by the entry file's hash), and the
+    fonts are hashed into the key globally already.
+    """
+    try:
+        inputs = json.loads(deps_file.read_text()).get("inputs", [])
+    except (OSError, json.JSONDecodeError, AttributeError):
+        return set()
+    out: set[str] = set()
+    for raw in inputs:
+        path = Path(raw)
+        absolute = (path if path.is_absolute() else ROOT / path).resolve()
+        try:
+            rel = absolute.relative_to(root.resolve()).as_posix()
+        except ValueError:
+            continue
+        if rel.split("/", 1)[0] == SHIM_DIR:
+            continue  # generated per build, covered by the pipeline hash
+        out.add(rel)
+    return out
+
+
+def key_hashes(tree: dict[str, Path], deps: list[str] | None) -> dict[str, str]:
+    """What the cache key is computed over.
+
+    `deps` is the file list the previous build of this note reported to typst.
+    Scoping the key to it is what keeps the parts of a `[[series]]` from
+    invalidating each other: they share one snapshot directory, so hashing the
+    whole tree recompiled every part whenever any part changed. Hashing what
+    the page *read* is still sufficient by construction — the entry file is
+    always in there, so an edit that adds an `#include` changes the key through
+    the entry itself, and a file that disappears contributes a sentinel instead
+    of looking like a hit.
+
+    `deps is None` (no previous build, or one written before deps were
+    recorded) falls back to the whole tree: over-approximate, never wrong.
+    """
+    if deps is None:
+        return {rel: digest(p.read_bytes()) for rel, p in tree.items()}
+    return {
+        rel: digest(tree[rel].read_bytes()) if rel in tree else "missing"
+        for rel in deps
+    }
 
 
 # --------------------------------------------------------------------------
@@ -684,6 +753,63 @@ def extract_images(
 
 
 # --------------------------------------------------------------------------
+# math check
+#
+# The HTML exporter is what turns equations into MathML, and it only learned to
+# do so in 0.15; an older typst drops them silently. The gate is cheap and
+# deliberately over-approximate: "some .typ file in the snapshot mentions $".
+# It has to be over-approximate because the *page* is the only ground truth —
+# `$` shows up in comments, in a `#let` that nothing calls, and (for a series)
+# in a sibling part that this page never includes. hebrew-5 tripped exactly
+# that way: heb.typ defines an unused `#let large-arrow = [$<-$]`, and the whole
+# series shares one snapshot directory.
+#
+# So the gate only decides *when to ask*: `typst eval` counts the equations the
+# document actually contains, and only a real equation that failed to reach the
+# page is an error.
+# --------------------------------------------------------------------------
+
+
+def sources_mention_math(tree: dict[str, Path]) -> bool:
+    return any(
+        "$" in p.read_text(errors="replace")
+        for p in tree.values()
+        if p.suffix == ".typ" and p.is_file()
+    )
+
+
+def count_equations(typst: Path, snap: Path, entry_name: str) -> int | None:
+    """How many `math.equation`s the document contains, per typst itself.
+
+    Runs the same compile as the PDF step (pristine snapshot, paged target, no
+    output written) and evaluates one expression in the resulting document, so
+    this counts equations that survive evaluation rather than text that looks
+    like math. Returns None when the count cannot be had — the caller then
+    stays quiet instead of inventing a verdict.
+    """
+    root = snap if snap.is_dir() else snap.parent
+    src = snap / entry_name if snap.is_dir() else snap
+    try:
+        proc = subprocess.run(
+            [
+                str(typst), "eval", "query(math.equation).len()",
+                "--in", str(src),
+                "--root", str(root),
+                "--font-path", str(FONT_DIR),
+            ],
+            capture_output=True, text=True, env=REPRO_ENV, cwd=ROOT,
+        )
+    except OSError:
+        return None
+    if proc.returncode != 0:
+        return None
+    try:
+        return int(proc.stdout.strip())
+    except ValueError:
+        return None
+
+
+# --------------------------------------------------------------------------
 # main
 # --------------------------------------------------------------------------
 
@@ -984,26 +1110,28 @@ def main() -> None:
                 "  fix: git add -f them, or drop them via `exclude` in blog.toml"
             )
 
-        # 2. cache: content-addressed. Same snapshot tree + same pipeline
-        #    settings => the previous artifacts are still correct.
+        # 2. cache: content-addressed. Same inputs + same pipeline settings
+        #    => the previous artifacts are still correct. The inputs of a note
+        #    are the files its own build read last time, not the whole snapshot
+        #    tree (a `[[series]]` shares one tree between its parts).
         pdf_name = slug.replace("/", "-") + ".pdf"
         pdf_path = PDF_DIR / pdf_name
-        hashes = {rel: digest(p.read_bytes()) for rel, p in tree.items()}
-        key = cache_key(
-            slug,
-            entry_name,
-            hashes,
-            {
-                "typst": tver,
-                "html_flags": HTML_FLAGS,
-                "base": base,
-                "shims": sorted(shims),
-                # The series index is rendered from blog.toml, not from the
-                # page, so adding/renaming a part must invalidate the cached
-                # pages even though their sources did not change.
-                "series": series,
-            },
-        )
+        previous = {} if args.no_cache else cache_meta(slug)
+        if args.no_cache:
+            hashes = key_hashes(tree, None)
+        else:
+            hashes = key_hashes(tree, previous.get("deps") or None)
+        options = {
+            "typst": tver,
+            "html_flags": HTML_FLAGS,
+            "base": base,
+            "shims": sorted(shims),
+            # No `series` here on purpose. The series index ("part 3 of 5",
+            # the list of parts) is rendered by Astro from notes.json, not
+            # baked into page.html, so retitling or adding a part must not
+            # recompile the other parts: their pages cannot change.
+        }
+        key = cache_key(slug, entry_name, hashes, options)
         cached = None if args.no_cache else cache_read(slug, key, pdf_name)
 
         if cached:
@@ -1015,10 +1143,15 @@ def main() -> None:
             pdf_bytes = cached["pdfBytes"]
             n_cached += 1
         else:
-            # 3. build the HTML from a throwaway copy of the snapshot, so that
-            #    the diagram shim never touches what is committed
+            # 3. build the HTML and the PDF from a throwaway copy of the
+            #    snapshot, so that the diagram shim never touches what is
+            #    committed. Both compiles report the files they read; that is
+            #    the dependency set of this page (see key_hashes).
             with tempfile.TemporaryDirectory() as tmp:
-                build = Path(tmp) / "build"
+                tmp = Path(tmp)
+                build = tmp / "build"
+                html_deps = tmp / "deps-html.json"
+                pdf_deps = tmp / "deps-pdf.json"
                 if is_tree(note):
                     shutil.copytree(
                         snap, build, ignore=shutil.ignore_patterns(*ALWAYS_EXCLUDE)
@@ -1030,7 +1163,7 @@ def main() -> None:
                 rewrites = 0
                 if "diagram" in shims:
                     rewrites = apply_shim(build)
-                page = Path(tmp) / "page.html"
+                page = tmp / "page.html"
                 proc = run(
                     [
                         str(typst),
@@ -1040,9 +1173,11 @@ def main() -> None:
                         str(build / entry_name),
                         str(page),
                         "--font-path", str(FONT_DIR),
+                        "--deps", str(html_deps),
                     ],
                     f"typst html for {slug}",
                     REPRO_ENV,
+                    cwd=ROOT,
                 )
                 warnings.extend(f"[{slug}] {w}" for w in note_warnings(proc.stderr))
                 full = page.read_text()
@@ -1051,36 +1186,51 @@ def main() -> None:
                 if "diagram" in shims:
                     print(f"    shim    {rewrites} import(s) redirected")
 
-                has_math_src = any(
-                    "$" in p.read_text(errors="replace")
-                    for p in tree.values()
-                    if p.suffix == ".typ" and p.is_file()
-                )
                 n_math = body.count("<math")
-                if has_math_src and n_math == 0:
-                    die(
-                        f"[{slug}] source has math but the page has no <math>; "
-                        "typst dropped the equations (needs >= 0.15)"
-                    )
+                if n_math == 0 and sources_mention_math(tree):
+                    # Over-approximate hint (comments, unused lets, sibling
+                    # files of a series) — confirm with typst before blaming
+                    # the exporter.
+                    expected = count_equations(typst, snap, entry_name)
+                    if expected:
+                        die(
+                            f"[{slug}] the document contains {expected} equation(s) "
+                            "but the page has no <math>; typst dropped them "
+                            "(needs >= 0.15)"
+                        )
 
-            n_figures = check_figures(slug, body, "diagram" in shims)
-            body, n_images = extract_images(slug, body, tree, base)
-            page_path = NOTES_DIR / f"{slug}.html"
-            page_path.parent.mkdir(parents=True, exist_ok=True)
-            page_path.write_text(body)
+                n_figures = check_figures(slug, body, "diagram" in shims)
+                body, n_images = extract_images(slug, body, tree, base)
+                page_path = NOTES_DIR / f"{slug}.html"
+                page_path.parent.mkdir(parents=True, exist_ok=True)
+                page_path.write_text(body)
 
-            # 4. PDF, from the pristine snapshot (the shim is HTML-only)
-            run(
-                [
-                    str(typst), "compile",
-                    "--root", str(snap if is_tree(note) else snap.parent),
-                    str(snap / entry_name if is_tree(note) else snap),
-                    str(pdf_path),
-                    "--font-path", str(FONT_DIR),
-                ],
-                f"typst pdf for {slug}",
-                REPRO_ENV,
-            )
+                # 4. PDF, from the pristine snapshot (the shim is HTML-only)
+                snap_root = snap if is_tree(note) else snap.parent
+                run(
+                    [
+                        str(typst), "compile",
+                        "--root", str(snap_root),
+                        str(snap / entry_name if is_tree(note) else snap),
+                        str(pdf_path),
+                        "--font-path", str(FONT_DIR),
+                        "--deps", str(pdf_deps),
+                    ],
+                    f"typst pdf for {slug}",
+                    REPRO_ENV,
+                    cwd=ROOT,
+                )
+
+                # 5. the files this page actually read
+                deps = sorted(
+                    typst_deps(html_deps, build) | typst_deps(pdf_deps, snap_root)
+                )
+                if entry_name not in deps:
+                    deps = sorted(tree)  # could not tell; stay conservative
+                # Re-key under the dependency set: the key we looked up with was
+                # a guess (whole tree, when there was no previous build), and a
+                # build stored under a guess would be a miss next time too.
+                key = cache_key(slug, entry_name, key_hashes(tree, deps), options)
 
             html_bytes = len(body)
             pdf_bytes = pdf_path.stat().st_size
@@ -1095,6 +1245,7 @@ def main() -> None:
                     "toc": toc,
                     "htmlBytes": html_bytes,
                     "pdfBytes": pdf_bytes,
+                    "deps": deps,
                 },
                 page_path,
                 pdf_path,

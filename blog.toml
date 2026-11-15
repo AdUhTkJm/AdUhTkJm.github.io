@@ -161,8 +161,16 @@ series = "hebrew"
 entry = "hebrew-4.typ"
 slug = "lang/hebrew-4"
 title = "希伯来语学习笔记 (4)"
-summary = "名词的性与数"
+summary = "完成体"
 date = "2026-11-13"
+
+[[note]]
+series = "hebrew"
+entry = "hebrew-5.typ"
+slug = "lang/hebrew-5"
+title = "希伯来语学习笔记 (5)"
+summary = "未完成体"
+date = "2026-11-14"
 
 [[note]]
 source = "~/blogs/src/content/docs/lang/emerald-tablet.typ"
