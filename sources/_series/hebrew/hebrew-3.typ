@@ -156,4 +156,4 @@
 
 The horse is in the field with the camels and with the donkeys. The camels and the donkeys are full, but the horse is hungry. Where are the delicacies? The delicacies are inside the palace, with the kings and with the queens. And where is the grass? The grass is inside the camels and the donkeys.
 
-#heb("haS.w.S b.as,A.deh `iM-hag.:mal.iyM v:`iM-hA'a:twOnwOt:: hag.:mal.iyM v:hA'a:twOnwOt s,:kE`iyM v:haS.w.S rA`EV:: 'ay.Eh ham.aT:`am.iyM:: ham.aT:`am.iyM b.ahEykAl `iM-ham.:lakiyM v:`iM-ham.:lakwOt:: v:'ay.Eh hadese':: hadese' b.ag.:mAl.iyM v:b.A'a:twOnwOt")
+#heb("haS.w.S b.as,A.deh `iM-hag.:mal.iyM v:`iM-hA'a:twOnwOt:: hag.:mal.iyM v:hA'a:twOnwOt s,:kE`iyM v:haS.w.S rA`EV:: 'ay.Eh ham.aT:`am.iyM:: ham.aT:`am.iyM b.ahEykAl `iM-ham.:lAkiyM v:`iM-ham.:lakwOt:: v:'ay.Eh hadese':: hadese' b.ag.:mAl.iyM v:b.A'a:twOnwOt")
