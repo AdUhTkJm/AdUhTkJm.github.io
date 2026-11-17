@@ -827,6 +827,17 @@ def load_manifest() -> tuple[dict, dict, list[dict]]:
     if not notes:
         die("blog.toml has no [[note]] entries")
 
+    # Listing position is no longer curated: every listing sorts by `date`, and
+    # a series by `date` too. Reject the retired keys instead of ignoring them,
+    # so an old `order` cannot sit in the file pretending to do something.
+    for note in notes:
+        for retired in ("order", "part"):
+            if retired in note:
+                die(
+                    f"[{str(note.get('slug', '?')).strip('/')}] drop `{retired}`: "
+                    "listings and series are ordered by `date` alone"
+                )
+
     # A `[[series]]` owns a directory; each member note only names the file
     # inside it. The directory is snapshotted **once** for the whole series
     # instead of once per note, so N parts cost one copy under sources/
@@ -887,14 +898,14 @@ def load_manifest() -> tuple[dict, dict, list[dict]]:
                 '(for a directory of files, also set entry = "web.typ")'
             )
 
-    # Reading order inside a series: `part` if given, else `order` (the listing
-    # key, so consecutive parts usually need nothing), then the slug to break
-    # ties. The resulting list is what the page renders as its series index.
+    # Reading order inside a series: `date` ascending (oldest first), then the
+    # slug to break ties. The resulting list is what the page renders as its
+    # series index.
     for sid, s in series_defs.items():
         members = [n for n in notes if str(n.get("series", "")) == sid]
         if not members:
             continue  # declared but unused: nothing to snapshot, nothing to list
-        members.sort(key=lambda n: (n.get("part", n.get("order", 999)), n["slug"]))
+        members.sort(key=lambda n: (n.get("date") or "", n["slug"]))
         parts = [{"slug": n["slug"].strip("/"), "title": n["title"]} for n in members]
         for index, n in enumerate(members, 1):
             n["_series"] = {"id": sid, "title": s["title"], "index": index, "parts": parts}
@@ -1259,7 +1270,6 @@ def main() -> None:
                 "summary": note.get("summary", ""),
                 "tags": note.get("tags", []),
                 "date": note.get("date"),
-                "order": note.get("order", 999),
                 "project": note["project"],
                 "kind": "typst",
                 "pdf": f"pdf/{pdf_name}",
@@ -1291,7 +1301,10 @@ def main() -> None:
 
     cache_prune({note["slug"].strip("/") for note in notes})
 
-    out_notes.sort(key=lambda n: (projects[n["project"]].get("order", 999), n["order"]))
+    # Newest first, slug ascending on a tied date. Two stable passes, so the
+    # tie-break is not reversed by the date sort.
+    out_notes.sort(key=lambda n: n["slug"])
+    out_notes.sort(key=lambda n: n.get("date") or "", reverse=True)
     payload = {
         "typstVersion": tver,
         "site": site,

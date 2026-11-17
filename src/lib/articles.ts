@@ -17,11 +17,6 @@ export interface Article {
   description: string;
   date: Date | null;
   tags: string[];
-  /**
-   * Listing position from `blog.toml`; lower comes first. This is the primary
-   * sort key of every listing — the date only breaks ties.
-   */
-  order: number;
   project: Project;
   /** Fully localized, base-aware URL. */
   href: string;
@@ -42,12 +37,12 @@ function noteDate(date: string | null): Date | null {
 }
 
 /**
- * Returns every published note, ordered by `order` (lower first) and then
- * newest first.
+ * Returns every published note, newest first.
  *
- * `order` is deliberately the *primary* key rather than the date: the curated
- * `blog.toml` listing is the source of truth for reading order, so a note with
- * a small `order` stays on top even after its date is bumped.
+ * `date` is the only sort key: listings are strictly chronological, so the
+ * position of a note in `blog.toml` no longer affects where it shows up. Notes
+ * without a date sink to the bottom, and a tied date is broken by id to keep
+ * the output deterministic.
  *
  * Notes have no draft/scheduled state in the manifest, so all of them are
  * included.
@@ -61,21 +56,16 @@ export async function getAllArticles(
     description: note.summary,
     date: noteDate(note.date),
     tags: note.tags,
-    order: note.order,
     project: projectOf(note),
     href: getRelativeLocaleUrl(locale, `posts/${note.slug}`),
   }));
 
   return articles.sort((a, b) => {
-    // 1. curated order, ascending ("lower first")
-    if (a.order !== b.order) return a.order - b.order;
-
-    // 2. same order: newest first
     const aTime = a.date?.getTime() ?? Number.NEGATIVE_INFINITY;
     const bTime = b.date?.getTime() ?? Number.NEGATIVE_INFINITY;
     if (aTime !== bTime) return bTime - aTime;
 
-    // 3. fully tied: keep the output deterministic
+    // tied (or both undated): keep the output deterministic
     return a.id.localeCompare(b.id);
   });
 }

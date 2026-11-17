@@ -44,8 +44,8 @@ export interface Note {
   title: string;
   summary: string;
   tags: string[];
+  /** `YYYY-MM-DD`; the only sort key of every listing. */
   date: string | null;
-  order: number;
   project: string;
   kind: string;
   html: string;
@@ -63,6 +63,7 @@ export interface Project {
   id: string;
   title: string;
   description: string;
+  /** Only remaining curated order: the group order on the home page. */
   order: number;
 }
 

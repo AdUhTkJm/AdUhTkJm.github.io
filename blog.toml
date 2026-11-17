@@ -81,11 +81,8 @@ order = 50000
 #   title    shown as <h1> and in listings (the Typst title block is ignored)
 #   summary  one line, shown in listings and <meta name="description">
 #   tags     free-form
-#   date     YYYY-MM-DD, used for sorting and "updated" display
-#   order    listing position; lower first. It is the primary sort key of every
-#            listing (home, /posts, tags, archives, RSS); the date only breaks
-#            ties. So to get newest-first, give the newest note the smallest
-#            order.
+#   date     YYYY-MM-DD. It is the only sort key of every listing (home,
+#            /posts, tags, archives, RSS): newest first, ties broken by slug.
 #
 # ---------------------------------------------------------------------------
 
@@ -101,7 +98,6 @@ title = "塔 2 最完美的种子"
 summary = "什么叫五十万张完美打击"
 tags = ["种子搜索", "优化", "杀戮尖塔"]
 date = "2026-10-28"
-order = 0
 
 [[note]]
 source = "~/projects/seedsearch/docs/optimizations.typ"
@@ -111,7 +107,6 @@ title = "塔 2 的地图生成"
 summary = "我加速了 100 倍的地图生成"
 tags = ["种子搜索", "优化", "杀戮尖塔"]
 date = "2026-10-17"
-order = 1
 
 [[note]]
 source = "~/projects/aw/docs/algorithm.typ"
@@ -121,7 +116,6 @@ title = "Minecraft 合成规划算法"
 summary = "并没有看上去那么简单"
 tags = ["算法", "CP-SAT", "图论", "优化"]
 date = "2026-10-10"
-order = 2
 
 # 语言
 
@@ -185,8 +179,8 @@ series = "hebrew"
 entry = "hebrew-7.typ"
 slug = "lang/hebrew-7"
 title = "希伯来语学习笔记 (7)"
-summary = "Wayyiqtol"
-date = "2026-11-16"
+summary = "形容词的性数变化"
+date = "2026-11-17"
 
 [[note]]
 source = "~/blogs/src/content/docs/lang/emerald-tablet.typ"
@@ -196,7 +190,6 @@ title = "翠玉录"
 summary = "依然是游戏引用的文本"
 tags = ["拉丁语"]
 date = "2026-11-05"
-order = 1
 
 [[note]]
 source = "~/blogs/src/content/docs/lang/dies-irae.typ"
@@ -206,7 +199,6 @@ title = "Dies Irae"
 summary = "同名视觉小说 Dies Irae 里引用的拉丁语文本"
 tags = ["拉丁语"]
 date = "2026-11-01"
-order = 1
 
 # LLM
 
@@ -218,7 +210,6 @@ title = "三值量化模型的无损压缩"
 summary = "实验对象：Qwen 3.8 27B"
 tags = ["LLM", "优化"]
 date = "2026-10-19"
-order = 1
 
 [[note]]
 source = "~/blogs/src/content/docs/llm/128k-ctx.typ"
@@ -228,7 +219,6 @@ title = "在 8 GB 显卡上跑 27B 模型，同时开 128K 上下文"
 summary = "或许部署了我也不会用"
 tags = ["LLM", "优化"]
 date = "2026-10-22"
-order = 2
 
 # Compiler
 
@@ -240,7 +230,6 @@ title = "C++26 静态反射，和由此而来的全新命令行解析方式"
 summary = "终于不用手写 DSL 然后生成代码了"
 tags = ["编译器", "C++"]
 date = "2026-10-26"
-order = 1
 
 [[note]]
 source = "~/blogs/src/content/docs/compiler/bv-decide.typ"
@@ -250,7 +239,6 @@ title = "bv_decide 的内部原理"
 summary = "Lean tactic"
 tags = ["编译器", "形式化验证", "Lean"]
 date = "2026-10-21"
-order = 2
 
 [[note]]
 source = "~/llvm/dissertation"
@@ -263,7 +251,6 @@ title = "用多面体模型静态预测缓存缺失次数"
 summary = "我的本科毕业论文"
 tags = ["编译器", "多面体", "MLIR"]
 date = "2026-04-28"
-order = 3
 
 # Novels
 
@@ -275,7 +262,6 @@ title = "费斯特想要在诡异学校里活下去"
 summary = "明日方舟/安科"
 tags = ["明日方舟", "小说"]
 date = "2024-05-26"
-order = 1
 
 [[note]]
 source = "~/blogs/src/content/docs/novels/Conquer.typ"
@@ -285,7 +271,6 @@ title = "征服"
 summary = "诡秘之主，安德森x克莱恩"
 tags = ["诡秘之主", "小说"]
 date = "2024-04-07"
-order = 2
 
 [[note]]
 source = "~/blogs/src/content/docs/novels/Danitz.typ"
@@ -295,7 +280,6 @@ title = "猎人走上海岸"
 summary = "诡秘之主，海上组（安德森、克莱恩、达尼兹）"
 tags = ["诡秘之主", "小说"]
 date = "2024-03-09"
-order = 3
 
 [[note]]
 source = "~/blogs/src/content/docs/novels/Uni.typ"
@@ -305,7 +289,6 @@ title = "愚者进校园"
 summary = "诡秘之主，全员"
 tags = ["诡秘之主", "小说"]
 date = "2024-05-14"
-order = 4
 
 [[note]]
 source = "~/blogs/src/content/docs/novels/Kinich.typ"
@@ -315,10 +298,8 @@ title = "无名之人，迎向深渊"
 summary = "原神（纳塔）"
 tags = ["原神", "小说"]
 date = "2024-10-19"
-order = 5
 
 # Misc
-# 这部分按时间倒序排列，所以是负的
 
 [[note]]
 source = "~/blogs/src/content/docs/misc/quantum-computing-2.typ"
@@ -328,7 +309,6 @@ title = "量子计算笔记 (2)"
 summary = "做题好麻烦，一点都不想做（而且还没做完）"
 tags = ["杂项", "量子计算"]
 date = "2026-10-31"
-order = -4
 
 [[note]]
 source = "~/projects/dict/docs/mdx.typ"
@@ -338,7 +318,6 @@ title = "词典格式解析：.mdx"
 summary = "得自己搞一个查词 CLI 工具才行"
 tags = ["杂项"]
 date = "2026-10-29"
-order = -3
 
 [[note]]
 source = "~/blogs/src/content/docs/misc/quantum-computing-1.typ"
@@ -348,7 +327,6 @@ title = "量子计算笔记 (1)"
 summary = "这真的是人类能理解的东西吗"
 tags = ["杂项", "量子计算"]
 date = "2026-10-27"
-order = -2
 
 [[note]]
 source = "~/blogs/src/content/docs/misc/fcitx5-ru"
@@ -359,7 +337,6 @@ title = "Fcitx5：手搓一个俄语输入法"
 summary = "前缀码？不存在的"
 tags = ["杂项", "输入法"]
 date = "2026-10-25"
-order = -1
 
 [[note]]
 source = "~/blogs/src/content/docs/misc/fcitx5-rime-commitraw.typ"
@@ -369,4 +346,3 @@ title = "Fcitx5：配置切换输入法时上屏原始文字"
 summary = "迁移到 Linux 不得不品的一环"
 tags = ["杂项", "输入法"]
 date = "2026-10-24"
-order = 0
