@@ -13,6 +13,8 @@ blog.toml                         精选的发布白名单：哪些文档会公�
 sources/<slug>.typ                单文件笔记的快照（构建输入）
 sources/<slug>/                   多文件笔记的整棵目录快照（构建输入）
 scripts/compile.py                快照 -> HTML（MathML）+ PDF + 抽出的图
+scripts/tokenize.mjs              源码 -> token 数（DeepSeek-V4.1-Flash tokenizer）
+scripts/tokenizers/               固定版本的 tokenizer.json（不进构建产物）
 compile.sh                        唯一会运行的命令
 .cache/notes/<slug>/              上次编译的产物（机器本地，不进 git）
 src/lib/notes.ts                  对生成清单的带类型访问器
@@ -117,6 +119,24 @@ title = "定冠词"
 整条连载只快照一次，落在 `sources/_series/<id>/`（前导下划线让它永远不可能和某个 slug 撞名），`--check` 也按连载比一次，`notes.json` 里每篇的 `snapshot` 字段指向同一棵树。`[[series]]` 负责 `source`/`exclude`/`project`/`shim`，note 里再写这几个字段会直接报错——两篇笔记对「快照是什么」有分歧时，缓存和 `--check` 都会失去意义。
 
 连载的目录索引（页面顶部）和「上一篇/下一篇」（正文末尾）由站点渲染，不由 Typst 渲染：索引来自 `blog.toml`，所以每篇上的都一模一样，也不进 Pagefind 的索引；`parts` 的顺序是 `part`（可选）→ `order` → slug。也就是说索引不在 `page.html` 里，而在 `notes.json` 里——它每次构建都会重写，所以改篇名、插一篇、调顺序都**不会**让任何一篇重编，Astro 会直接拿新的 `notes.json` 重新渲染。`series` 曾经被放进缓存键（理由是「页面输入没变、索引变了」），那是个错位的依赖：受影响的只有站点那一层，多编一遍 typst 文档纯属浪费。
+
+## 字数与 token
+
+页面上有两个数字，口径不同：
+
+- **字**：`src/utils/wordCount.ts` 只数渲染后正文里的 CJK 字符（汉字、假名、谚文）。`<pre>`、`<code>`、`<math>`、`<svg>` 里的内容不算，英文和数字也不算。它回答“中文正文有多长”。
+- **tokens**：`scripts/tokenize.mjs` 数 Typst 源码的 token。它回答“把源码交给大模型要占多少上下文”。
+
+token 的文件集合是入口 `.typ` 加上递归的 `#include` 闭包，**不跟 `#import`**。这不是随便定的：
+
+- `#include` 是内容，被包含的文件就是文章的一部分；
+- `#import` 是代码，`heb.typ`、`chapters/common.typ` 这类辅助库不是文章，算进去会让同一连载的每一篇都被共享库拉高。
+
+举例：`compiler/cache-miss-analysis` 的 `web.typ` 通过 `#include` 拉进 3 章和 27 个图表脚本，共 31 个文件、31,230 token；`lang/hebrew-2` 只算 `hebrew-2.typ`（`heb.typ` 是 `#import`），2,746 token。
+
+解析是静态的：注释、字符串、raw block 里的 `#include` 会被跳过；动态 include（`#include path`）会直接报错，而不是悄悄少算。当前快照里的 include 都是字面量。`#include` 的 `.typ` 文件必须存在且留在 `sources/` 内。
+
+tokenizer 是 DeepSeek-V4.1-Flash 官方的 `tokenizer.json`，放在 `scripts/tokenizers/deepseek-v4.1-flash/`，按 revision 和 SHA-256 固定；`src/generated/token-counts.json` 由 `scripts/tokenize.mjs` 生成，不进 git。token 数只在同一 tokenizer revision 内可比，换 tokenizer 要重算全部页面。
 
 ## 为什么 Typst 直接导出 HTML
 

@@ -177,7 +177,15 @@ series = "hebrew"
 entry = "hebrew-6.typ"
 slug = "lang/hebrew-6"
 title = "希伯来语学习笔记 (6)"
-summary = "未完成体"
+summary = "Wayyiqtol"
+date = "2026-11-16"
+
+[[note]]
+series = "hebrew"
+entry = "hebrew-7.typ"
+slug = "lang/hebrew-7"
+title = "希伯来语学习笔记 (7)"
+summary = "Wayyiqtol"
 date = "2026-11-16"
 
 [[note]]

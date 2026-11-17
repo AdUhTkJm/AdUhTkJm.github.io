@@ -21,12 +21,9 @@ case "${1:-}" in
   --check)
     exec python3 scripts/compile.py --check
     ;;
-  --no-build)
-    exec python3 scripts/compile.py
-    ;;
 esac
 
-if [ ! -d node_modules ]; then
+if [ ! -d node_modules ] || [ ! -d node_modules/@huggingface/tokenizers ]; then
   echo "==> installing dependencies"
   pnpm install
 fi
@@ -34,6 +31,10 @@ fi
 case "${1:-}" in
   --dev)
     exec pnpm dev
+    ;;
+  --no-build)
+    python3 scripts/compile.py
+    exec node scripts/tokenize.mjs
     ;;
   -h|--help)
     sed -n '2,/^# ====/p' "$0"

@@ -7,7 +7,14 @@ import Tag from "@/components/Tag.astro";
 import { getAssetPath } from "@/utils/withBase";
 import { slugifyStr } from "@/utils/slugify";
 import { toTransitionName } from "@/utils/toTransitionName";
-import { noteBody, notes, noteWords, projectOf, type Note } from "@/lib/notes";
+import {
+  noteBody,
+  notes,
+  noteCjk,
+  noteTokens,
+  projectOf,
+  type Note,
+} from "@/lib/notes";
 import ShareLinks from "./_components/ShareLinks.astro";
 import BackButton from "./_components/BackButton.astro";
 import BackToTopButton from "./_components/BackToTopButton.astro";
@@ -71,6 +78,8 @@ const tags = note.tags;
 
 const noteProject = projectOf(note);
 const toc = note.toc.filter(entry => entry.level <= 3);
+const cjk = noteCjk(note);
+const tokens = noteTokens(note);
 const noteDateLabel = note.date
   ? new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(
       new Date(`${note.date}T00:00:00Z`)
@@ -121,7 +130,12 @@ const ogImage = undefined;
       class="text-muted-foreground my-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs"
     >
       {noteDateLabel && <span>{noteDateLabel}</span>}
-      <span>{noteWords(note).toLocaleString(locale)} 字</span>
+      <span
+        title="字：正文中的 CJK 字符，代码/公式不计。tokens：Typst 源码（含 #include，不含 #import）经 DeepSeek-V4.1-Flash tokenizer 编码。"
+      >
+        {cjk.toLocaleString(locale)} 字 · {tokens.toLocaleString(locale)}{" "}
+        tokens
+      </span>
       {
         note.pdf && (
           <a

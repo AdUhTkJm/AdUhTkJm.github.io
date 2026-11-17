@@ -57,6 +57,9 @@ importers:
       '@astrojs/check':
         specifier: ^0.9.9
         version: 0.9.9(prettier-plugin-astro@0.14.1)(prettier@3.9.3)(typescript@6.0.3)
+      '@huggingface/tokenizers':
+        specifier: 0.2.0
+        version: 0.2.0
       '@pagefind/default-ui':
         specifier: ^1.5.2
         version: 1.5.2
@@ -516,6 +519,9 @@ packages:
   '@eslint/plugin-kit@0.7.2':
     resolution: {integrity: sha512-+CNAzxglkrpNf/kKywqQfk74QjtceuOE7Qm+AF8miRvPF/wmmK5+OJOgVh3AVTT3RP2mH3+FOaxlE5v72owk0A==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
+
+  '@huggingface/tokenizers@0.2.0':
+    resolution: {integrity: sha512-LidMHe1FpcSYH4vcSjXooda34pC0M8m1gmDOv7SQi6Iv+ib1zX7J3sHBCC9/3FPCkn2k1b55FneVqMRxrr99pg==}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -3648,6 +3654,8 @@ snapshots:
     dependencies:
       '@eslint/core': 1.2.1
       levn: 0.4.1
+
+  '@huggingface/tokenizers@0.2.0': {}
 
   '@humanfs/core@0.19.2':
     dependencies:

@@ -1,23 +1,22 @@
 /**
- * Word count for prose written in Chinese (with the occasional English term).
+ * CJK character count for prose written in Chinese, Japanese or Korean.
  *
- * Counting rules — the ones Chinese editors actually use:
+ * Counting rules — the ones Chinese editors actually use for 字数:
  *   - every CJK character counts as one 字;
- *   - a run of Latin letters or digits counts as one word;
- *   - whitespace, punctuation and markup count as nothing.
+ *   - whitespace, punctuation, markup, Latin letters and digits count as
+ *     nothing.
  *
- * Two things are deliberately skipped before counting:
- *   - `<pre>` blocks (code listings are not prose);
- *   - `<math>` blocks (raw MathML would otherwise count every symbol in an
- *     equation, and count `𝑐`/`𝑟` again on every line they appear).
+ * Blocks that are not prose are skipped before counting:
+ *   - code (`<pre>` and inline `<code>`);
+ *   - `<math>` blocks (raw MathML would count every symbol in an equation);
+ *   - `<svg>` (figure labels are not article text), `<script>` and `<style>`.
  */
 const CJK =
   /[\u2e80-\u2fff\u3005\u3007\u3021-\u3029\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uac00-\ud7af]/;
 
-const LATIN_WORD = /[A-Za-z0-9]+/g;
-
 /** Elements whose text content must never be counted. */
-const SKIPPED_BLOCKS = /<(pre|math|script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
+const SKIPPED_BLOCKS =
+  /<(pre|code|math|script|style|svg)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
 
 const HTML_COMMENT = /<!--[\s\S]*?-->/g;
 const HTML_TAG = /<\/?[a-zA-Z][^>]*>/g;
@@ -32,16 +31,12 @@ export function htmlToText(html: string): string {
     .replace(HTML_ENTITY, " ");
 }
 
-/** CJK characters + Latin words in the given text. */
-export function countWords(text: string): number {
-  const cjk = text.match(new RegExp(CJK.source, "g"))?.length ?? 0;
-  const latin =
-    text.replace(new RegExp(CJK.source, "g"), " ").match(LATIN_WORD)?.length ??
-    0;
-  return cjk + latin;
+/** CJK characters in the given text. */
+export function countCjk(text: string): number {
+  return text.match(new RegExp(CJK.source, "g"))?.length ?? 0;
 }
 
-/** Word count of an HTML fragment, ignoring code blocks and math. */
-export function htmlWordCount(html: string): number {
-  return countWords(htmlToText(html));
+/** CJK count of an HTML fragment, ignoring code, math and SVG. */
+export function htmlCjkCount(html: string): number {
+  return countCjk(htmlToText(html));
 }
