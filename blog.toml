@@ -183,6 +183,14 @@ summary = "形容词的性数变化"
 date = "2026-11-17"
 
 [[note]]
+series = "hebrew"
+entry = "hebrew-8.typ"
+slug = "lang/hebrew-8"
+title = "希伯来语学习笔记 (8)"
+summary = "形容词的更多使用方式"
+date = "2026-11-18"
+
+[[note]]
 source = "~/blogs/src/content/docs/lang/emerald-tablet.typ"
 slug = "lang/emerald-tablet"
 project = "lang"
